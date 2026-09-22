@@ -3,17 +3,29 @@
 
   const API = 'https://bible.helloao.org';
   const SUPABASE_URL = 'https://ylspdrjrvhixrregmqtg.supabase.co';
+  const SUPABASE_KEY =
+    'sb_publishable_Ar8T3NCh77i6YZfjN88wBQ_f8j7oool';
 
-  /*
-    Replace the value below with your publishable key.
-    Never use a service_role or secret key in this file.
-  */
-  const SUPABASE_KEY = 'PASTE_YOUR_SB_PUBLISHABLE_KEY_HERE';
+  if (!window.supabase) {
+    document.body.insertAdjacentHTML(
+      'afterbegin',
+      '<p style="padding:1rem;color:#900">Supabase failed to load.</p>'
+    );
+    return;
+  }
 
-  const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+  const db = window.supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_KEY
+  );
 
   const DEVICE_KEY = 'selah_device_id';
-  const DEVICE_ID = localStorage.getItem(DEVICE_KEY) || crypto.randomUUID();
+  const DEVICE_ID =
+    localStorage.getItem(DEVICE_KEY) ||
+    (crypto.randomUUID
+      ? crypto.randomUUID()
+      : `device-${Date.now()}-${Math.random().toString(36).slice(2)}`);
+
   localStorage.setItem(DEVICE_KEY, DEVICE_ID);
 
   const $ = (id) => document.getElementById(id);
@@ -22,6 +34,7 @@
     audio: $('audio'),
     scripture: $('scripture'),
     refLabel: $('refLabel'),
+    refBtn: $('refBtn'),
     trSel: $('translationSel'),
     narSel: $('narratorSel'),
     playBtn: $('playBtn'),
@@ -74,9 +87,11 @@
     numsToggle: $('numsToggle')
   };
 
+  const synth =
+    'speechSynthesis' in window ? window.speechSynthesis : null;
+
   const state = {
     tr: 'BSB',
-    lang: 'eng',
     books: [],
     bookId: 'JHN',
     chapter: 3,
@@ -94,13 +109,12 @@
     autoNext: true,
     fontStep: 0,
     selectedVerse: null,
-    loadToken: 0,
     bookmarks: [],
-    searchScope: 'all'
+    searchScope: 'all',
+    loadToken: 0
   };
 
   const cache = new Map();
-  const synth = 'speechSynthesis' in window ? window.speechSynthesis : null;
 
   const TRANSLATIONS = [
     {
@@ -148,8 +162,8 @@
 
   const BOOK_ALIASES = {
     gen: 'GEN',
-    exod: 'EXO',
     ex: 'EXO',
+    exod: 'EXO',
     lev: 'LEV',
     num: 'NUM',
     deut: 'DEU',
@@ -157,21 +171,18 @@
     josh: 'JOS',
     judg: 'JDG',
     ruth: 'RUT',
-    sam1: '1SA',
     '1sam': '1SA',
-    sam2: '2SA',
     '2sam': '2SA',
-    kgs1: '1KI',
     '1kgs': '1KI',
-    kgs2: '2KI',
     '2kgs': '2KI',
-    chr1: '1CH',
+    '1ki': '1KI',
+    '2ki': '2KI',
     '1chr': '1CH',
-    chr2: '2CH',
     '2chr': '2CH',
     ps: 'PSA',
     psa: 'PSA',
     prov: 'PRO',
+    eccl: 'ECC',
     ecc: 'ECC',
     song: 'SNG',
     isa: 'ISA',
@@ -203,63 +214,30 @@
     acts: 'ACT',
     rom: 'ROM',
     romans: 'ROM',
-    cor1: '1CO',
     '1cor': '1CO',
-    cor2: '2CO',
     '2cor': '2CO',
     gal: 'GAL',
     eph: 'EPH',
     phil: 'PHP',
+    php: 'PHP',
     col: 'COL',
-    thess1: '1TH',
     '1thess': '1TH',
-    thess2: '2TH',
     '2thess': '2TH',
-    tim1: '1TI',
     '1tim': '1TI',
-    tim2: '2TI',
     '2tim': '2TI',
     tit: 'TIT',
     phlm: 'PHM',
     heb: 'HEB',
     jas: 'JAS',
     jam: 'JAS',
-    pet1: '1PE',
     '1pet': '1PE',
-    pet2: '2PE',
     '2pet': '2PE',
-    john1: '1JN',
     '1jn': '1JN',
-    john2: '2JN',
     '2jn': '2JN',
-    john3: '3JN',
     '3jn': '3JN',
     jude: 'JUD',
     rev: 'REV'
   };
-
-  function toast(message) {
-    if (!el.toast) return;
-    el.toast.textContent = message;
-    el.toast.classList.add('show');
-    setTimeout(() => el.toast.classList.remove('show'), 2400);
-  }
-
-  function bookName(book) {
-    return book ? book.commonName || book.name || book.id : '';
-  }
-
-  function currentBook() {
-    return state.books.find((book) => book.id === state.bookId);
-  }
-
-  function reference() {
-    return `${bookName(currentBook())} ${state.chapter}`;
-  }
-
-  function verseReference(verse) {
-    return `${reference()}:${verse}`;
-  }
 
   function cleanText(value) {
     return String(value || '')
@@ -268,45 +246,113 @@
       .trim();
   }
 
+  function formatTime(value) {
+    if (!Number.isFinite(value) || value < 0) value = 0;
+    const minutes = Math.floor(value / 60);
+    const seconds = Math.floor(value % 60);
+    return `${minutes}:${String(seconds).padStart(2, '0')}`;
+  }
+
+  function showToast(message) {
+    if (!el.toast) return;
+
+    el.toast.textContent = message;
+    el.toast.classList.add('show');
+
+    clearTimeout(showToast.timer);
+    showToast.timer = setTimeout(() => {
+      el.toast.classList.remove('show');
+    }, 2400);
+  }
+
+  function bookName(book) {
+    return book
+      ? book.commonName || book.name || book.id
+      : '';
+  }
+
+  function currentBook() {
+    return state.books.find((book) => book.id === state.bookId);
+  }
+
+  function currentReference() {
+    return `${bookName(currentBook())} ${state.chapter}`;
+  }
+
+  function verseReference(verse) {
+    return `${currentReference()}:${verse}`;
+  }
+
   async function getJSON(path) {
     const url = path.startsWith('http') ? path : API + path;
 
-    if (cache.has(url)) return cache.get(url);
+    if (cache.has(url)) {
+      return cache.get(url);
+    }
 
-    const promise = fetch(url).then((response) => {
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const request = fetch(url).then((response) => {
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+
       return response.json();
     });
 
-    cache.set(url, promise);
-    promise.catch(() => cache.delete(url));
-    return promise;
+    cache.set(url, request);
+    request.catch(() => cache.delete(url));
+
+    return request;
   }
 
-  function setTheme() {
-    const root = document.documentElement;
-    const dark = root.dataset.theme === 'dark';
-    if (el.themeLabel) el.themeLabel.textContent = dark ? 'Light' : 'Dark';
+  function showLoading() {
+    el.scripture.innerHTML = `
+      <div class="sk" style="width:100%"></div>
+      <div class="sk" style="width:94%"></div>
+      <div class="sk" style="width:86%"></div>
+      <div class="sk" style="width:72%"></div>
+    `;
   }
 
   function setupTheme() {
     const root = document.documentElement;
 
-    el.themeBtn?.addEventListener('click', () => {
-      root.dataset.theme = root.dataset.theme === 'dark' ? 'light' : 'dark';
-      setTheme();
-    });
+    if (
+      !root.dataset.theme &&
+      window.matchMedia?.('(prefers-color-scheme: dark)').matches
+    ) {
+      root.dataset.theme = 'dark';
+    }
 
-    setTheme();
+    if (!root.dataset.theme) {
+      root.dataset.theme = 'light';
+    }
+
+    updateThemeLabel();
+
+    el.themeBtn?.addEventListener('click', () => {
+      root.dataset.theme =
+        root.dataset.theme === 'dark' ? 'light' : 'dark';
+
+      updateThemeLabel();
+    });
+  }
+
+  function updateThemeLabel() {
+    el.themeLabel.textContent =
+      document.documentElement.dataset.theme === 'dark'
+        ? 'Light'
+        : 'Dark';
   }
 
   function setupSettings() {
     el.settingsBtn?.addEventListener('click', (event) => {
       event.stopPropagation();
-      el.settings.hidden = !el.settings.hidden;
+
+      const opening = el.settings.hidden;
+      el.settings.hidden = !opening;
       el.settingsBtn.setAttribute(
         'aria-expanded',
-        String(!el.settings.hidden)
+        String(opening)
       );
     });
 
@@ -318,23 +364,18 @@
         event.target !== el.settingsBtn
       ) {
         el.settings.hidden = true;
+        el.settingsBtn.setAttribute('aria-expanded', 'false');
       }
     });
 
     el.fontUp?.addEventListener('click', () => {
       state.fontStep = Math.min(5, state.fontStep + 1);
-      document.documentElement.style.setProperty(
-        '--read-size',
-        `${1.1875 + state.fontStep * 0.125}rem`
-      );
+      applyFontSize();
     });
 
     el.fontDown?.addEventListener('click', () => {
       state.fontStep = Math.max(-2, state.fontStep - 1);
-      document.documentElement.style.setProperty(
-        '--read-size',
-        `${1.1875 + state.fontStep * 0.125}rem`
-      );
+      applyFontSize();
     });
 
     el.followToggle?.addEventListener('change', () => {
@@ -351,6 +392,14 @@
         !el.numsToggle.checked
       );
     });
+  }
+
+  function applyFontSize() {
+    const size = 1.1875 + state.fontStep * 0.125;
+    document.documentElement.style.setProperty(
+      '--read-size',
+      `${size}rem`
+    );
   }
 
   function buildTranslationSelect() {
@@ -375,8 +424,11 @@
 
   async function loadBooks() {
     const data = await getJSON(`/api/${state.tr}/books.json`);
-    state.books = data.books.slice().sort((a, b) => a.order - b.order);
-    state.lang = data.translation.language;
+
+    state.books = data.books
+      .slice()
+      .sort((a, b) => a.order - b.order);
+
     state.translation = data.translation;
   }
 
@@ -387,12 +439,14 @@
     el.refLabel.textContent = `${name} ${state.chapter}`;
     el.chapterBook.textContent = name;
     el.chapterNum.textContent = state.chapter;
+
     el.bookTitle.textContent =
       book?.title && book.title !== name
         ? book.title
         : book?.order >= 40
           ? 'New Testament'
           : 'Old Testament';
+
     el.trNote.textContent = state.translation?.name || '';
     document.title = `${name} ${state.chapter} — Selah`;
 
@@ -402,15 +456,17 @@
     el.prevChap.disabled = !previous;
     el.nextChap.disabled = !next;
 
-    if (previous) {
-      el.prevLabel.textContent =
-        `${bookName(state.books.find((b) => b.id === previous[0]))} ${previous[1]}`;
-    }
+    el.prevLabel.textContent = previous
+      ? `${bookName(
+          state.books.find((item) => item.id === previous[0])
+        )} ${previous[1]}`
+      : 'Previous';
 
-    if (next) {
-      el.nextLabel.textContent =
-        `${bookName(state.books.find((b) => b.id === next[0]))} ${next[1]}`;
-    }
+    el.nextLabel.textContent = next
+      ? `${bookName(
+          state.books.find((item) => item.id === next[0])
+        )} ${next[1]}`
+      : 'Next';
   }
 
   function previousReference() {
@@ -418,11 +474,13 @@
       return [state.bookId, state.chapter - 1];
     }
 
-    const index = state.books.findIndex((book) => book.id === state.bookId);
+    const index = state.books.findIndex(
+      (book) => book.id === state.bookId
+    );
 
     if (index > 0) {
-      const previous = state.books[index - 1];
-      return [previous.id, previous.numberOfChapters];
+      const book = state.books[index - 1];
+      return [book.id, book.numberOfChapters];
     }
 
     return null;
@@ -435,7 +493,9 @@
       return [state.bookId, state.chapter + 1];
     }
 
-    const index = state.books.findIndex((item) => item.id === state.bookId);
+    const index = state.books.findIndex(
+      (item) => item.id === state.bookId
+    );
 
     if (index >= 0 && index < state.books.length - 1) {
       return [state.books[index + 1].id, 1];
@@ -447,7 +507,9 @@
   function contentText(parts) {
     return cleanText(
       parts
-        .map((part) => (typeof part === 'string' ? part : part?.text || ''))
+        .map((part) =>
+          typeof part === 'string' ? part : part?.text || ''
+        )
         .join(' ')
     );
   }
@@ -458,7 +520,7 @@
 
     state.verses = [];
 
-    const newParagraph = () => {
+    const createParagraph = () => {
       paragraph = document.createElement('p');
       fragment.appendChild(paragraph);
     };
@@ -466,6 +528,7 @@
     data.chapter.content.forEach((item) => {
       if (item.type === 'heading') {
         paragraph = null;
+
         const heading = document.createElement('h3');
         heading.textContent = contentText(item.content);
         fragment.appendChild(heading);
@@ -474,6 +537,7 @@
 
       if (item.type === 'hebrew_subtitle') {
         paragraph = null;
+
         const subtitle = document.createElement('p');
         subtitle.className = 'subtitle';
         subtitle.textContent = contentText(item.content);
@@ -488,19 +552,19 @@
 
       if (item.type !== 'verse') return;
 
-      if (!paragraph) newParagraph();
+      if (!paragraph) createParagraph();
 
-      const verse = document.createElement('span');
-      verse.className = 'verse';
-      verse.dataset.v = item.number;
-      verse.id = `v${item.number}`;
+      const verseElement = document.createElement('span');
+      verseElement.className = 'verse';
+      verseElement.dataset.v = item.number;
+      verseElement.id = `v${item.number}`;
 
-      const number = document.createElement('sup');
-      number.className = 'vnum';
-      number.textContent = item.number;
+      const numberElement = document.createElement('sup');
+      numberElement.className = 'vnum';
+      numberElement.textContent = item.number;
 
-      let first = true;
-      const texts = [];
+      const textParts = [];
+      let firstTextNode = true;
 
       item.content.forEach((part) => {
         let text = '';
@@ -514,43 +578,50 @@
           poem = part.poem || 0;
           wordsOfJesus = Boolean(part.wordsOfJesus);
         } else if (part?.lineBreak) {
-          verse.appendChild(document.createElement('br'));
+          verseElement.appendChild(
+            document.createElement('br')
+          );
           return;
         } else {
           return;
         }
 
-        texts.push(text);
+        textParts.push(text);
 
         const node = document.createElement('span');
 
         if (poem) {
-          node.className = `poem-line${poem > 1 ? ' p2' : ''}`;
+          node.className =
+            `poem-line${poem > 1 ? ' p2' : ''}`;
         }
 
-        if (wordsOfJesus) node.classList.add('jesus');
+        if (wordsOfJesus) {
+          node.classList.add('jesus');
+        }
 
-        if (first) {
-          node.appendChild(number);
-          first = false;
+        if (firstTextNode) {
+          node.appendChild(numberElement);
+          firstTextNode = false;
         }
 
         node.appendChild(document.createTextNode(text));
-        verse.appendChild(node);
+        verseElement.appendChild(node);
       });
 
-      if (first) verse.appendChild(number);
+      if (firstTextNode) {
+        verseElement.appendChild(numberElement);
+      }
 
       if (paragraph.childNodes.length) {
         paragraph.appendChild(document.createTextNode(' '));
       }
 
-      paragraph.appendChild(verse);
+      paragraph.appendChild(verseElement);
 
       state.verses.push({
         n: Number(item.number),
-        text: cleanText(texts.join(' ')),
-        el: verse
+        text: cleanText(textParts.join(' ')),
+        el: verseElement
       });
     });
 
@@ -577,33 +648,37 @@
       el.narSel.appendChild(option);
     }
 
-    let choice = state.narrator;
+    let selected = state.narrator;
 
-    if (choice !== 'device' && !links[choice]) {
-      choice = Object.keys(links)[0] || (synth ? 'device' : '');
+    if (selected !== 'device' && !links[selected]) {
+      selected = Object.keys(links)[0] || '';
     }
 
-    if (choice === 'device' && !synth) {
-      choice = Object.keys(links)[0] || '';
+    if (!selected && synth) {
+      selected = 'device';
     }
 
-    state.narrator = choice;
-    el.narSel.value = choice;
-    applyNarrator(choice);
+    if (selected === 'device' && !synth) {
+      selected = Object.keys(links)[0] || '';
+    }
+
+    state.narrator = selected;
+    el.narSel.value = selected;
+    applyNarrator(selected);
   }
 
-  async function applyNarrator(choice) {
+  async function applyNarrator(narrator) {
     const links = state.data?.thisChapterAudioLinks || {};
     state.timings = null;
 
-    if (choice !== 'device' && links[choice]) {
+    if (narrator !== 'device' && links[narrator]) {
       state.mode = 'audio';
-      el.audio.src = links[choice];
+      el.audio.src = links[narrator];
       el.audio.playbackRate = state.speed;
       el.audio.preload = 'metadata';
 
       const timingPath =
-        state.data.thisChapterAudioTimings?.[choice];
+        state.data?.thisChapterAudioTimings?.[narrator];
 
       if (timingPath) {
         try {
@@ -623,8 +698,16 @@
   }
 
   function setPlayingUI() {
-    el.playBtn.classList.toggle('is-playing', state.playing);
-    el.playBtn.classList.toggle('is-loading', state.loading);
+    el.playBtn.classList.toggle(
+      'is-playing',
+      state.playing
+    );
+
+    el.playBtn.classList.toggle(
+      'is-loading',
+      state.loading
+    );
+
     el.playBtn.setAttribute(
       'aria-label',
       state.playing ? 'Pause' : 'Play'
@@ -633,9 +716,11 @@
 
   function stopPlayback() {
     if (synth) synth.cancel();
+
     el.audio.pause();
     state.playing = false;
     state.loading = false;
+
     setPlayingUI();
   }
 
@@ -643,7 +728,9 @@
     if (!state.data) return;
 
     if (state.mode === 'audio') {
-      if (fromVerse && state.timings) seekToVerse(fromVerse);
+      if (fromVerse && state.timings) {
+        seekToVerse(fromVerse);
+      }
 
       state.loading = true;
       setPlayingUI();
@@ -654,20 +741,25 @@
         state.loading = false;
         state.playing = false;
         setPlayingUI();
-        toast('Audio could not start. Tap play again.');
+        showToast('Audio could not start. Tap play again.');
       });
 
       return;
     }
 
     if (!synth) {
-      toast('Read-aloud is not supported in this browser.');
+      showToast('Read-aloud is not supported here.');
       return;
     }
 
     if (fromVerse) {
-      const index = state.verses.findIndex((v) => v.n === fromVerse);
-      if (index >= 0) state.ttsIndex = index;
+      const index = state.verses.findIndex(
+        (verse) => verse.n === fromVerse
+      );
+
+      if (index >= 0) {
+        state.ttsIndex = index;
+      }
     }
 
     state.playing = true;
@@ -705,11 +797,16 @@
 
     markVerse(verse.n);
 
-    const utterance = new SpeechSynthesisUtterance(verse.text);
+    const utterance = new SpeechSynthesisUtterance(
+      verse.text
+    );
+
     utterance.rate = state.speed;
 
     utterance.onend = () => {
-      if (token !== speechToken || !state.playing) return;
+      if (token !== speechToken || !state.playing) {
+        return;
+      }
 
       state.ttsIndex += 1;
 
@@ -719,7 +816,12 @@
 
         if (state.autoNext) {
           const next = nextReference();
-          if (next) loadChapter(next[0], next[1], { autoplay: true });
+
+          if (next) {
+            loadChapter(next[0], next[1], {
+              autoplay: true
+            });
+          }
         }
 
         return;
@@ -736,15 +838,15 @@
     synth.speak(utterance);
   }
 
-  function seekToVerse(number) {
+  function seekToVerse(verseNumber) {
     if (!state.timings) return;
 
-    const time = state.timings[number - 1];
+    const time = state.timings[verseNumber - 1];
 
     if (typeof time !== 'number') return;
 
     el.audio.currentTime = Math.max(0, time - 0.05);
-    markVerse(number);
+    markVerse(verseNumber);
   }
 
   function markVerse(number) {
@@ -755,78 +857,27 @@
       );
     });
 
-    state.currentVerse = number || 0;
+    state.currentVerse = Number(number) || 0;
+
     el.tNow.textContent = number
       ? verseReference(number)
-      : reference();
+      : currentReference();
+
+    if (number) {
+      savePosition(number);
+    }
 
     if (number && state.follow && state.playing) {
-      const verse = state.verses.find((item) => item.n === number);
+      const verse = state.verses.find(
+        (item) => item.n === number
+      );
 
       verse?.el.scrollIntoView({
         behavior: 'smooth',
         block: 'center'
       });
     }
-
-    if (number) savePosition(number);
   }
 
   function renderProgress() {
-    const duration = Number.isFinite(el.audio.duration)
-      ? el.audio.duration
-      : 0;
-    const current = Number.isFinite(el.audio.currentTime)
-      ? el.audio.currentTime
-      : 0;
-
-    el.seek.max = duration || 1000;
-    el.seek.value = duration ? current : 0;
-    el.tCur.textContent = formatTime(current);
-    el.tDur.textContent = formatTime(duration);
-  }
-
-  function formatTime(seconds) {
-    if (!Number.isFinite(seconds) || seconds < 0) seconds = 0;
-    const minutes = Math.floor(seconds / 60);
-    const remainder = Math.floor(seconds % 60);
-    return `${minutes}:${String(remainder).padStart(2, '0')}`;
-  }
-
-  async function loadChapter(bookId, chapter, options = {}) {
-    const token = ++state.loadToken;
-
-    stopPlayback();
-    state.bookId = bookId;
-    state.chapter = chapter;
-    updateHeader();
-
-    el.scripture.innerHTML = '<p>Loading chapter…</p>';
-
-    try {
-      const data = await getJSON(
-        `/api/${state.tr}/${bookId}/${chapter}.json`
-      );
-
-      if (token !== state.loadToken) return;
-
-      state.data = data;
-      renderChapter(data);
-      setupAudioSources(data);
-      renderProgress();
-
-      await restorePosition();
-
-      if (options.verse) {
-        const verse = state.verses.find((v) => v.n === options.verse);
-        verse?.el.scrollIntoView({
-          behavior: 'smooth',
-          block: 'center'
-        });
-      }
-
-      if (options.autoplay) {
-        play(options.verse || null);
-      }
-    } catch (error) {
-      console.erro
+    const duration = Number.isF
