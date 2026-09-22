@@ -2,10 +2,7 @@
 <html lang="en" data-theme="light">
 <head>
   <meta charset="utf-8">
-  <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1, viewport-fit=cover"
-  >
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 
   <title>Selah — Read & Listen to the Bible</title>
 
@@ -37,29 +34,15 @@
 
   <header class="topbar">
     <div class="topbar__inner">
-      <a
-        class="brand"
-        href="#"
-        id="brandLink"
-        aria-label="Selah home"
-      >
-        <svg
-          class="brand__mark"
-          viewBox="0 0 32 32"
-          fill="none"
-          aria-hidden="true"
-        >
+      <a class="brand" href="#" id="brandLink" aria-label="Selah home">
+        <svg class="brand__mark" viewBox="0 0 32 32" fill="none" aria-hidden="true">
           <path
             d="M16 8.5C12.5 6.2 8.2 5.6 4 6.2v18c4.2-.6 8.5 0 12 2.3 3.5-2.3 7.8-2.9 12-2.3v-18c-4.2-.6-8.5 0-12 2.3Z"
             stroke="currentColor"
             stroke-width="1.8"
             stroke-linejoin="round"
           />
-          <path
-            d="M16 8.5v18"
-            stroke="currentColor"
-            stroke-width="1.8"
-          />
+          <path d="M16 8.5v18" stroke="currentColor" stroke-width="1.8"/>
           <path
             d="M8.5 13.5v4M11.5 11.8v7.4M20.5 11.8v7.4M23.5 13.5v4"
             stroke="currentColor"
@@ -80,12 +63,7 @@
       >
         <span id="refLabel">John 3</span>
 
-        <svg
-          viewBox="0 0 20 20"
-          width="16"
-          height="16"
-          aria-hidden="true"
-        >
+        <svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true">
           <path
             d="m5 7.5 5 5 5-5"
             fill="none"
@@ -105,12 +83,7 @@
           aria-label="Search the Bible"
           aria-haspopup="dialog"
         >
-          <svg
-            viewBox="0 0 24 24"
-            width="20"
-            height="20"
-            aria-hidden="true"
-          >
+          <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
             <circle
               cx="10.5"
               cy="10.5"
@@ -126,20 +99,16 @@
               stroke-linecap="round"
             />
           </svg>
-              </button>
-              <button
+        </button>
+
+        <button
           class="iconbtn"
           id="bookmarksBtn"
           type="button"
           aria-label="Your bookmarks"
           aria-haspopup="dialog"
         >
-          <svg
-            viewBox="0 0 24 24"
-            width="20"
-            height="20"
-            aria-hidden="true"
-          >
+          <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
             <path
               d="M6.5 4h11v16.5L12 16.5 6.5 20.5V4Z"
               fill="none"
@@ -149,27 +118,11 @@
             />
           </svg>
 
-          <span
-            class="badge"
-            id="bmBadge"
-            hidden
-          >
-            0
-          </span>
+          <span class="badge" id="bmBadge" hidden>0</span>
         </button>
 
-        <label
-          class="sr-only"
-          for="translationSel"
-        >
-          Translation
-        </label>
-
-        <select
-          id="translationSel"
-          class="select"
-          title="Translation"
-        ></select>
+        <label class="sr-only" for="translationSel">Translation</label>
+        <select id="translationSel" class="select" title="Translation"></select>
 
         <button
           class="iconbtn"
@@ -179,198 +132,71 @@
           aria-haspopup="true"
           aria-expanded="false"
         >
-          <svg
-            viewBox="0 0 24 24"
-            width="20"
-            height="20"
-            aria-hidden="true"
-          >
-            <text
-              x="3"
-              y="17"
-              font-size="13"
-              font-family="Georgia, serif"
-              fill="currentColor"
-            >
-              A
-            </text>
-            <text
-              x="12"
-              y="17"
-              font-size="9"
-              font-family="Georgia, serif"
-              fill="currentColor"
-            >
-              A
-            </text>
+          <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+            <text x="3" y="17" font-size="13" font-family="Georgia,serif" fill="currentColor">A</text>
+            <text x="12" y="17" font-size="9" font-family="Georgia,serif" fill="currentColor">A</text>
           </svg>
         </button>
       </div>
     </div>
 
-    <div
-      class="settings"
-      id="settingsPanel"
-      hidden
-    >
+    <div class="settings" id="settingsPanel" hidden>
       <div class="settings__row">
         <span>Text size</span>
-
         <div class="seg">
-          <button
-            id="fontDown"
-            type="button"
-            aria-label="Smaller text"
-          >
-            A−
-          </button>
-
-          <button
-            id="fontUp"
-            type="button"
-            aria-label="Larger text"
-          >
-            A+
-          </button>
+          <button id="fontDown" type="button" aria-label="Smaller text">A−</button>
+          <button id="fontUp" type="button" aria-label="Larger text">A+</button>
         </div>
       </div>
 
       <div class="settings__row">
         <span>Theme</span>
-
-        <button
-          class="themeswitch"
-          id="themeBtn"
-          type="button"
-          aria-label="Toggle dark mode"
-        >
-          <svg
-            class="i-moon"
-            viewBox="0 0 24 24"
-            width="16"
-            height="16"
-            aria-hidden="true"
-          >
-            <path
-              d="M20 14.5A8 8 0 1 1 9.5 4 6.5 6.5 0 0 0 20 14.5Z"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="1.8"
-              stroke-linejoin="round"
-            />
-          </svg>
-
-          <svg
-            class="i-sun"
-            viewBox="0 0 24 24"
-            width="16"
-            height="16"
-            aria-hidden="true"
-          >
-            <circle
-              cx="12"
-              cy="12"
-              r="4"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="1.8"
-            />
-            <path
-              d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4"
-              stroke="currentColor"
-              stroke-width="1.8"
-              stroke-linecap="round"
-            />
-          </svg>
-
+        <button class="themeswitch" id="themeBtn" type="button" aria-label="Toggle dark mode">
+          <span aria-hidden="true">◐</span>
           <span id="themeLabel">Dark</span>
         </button>
       </div>
 
       <label class="settings__row">
         <span>Follow along while listening</span>
-        <input
-          type="checkbox"
-          id="followToggle"
-          checked
-        >
+        <input type="checkbox" id="followToggle" checked>
       </label>
 
       <label class="settings__row">
         <span>Auto-play next chapter</span>
-        <input
-          type="checkbox"
-          id="autoNextToggle"
-          checked
-        >
+        <input type="checkbox" id="autoNextToggle" checked>
       </label>
 
       <label class="settings__row">
         <span>Show verse numbers</span>
-        <input
-          type="checkbox"
-          id="numsToggle"
-          checked
-        >
+        <input type="checkbox" id="numsToggle" checked>
       </label>
     </div>
   </header>
 
-  <main
-    id="reader"
-    class="reader"
-    tabindex="-1"
-  >
+  <main id="reader" class="reader" tabindex="-1">
     <div class="reader__head">
-      <p
-        class="eyebrow"
-        id="bookTitle"
-      >
-        The Gospel According to John
-      </p>
+      <p class="eyebrow" id="bookTitle">The Gospel According to John</p>
 
       <h1 class="chapter-title">
         <span id="chapterBook">John</span>
-        <span
-          id="chapterNum"
-          class="chapter-title__num"
-        >
-          3
-        </span>
+        <span id="chapterNum" class="chapter-title__num">3</span>
       </h1>
 
-      <p
-        class="translation-note"
-        id="translationNote"
-      ></p>
+      <p class="translation-note" id="translationNote"></p>
     </div>
 
-    <article
-      class="scripture"
-      id="scripture"
-      aria-live="polite"
-    >
+    <article class="scripture" id="scripture" aria-live="polite">
       <p>Loading Scripture…</p>
     </article>
 
-    <nav
-      class="chapnav"
-      aria-label="Chapter navigation"
-    >
-      <button
-        class="chapnav__btn"
-        id="prevChap"
-        type="button"
-      >
+    <nav class="chapnav" aria-label="Chapter navigation">
+      <button class="chapnav__btn" id="prevChap" type="button">
         <span aria-hidden="true">←</span>
         <span id="prevLabel">Previous</span>
       </button>
 
-      <button
-        class="chapnav__btn"
-        id="nextChap"
-        type="button"
-      >
+      <button class="chapnav__btn" id="nextChap" type="button">
         <span id="nextLabel">Next</span>
         <span aria-hidden="true">→</span>
       </button>
@@ -378,105 +204,21 @@
 
     <p class="credits">
       Text and audio from the
-      <a
-        href="https://bible.helloao.org"
-        target="_blank"
-        rel="noopener noreferrer"
-      >
+      <a href="https://bible.helloao.org" target="_blank" rel="noopener noreferrer">
         Free Use Bible API
       </a>.
-      Berean Standard Bible audio narration is provided through
-      openbible.com and the Free Use Bible API. Other translations
-      can be read aloud with your device’s voice.
     </p>
   </main>
 
-  <div
-    class="popover"
-    id="versePop"
-    role="menu"
-    hidden
-  >
-    <button
-      role="menuitem"
-      id="popPlay"
-      type="button"
-    >
-      <svg
-        viewBox="0 0 20 20"
-        width="16"
-        height="16"
-        aria-hidden="true"
-      >
-        <path
-          d="M6 4.5v11l9-5.5-9-5.5Z"
-          fill="currentColor"
-        />
-      </svg>
-
-      Listen from here
+  <div class="popover" id="versePop" role="menu" hidden>
+    <button role="menuitem" id="popPlay" type="button">▶ Listen from here</button>
+    <button role="menuitem" id="popBookmark" type="button">
+      🔖 <span id="popBookmarkLabel">Bookmark</span>
     </button>
-    <button
-      role="menuitem"
-      id="popBookmark"
-      type="button"
-    >
-      <svg
-        viewBox="0 0 20 20"
-        width="16"
-        height="16"
-        aria-hidden="true"
-      >
-        <path
-          d="M5.5 3.5h9v13L10 13.2l-4.5 3.3v-13Z"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="1.6"
-          stroke-linejoin="round"
-        />
-      </svg>
-
-      <span id="popBookmarkLabel">Bookmark</span>
-    </button>
-
-    <button
-      role="menuitem"
-      id="popCopy"
-      type="button"
-    >
-      <svg
-        viewBox="0 0 20 20"
-        width="16"
-        height="16"
-        aria-hidden="true"
-      >
-        <rect
-          x="6.5"
-          y="6.5"
-          width="9"
-          height="10"
-          rx="1.5"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="1.6"
-        />
-        <path
-          d="M4.5 13V4.8c0-.7.6-1.3 1.3-1.3H12"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="1.6"
-          stroke-linecap="round"
-        />
-      </svg>
-
-      Copy verse
-    </button>
+    <button role="menuitem" id="popCopy" type="button">▣ Copy verse</button>
   </div>
 
-  <section
-    class="player"
-    aria-label="Audio player"
-  >
+  <section class="player" aria-label="Audio player">
     <div class="player__progress">
       <input
         type="range"
@@ -490,157 +232,35 @@
 
       <div class="player__times">
         <span id="tCur">0:00</span>
-        <span
-          id="tNow"
-          class="player__now"
-        ></span>
+        <span id="tNow" class="player__now"></span>
         <span id="tDur">0:00</span>
       </div>
     </div>
 
     <div class="player__row">
       <div class="player__left">
-        <label
-          class="sr-only"
-          for="narratorSel"
-        >
-          Narrator
-        </label>
+        <label class="sr-only" for="narratorSel">Narrator</label>
 
         <div class="narrator">
-          <svg
-            viewBox="0 0 20 20"
-            width="16"
-            height="16"
-            aria-hidden="true"
-          >
-            <path
-              d="M10 2.5a3 3 0 0 1 3 3v4a3 3 0 0 1-6 0v-4a3 3 0 0 1 3-3ZM4.5 9.5a5.5 5.5 0 0 0 11 0M10 15v2.5"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="1.6"
-              stroke-linecap="round"
-            />
-          </svg>
-
-          <select
-            id="narratorSel"
-            class="select select--bare"
-            title="Narrator"
-          ></select>
+          <span aria-hidden="true">🎙</span>
+          <select id="narratorSel" class="select select--bare" title="Narrator"></select>
         </div>
       </div>
 
       <div class="player__controls">
-        <button
-          class="iconbtn"
-          id="prevVerse"
-          type="button"
-          aria-label="Previous verse"
-        >
-          <svg
-            viewBox="0 0 24 24"
-            width="22"
-            height="22"
-            aria-hidden="true"
-          >
-            <path
-              d="M6 5v14"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-            />
-            <path
-              d="M18 5.5v13L9 12l9-6.5Z"
-              fill="currentColor"
-            />
-          </svg>
+        <button class="iconbtn" id="prevVerse" type="button" aria-label="Previous verse">◀</button>
+
+        <button class="playbtn" id="playBtn" type="button" aria-label="Play">
+          <span class="i-play">▶</span>
+          <span class="i-pause">Ⅱ</span>
+          <span class="spinner" aria-hidden="true"></span>
         </button>
 
-        <button
-          class="playbtn"
-          id="playBtn"
-          type="button"
-          aria-label="Play"
-        >
-          <svg
-            class="i-play"
-            viewBox="0 0 24 24"
-            width="26"
-            height="26"
-            aria-hidden="true"
-          >
-            <path
-              d="M8 5.5v13L18.5 12 8 5.5Z"
-              fill="currentColor"
-            />
-          </svg>
-
-          <svg
-            class="i-pause"
-            viewBox="0 0 24 24"
-            width="26"
-            height="26"
-            aria-hidden="true"
-          >
-            <rect
-              x="6.5"
-              y="5"
-              width="4"
-              height="14"
-              rx="1.2"
-              fill="currentColor"
-            />
-            <rect
-              x="13.5"
-              y="5"
-              width="4"
-              height="14"
-              rx="1.2"
-              fill="currentColor"
-            />
-          </svg>
-
-          <span
-            class="spinner"
-            aria-hidden="true"
-          ></span>
-        </button>
-
-        <button
-          class="iconbtn"
-          id="nextVerse"
-          type="button"
-          aria-label="Next verse"
-        >
-          <svg
-            viewBox="0 0 24 24"
-            width="22"
-            height="22"
-            aria-hidden="true"
-            <path
-              d="M18 5v14"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-            />
-            <path
-              d="M6 5.5v13L15 12 6 5.5Z"
-              fill="currentColor"
-            />
-          </svg>
-        </button>
+        <button class="iconbtn" id="nextVerse" type="button" aria-label="Next verse">▶</button>
       </div>
 
       <div class="player__right">
-        <button
-          class="speed"
-          id="speedBtn"
-          type="button"
-          aria-label="Playback speed"
-        >
-          1×
-        </button>
+        <button class="speed" id="speedBtn" type="button" aria-label="Playback speed">1×</button>
       </div>
     </div>
   </section>
@@ -653,10 +273,7 @@
     aria-labelledby="pickerTitle"
     hidden
   >
-    <div
-      class="picker__backdrop"
-      data-close
-    ></div>
+    <div class="picker__backdrop" data-close></div>
 
     <div class="picker__sheet">
       <div class="picker__head">
@@ -667,74 +284,15 @@
           aria-label="Back to books"
           hidden
         >
-          <svg
-            viewBox="0 0 20 20"
-            width="18"
-            height="18"
-            aria-hidden="true"
-          >
-            <path
-              d="m12.5 4.5-5.5 5.5 5.5 5.5"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="1.8"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            />
-          </svg>
+          ←
         </button>
 
         <h2 id="pickerTitle">Choose a book</h2>
 
-        <button
-          class="iconbtn"
-          type="button"
-          data-close
-          aria-label="Close"
-        >
-          <svg
-            viewBox="0 0 20 20"
-            width="18"
-            height="18"
-            aria-hidden="true"
-          >
-            <path
-              d="m5 5 10 10M15 5 5 15"
-              stroke="currentColor"
-              stroke-width="1.8"
-              stroke-linecap="round"
-            />
-          </svg>
-        </button>
+        <button class="iconbtn" type="button" data-close aria-label="Close">×</button>
       </div>
 
-      <form
-        class="jump"
-        id="jumpForm"
-        autocomplete="off"
-      >
-        <svg
-          viewBox="0 0 20 20"
-          width="16"
-          height="16"
-          aria-hidden="true"
-        >
-          <circle
-            cx="9"
-            cy="9"
-            r="5.5"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="1.6"
-          />
-          <path
-            d="m13.2 13.2 3.3 3.3"
-            stroke="currentColor"
-            stroke-width="1.6"
-            stroke-linecap="round"
-          />
-        </svg>
-
+      <form class="jump" id="jumpForm" autocomplete="off">
         <input
           id="jumpInput"
           type="text"
@@ -743,10 +301,7 @@
         >
       </form>
 
-      <div
-        class="picker__body"
-        id="pickerBody"
-      ></div>
+      <div class="picker__body" id="pickerBody"></div>
     </div>
   </div>
 
@@ -758,67 +313,16 @@
     aria-labelledby="searchTitle"
     hidden
   >
-    <div
-      class="picker__backdrop"
-      data-close
-    ></div>
+    <div class="picker__backdrop" data-close></div>
 
     <div class="picker__sheet">
       <div class="picker__head">
         <span></span>
-
         <h2 id="searchTitle">Search</h2>
-
-        <button
-          class="iconbtn"
-          type="button"
-          data-close
-          aria-label="Close"
-        >
-          <svg
-            viewBox="0 0 20 20"
-            width="18"
-            height="18"
-            aria-hidden="true"
-          >
-            <path
-              d="m5 5 10 10M15 5 5 15"
-              stroke="currentColor"
-              stroke-width="1.8"
-              stroke-linecap="round"
-            />
-          </svg>
-        </button>
+        <button class="iconbtn" type="button" data-close aria-label="Close">×</button>
       </div>
 
-      <form
-        class="jump"
-        id="searchForm"
-        autocomplete="off"
-        role="search"
-      >
-        <svg
-          viewBox="0 0 20 20"
-          width="16"
-          height="16"
-          aria-hidden="true"
-        >
-          <circle
-            cx="9"
-            cy="9"
-            r="5.5"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="1.6"
-          />
-          <path
-            d="m13.2 13.2 3.3 3.3"
-            stroke="currentColor"
-            stroke-width="1.6"
-            stroke-linecap="round"
-          />
-        </svg>
-
+      <form class="jump" id="searchForm" autocomplete="off" role="search">
         <input
           id="searchInput"
           type="search"
@@ -828,54 +332,18 @@
       </form>
 
       <div class="searchbar">
-        <div
-          class="seg seg--scope"
-          role="radiogroup"
-          aria-label="Search scope"
-        >
-          <button
-            type="button"
-            role="radio"
-            data-scope="all"
-            aria-checked="true"
-          >
-            Whole Bible
-          </button>
-
-          <button
-            type="button"
-            role="radio"
-            data-scope="ot"
-            aria-checked="false"
-          >
-            Old Testament
-          </button>
-
-          <button
-            type="button"
-            role="radio"
-            data-scope="nt"
-            aria-checked="false"
-          >
-            New Testament
-          </button>
+        <div class="seg seg--scope" role="radiogroup" aria-label="Search scope">
+          <button type="button" role="radio" data-scope="all" aria-checked="true">Whole Bible</button>
+          <button type="button" role="radio" data-scope="ot" aria-checked="false">Old Testament</button>
+          <button type="button" role="radio" data-scope="nt" aria-checked="false">New Testament</button>
         </div>
 
-        <span
-          class="searchbar__tr"
-          id="searchTr"
-        ></span>
+        <span class="searchbar__tr" id="searchTr"></span>
       </div>
 
-      <div
-        class="chips"
-        id="searchBooks"
-      ></div>
+      <div class="chips" id="searchBooks"></div>
 
-      <div
-        class="picker__body"
-        id="searchBody"
-      >
+      <div class="picker__body" id="searchBody">
         <p>Type a word or phrase to search.</p>
       </div>
     </div>
@@ -889,62 +357,27 @@
     aria-labelledby="bmTitle"
     hidden
   >
-    <div
-      class="picker__backdrop"
-      data-close
-    ></div>
+    <div class="picker__backdrop" data-close></div>
 
     <div class="picker__sheet picker__sheet--narrow">
       <div class="picker__head">
         <span></span>
-
         <h2 id="bmTitle">Bookmarks</h2>
-
-        <button
-          class="iconbtn"
-          type="button"
-          data-close
-          aria-label="Close"
-        >
-          <svg
-            viewBox="0 0 20 20"
-            width="18"
-            height="18"
-            aria-hidden="true"
-          >
-            <path
-              d="m5 5 10 10M15 5 5 15"
-              stroke="currentColor"
-              stroke-width="1.8"
-              stroke-linecap="round"
-            />
-          </svg>
-        </button>
+        <button class="iconbtn" type="button" data-close aria-label="Close">×</button>
       </div>
 
-      <div
-        class="picker__body"
-        id="bmBody"
-      >
+      <div class="picker__body" id="bmBody">
         <p>No bookmarks yet.</p>
       </div>
     </div>
   </div>
 
-  <div
-    class="toast"
-    id="toast"
-    role="status"
-    aria-live="polite"
-  ></div>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-  <audio
-    id="audio"
-    preload="none"
-  ></audio>
+  <audio id="audio" preload="none"></audio>
 
+  <!-- This must load before app.js. -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="app.js"></script>
 </body>
-</html>
-
+          </html>
