@@ -97,41 +97,70 @@
   let db = null;
   let deviceId = null;
 
-  const TRANSLATIONS = [
-    {
-      group: 'English',
-      items: [
-        ['BSB', 'Berean Standard (BSB) · Audio'],
-        ['eng_kjv', 'King James Version'],
-        ['ENGWEBP', 'World English Bible'],
-        ['eng_asv', 'American Standard (1901)'],
-        ['eng_net', 'NET Bible'],
-        ['eng_bbe', 'Bible in Basic English'],
-        ['eng_ylt', "Young's Literal"],
-        ['eng_dby', 'Darby Translation']
-      ]
-    },
-    {
-      group: 'Ghana & Africa',
-      items: [
-        ['twi_asa', 'Asante Twi'],
-        ['twi_aka', 'Akuapem Twi'],
-        ['ewe_bib', 'Eʋegbe (Ewe)'],
-        ['hau_bib', 'Hausa'],
-        ['yor_bib', 'Yorùbá'],
-        ['swh_onmm', 'Kiswahili']
-      ]
-    },
-    {
-      group: 'Other languages',
-      items: [
-        ['fra_lsg', 'Français — Louis Segond'],
-        ['spa_r09', 'Español — Reina Valera 1909'],
-        ['por_blj', 'Português — Bíblia Livre'],
-        ['deu_l12', 'Deutsch — Luther 1912']
-      ]
-    }
-  ];
+ const TRANSLATIONS = [
+  {
+    group: 'English',
+    items: [
+      ['BSB', 'Berean Standard Bible · Audio'],
+      ['eng_kjv', 'King James Version'],
+      ['ENGWEBP', 'World English Bible'],
+      ['eng_asv', 'American Standard Version'],
+      ['eng_net', 'NET Bible'],
+      ['eng_bbe', 'Bible in Basic English'],
+      ['eng_ylt', "Young's Literal Translation"],
+      ['eng_dby', 'Darby Translation'],
+      ['eng_rv', 'Revised Version'],
+      ['eng_drc', 'Douay-Rheims'],
+      ['eng_wey', 'Weymouth New Testament']
+    ]
+  },
+  {
+    group: 'Ghana and Africa',
+    items: [
+      ['twi_asa', 'Asante Twi'],
+      ['twi_aka', 'Akuapem Twi'],
+      ['ewe_bib', 'Eʋegbe (Ewe)'],
+      ['hau_bib', 'Hausa'],
+      ['yor_bib', 'Yorùbá'],
+      ['swh_onmm', 'Kiswahili'],
+      ['afr_1933', 'Afrikaans'],
+      ['zul_1963', 'isiZulu'],
+      ['xho_nta', 'isiXhosa'],
+      ['sna_bza', 'Shona'],
+      ['amh_bsi', 'Amharic'],
+      ['kin_bwa', 'Kinyarwanda']
+    ]
+  },
+  {
+    group: 'European languages',
+    items: [
+      ['fra_lsg', 'Français — Louis Segond'],
+      ['fra_apee', 'Français — APEE'],
+      ['spa_r09', 'Español — Reina-Valera 1909'],
+      ['por_blj', 'Português — Bíblia Livre'],
+      ['deu_l12', 'Deutsch — Luther 1912'],
+      ['ita_gio', 'Italiano — Giovanni Diodati'],
+      ['nld_svva', 'Nederlands — Statenvertaling'],
+      ['pol_ubg', 'Polski — Biblia Gdańska'],
+      ['ron_corn', 'Română — Cornilescu'],
+      ['rus_syn', 'Русский — Синодальный']
+    ]
+  ],
+  {
+    group: 'Other languages',
+    items: [
+      ['arb_vd', 'العربية — Van Dyke'],
+      ['heb_wlc', 'עברית — Westminster Leningrad Codex'],
+      ['zho_cuv', '中文 — Chinese Union Version'],
+      ['jpn_1887', '日本語 — Japanese Bible'],
+      ['kor_ko', '한국어 — Korean Bible'],
+      ['ind_ayt', 'Bahasa Indonesia'],
+      ['vie_ov', 'Tiếng Việt'],
+      ['tam_irv', 'தமிழ்'],
+      ['tel_irv', 'తెలుగు']
+    ]
+  }
+];
 
   const NARRATORS = {
     souer: 'Souer',
