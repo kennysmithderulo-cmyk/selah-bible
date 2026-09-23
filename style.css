@@ -107,17 +107,6 @@ a {
   border-bottom: 1px solid var(--line);
   backdrop-filter: blur(18px);
 }
-
-.topbar__inner {
-  display: grid;
-  grid-template-columns: auto minmax(150px, 1fr) auto;
-  align-items: center;
-  gap: 1rem;
-  width: min(1180px, calc(100% - 2rem));
-  min-height: 72px;
-  margin: auto;
-}
-
 .brand {
   display: inline-flex;
   align-items: center;
@@ -405,8 +394,7 @@ input[type="checkbox"] {
   margin: 3rem auto 0;
   padding-top: 1.5rem;
   border-top: 1px solid var(--line);
-}
-
+  }
 .chapnav__btn {
   max-width: 48%;
   padding: .6rem .8rem;
@@ -610,7 +598,15 @@ input[type="checkbox"] {
   border: 1px solid var(--line);
   border-radius: .75rem;
 }
-
+.topbar__inner {
+  display: grid;
+  grid-template-columns: auto minmax(150px, 1fr) auto;
+  align-items: center;
+  gap: 1rem;
+  width: min(1180px, calc(100% - 2rem));
+  min-height: 72px;
+  margin: auto;
+}
 .jump input {
   width: 100%;
   min-height: 44px;
@@ -800,7 +796,6 @@ input[type="checkbox"] {
   border: 1px solid currentColor;
   border-radius: .55rem;
 }
-
 @media (max-width: 720px) {
   :root {
     --player-height: 132px;
@@ -915,4 +910,4 @@ input[type="checkbox"] {
     animation-duration: .01ms !important;
     transition-duration: .01ms !important;
   }
-  }
+}
