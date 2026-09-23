@@ -12,37 +12,6 @@ function first(value, fallback) {
   return String(value);
 }
 
-function extractText(value) {
-  if (typeof value === 'string') {
-    return value;
-  }
-
-  if (Array.isArray(value)) {
-    return value
-      .map((part) => extractText(part))
-      .join('');
-  }
-
-  if (value && typeof value === 'object') {
-    if (typeof value.text === 'string') {
-      return value.text;
-    }
-
-    if (value.content !== undefined) {
-      return extractText(value.content);
-    }
-  }
-
-  return '';
-}
-
-function cleanText(value) {
-  return String(value || '')
-    .replace(/s+/g, ' ')
-    .replace(/ ([”’.,;:!?])/g, '$1')
-    .trim();
-}
-
 export default async function handler(request, response) {
   if (request.method !== 'GET') {
     response.setHeader('Allow', 'GET');
@@ -109,32 +78,16 @@ export default async function handler(request, response) {
 
     const data = await upstream.json();
 
-    /*
-      Preserve the complete original chapter object.
-      This is the source used by the frontend renderer.
-    */
-    const verses = (
-      data.chapter?.content || []
-    )
-      .filter((item) => item.type === 'verse')
-      .map((item) => ({
-        number: Number(item.number),
-        text: cleanText(
-          extractText(item.content)
-        )
-      }));
-
     response.setHeader(
       'Cache-Control',
       's-maxage=86400, stale-while-revalidate=604800'
     );
 
-    return response.status(200).json({
-      translation: data.translation || null,
-      book: data.book || null,
-      chapter: data.chapter || null,
-      verses
-    });
+    /*
+      Return the original API response unchanged.
+      Do not rebuild verse text on the backend.
+    */
+    return response.status(200).json(data);
   } catch (error) {
     console.error(error);
 
