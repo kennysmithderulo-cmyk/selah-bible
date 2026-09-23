@@ -1,5 +1,17 @@
 const API_BASE = 'https://bible.helloao.org';
 
+function first(value, fallback) {
+  if (Array.isArray(value)) {
+    return String(value[0] ?? fallback);
+  }
+
+  if (value === undefined || value === null) {
+    return String(fallback);
+  }
+
+  return String(value);
+}
+
 function extractText(value) {
   if (typeof value === 'string') {
     return value;
@@ -37,42 +49,59 @@ export default async function handler(request, response) {
     });
   }
 
-  const translation = String(
-    request.query.translation || 'BSB'
+  const query = request.query || {};
+
+  const translation = first(
+    query.translation,
+    'BSB'
   );
 
-  const book = String(
-    request.query.book || 'JHN'
+  const book = first(
+    query.book,
+    'JHN'
   );
 
-  const chapter = String(
-    request.query.chapter || '3'
+  const chapter = first(
+    query.chapter,
+    '3'
   );
 
   const validPart = /^[A-Za-z0-9_-]+$/;
 
-  if (
-    !validPart.test(translation) ||
-    !validPart.test(book) ||
-    !/^d+$/.test(chapter)
-  ) {
+  if (!validPart.test(translation)) {
     return response.status(400).json({
-      error: 'Invalid translation, book, or chapter'
+      error: 'Invalid translation',
+      received: translation
     });
   }
 
-  const url =
+  if (!validPart.test(book)) {
+    return response.status(400).json({
+      error: 'Invalid book',
+      received: book
+    });
+  }
+
+  if (!/^d+$/.test(chapter)) {
+    return response.status(400).json({
+      error: 'Invalid chapter',
+      received: chapter
+    });
+  }
+
+  const upstreamUrl =
     `${API_BASE}/api/${encodeURIComponent(translation)}` +
     `/${encodeURIComponent(book)}` +
     `/${encodeURIComponent(chapter)}.json`;
 
   try {
-    const upstream = await fetch(url);
+    const upstream = await fetch(upstreamUrl);
 
     if (!upstream.ok) {
       return response.status(upstream.status).json({
         error: 'Bible API request failed',
-        status: upstream.status
+        status: upstream.status,
+        upstreamUrl
       });
     }
 
@@ -104,7 +133,8 @@ export default async function handler(request, response) {
     console.error(error);
 
     return response.status(502).json({
-      error: 'Could not reach the Bible API'
+      error: 'Could not reach the Bible API',
+      message: error.message
     });
   }
 }
