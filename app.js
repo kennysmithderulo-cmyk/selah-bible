@@ -64,6 +64,11 @@
     numsToggle: $('numsToggle')
   };
 
+  const synth =
+    'speechSynthesis' in window
+      ? window.speechSynthesis
+      : null;
+
   const state = {
     tr: 'BSB',
     books: [],
@@ -82,6 +87,7 @@
     speed: 1,
     follow: true,
     autoNext: true,
+    fontStep: 0,
     selectedVerse: null,
     bookmarks: [],
     searchScope: 'all',
@@ -89,78 +95,74 @@
   };
 
   const cache = new Map();
-  const synth =
-    'speechSynthesis' in window
-      ? window.speechSynthesis
-      : null;
 
   let db = null;
   let deviceId = null;
 
- const TRANSLATIONS = [
-  {
-    group: 'English',
-    items: [
-      ['BSB', 'Berean Standard Bible · Audio'],
-      ['eng_kjv', 'King James Version'],
-      ['ENGWEBP', 'World English Bible'],
-      ['eng_asv', 'American Standard Version'],
-      ['eng_net', 'NET Bible'],
-      ['eng_bbe', 'Bible in Basic English'],
-      ['eng_ylt', "Young's Literal Translation"],
-      ['eng_dby', 'Darby Translation'],
-      ['eng_rv', 'Revised Version'],
-      ['eng_drc', 'Douay-Rheims'],
-      ['eng_wey', 'Weymouth New Testament']
-    ]
-  },
-  {
-    group: 'Ghana and Africa',
-    items: [
-      ['twi_asa', 'Asante Twi'],
-      ['twi_aka', 'Akuapem Twi'],
-      ['ewe_bib', 'Eʋegbe (Ewe)'],
-      ['hau_bib', 'Hausa'],
-      ['yor_bib', 'Yorùbá'],
-      ['swh_onmm', 'Kiswahili'],
-      ['afr_1933', 'Afrikaans'],
-      ['zul_1963', 'isiZulu'],
-      ['xho_nta', 'isiXhosa'],
-      ['sna_bza', 'Shona'],
-      ['amh_bsi', 'Amharic'],
-      ['kin_bwa', 'Kinyarwanda']
-    ]
-  },
-  {
-    group: 'European languages',
-    items: [
-      ['fra_lsg', 'Français — Louis Segond'],
-      ['fra_apee', 'Français — APEE'],
-      ['spa_r09', 'Español — Reina-Valera 1909'],
-      ['por_blj', 'Português — Bíblia Livre'],
-      ['deu_l12', 'Deutsch — Luther 1912'],
-      ['ita_gio', 'Italiano — Giovanni Diodati'],
-      ['nld_svva', 'Nederlands — Statenvertaling'],
-      ['pol_ubg', 'Polski — Biblia Gdańska'],
-      ['ron_corn', 'Română — Cornilescu'],
-      ['rus_syn', 'Русский — Синодальный']
-    ]
-  ],
-  {
-    group: 'Other languages',
-    items: [
-      ['arb_vd', 'العربية — Van Dyke'],
-      ['heb_wlc', 'עברית — Westminster Leningrad Codex'],
-      ['zho_cuv', '中文 — Chinese Union Version'],
-      ['jpn_1887', '日本語 — Japanese Bible'],
-      ['kor_ko', '한국어 — Korean Bible'],
-      ['ind_ayt', 'Bahasa Indonesia'],
-      ['vie_ov', 'Tiếng Việt'],
-      ['tam_irv', 'தமிழ்'],
-      ['tel_irv', 'తెలుగు']
-    ]
-  }
-];
+  const TRANSLATIONS = [
+    {
+      group: 'English',
+      items: [
+        ['BSB', 'Berean Standard Bible · Audio'],
+        ['eng_kjv', 'King James Version'],
+        ['ENGWEBP', 'World English Bible'],
+        ['eng_asv', 'American Standard Version'],
+        ['eng_net', 'NET Bible'],
+        ['eng_bbe', 'Bible in Basic English'],
+        ['eng_ylt', "Young's Literal Translation"],
+        ['eng_dby', 'Darby Translation'],
+        ['eng_rv', 'Revised Version'],
+        ['eng_drc', 'Douay-Rheims'],
+        ['eng_wey', 'Weymouth New Testament']
+      ]
+    },
+    {
+      group: 'Ghana and Africa',
+      items: [
+        ['twi_asa', 'Asante Twi'],
+        ['twi_aka', 'Akuapem Twi'],
+        ['ewe_bib', 'Eʋegbe (Ewe)'],
+        ['hau_bib', 'Hausa'],
+        ['yor_bib', 'Yorùbá'],
+        ['swh_onmm', 'Kiswahili'],
+        ['afr_1933', 'Afrikaans'],
+        ['zul_1963', 'isiZulu'],
+        ['xho_nta', 'isiXhosa'],
+        ['sna_bza', 'Shona'],
+        ['amh_bsi', 'Amharic'],
+        ['kin_bwa', 'Kinyarwanda']
+      ]
+    },
+    {
+      group: 'European languages',
+      items: [
+        ['fra_lsg', 'Français — Louis Segond'],
+        ['fra_apee', 'Français — APEE'],
+        ['spa_r09', 'Español — Reina-Valera 1909'],
+        ['por_blj', 'Português — Bíblia Livre'],
+        ['deu_l12', 'Deutsch — Luther 1912'],
+        ['ita_gio', 'Italiano — Giovanni Diodati'],
+        ['nld_svva', 'Nederlands — Statenvertaling'],
+        ['pol_ubg', 'Polski — Biblia Gdańska'],
+        ['ron_corn', 'Română — Cornilescu'],
+        ['rus_syn', 'Русский — Синодальный']
+      ]
+    },
+    {
+      group: 'Other languages',
+      items: [
+        ['arb_vd', 'العربية — Van Dyke'],
+        ['heb_wlc', 'עברית — Westminster Leningrad Codex'],
+        ['zho_cuv', '中文 — Chinese Union Version'],
+        ['jpn_1887', '日本語 — Japanese Bible'],
+        ['kor_ko', '한국어 — Korean Bible'],
+        ['ind_ayt', 'Bahasa Indonesia'],
+        ['vie_ov', 'Tiếng Việt'],
+        ['tam_irv', 'தமிழ்'],
+        ['tel_irv', 'తెలుగు']
+      ]
+    }
+  ];
 
   const NARRATORS = {
     souer: 'Souer',
@@ -252,7 +254,7 @@
   function initializeDatabase() {
     if (!window.supabase?.createClient) {
       console.warn(
-        'Supabase CDN did not load. Bookmarks are disabled.'
+        'Supabase CDN did not load. Cloud saving is disabled.'
       );
       return;
     }
@@ -262,10 +264,10 @@
       SUPABASE_KEY
     );
 
-    const storageKey = 'selah_device_id';
+    const key = 'selah_device_id';
 
     deviceId =
-      localStorage.getItem(storageKey) ||
+      localStorage.getItem(key) ||
       (
         crypto.randomUUID
           ? crypto.randomUUID()
@@ -274,7 +276,7 @@
               .slice(2)}`
       );
 
-    localStorage.setItem(storageKey, deviceId);
+    localStorage.setItem(key, deviceId);
   }
 
   function cleanText(value) {
@@ -285,7 +287,9 @@
   }
 
   function formatTime(value) {
-    if (!Number.isFinite(value) || value < 0) value = 0;
+    if (!Number.isFinite(value) || value < 0) {
+      value = 0;
+    }
 
     const minutes = Math.floor(value / 60);
     const seconds = Math.floor(value % 60);
@@ -293,7 +297,23 @@
     return `${minutes}:${String(seconds).padStart(2, '0')}`;
   }
 
+  function escapeHTML(value) {
+    return String(value).replace(
+      /[&<>"']/g,
+      (character) =>
+        ({
+          '&': '&amp;',
+          '<': '&lt;',
+          '>': '&gt;',
+          '"': '&quot;',
+          "'": '&#039;'
+        })[character]
+    );
+  }
+
   function toast(message) {
+    if (!el.toast) return;
+
     el.toast.textContent = message;
     el.toast.classList.add('show');
 
@@ -322,11 +342,15 @@
       ? path
       : API + path;
 
-    if (cache.has(url)) return cache.get(url);
+    if (cache.has(url)) {
+      return cache.get(url);
+    }
 
     const request = fetch(url).then((response) => {
       if (!response.ok) {
-        throw new Error(`Bible API returned HTTP ${response.status}`);
+        throw new Error(
+          `Bible API returned HTTP ${response.status}`
+        );
       }
 
       return response.json();
@@ -342,6 +366,8 @@
     el.trSel.innerHTML = '';
 
     TRANSLATIONS.forEach((group) => {
+      if (!group.items.length) return;
+
       const optgroup = document.createElement('optgroup');
       optgroup.label = group.group;
 
@@ -356,6 +382,72 @@
     });
 
     el.trSel.value = state.tr;
+  }
+
+  async function addAvailableTranslations() {
+    try {
+      const data = await getJSON(
+        '/api/available_translations.json'
+      );
+
+      const available = Array.isArray(data)
+        ? data
+        : data.translations || data.data || [];
+
+      const existing = new Set(
+        TRANSLATIONS.flatMap((group) =>
+          group.items.map(([id]) => id)
+        )
+      );
+
+      const discovered = available
+        .map((item) => ({
+          id:
+            item.id ||
+            item.translationId ||
+            item.abbreviation,
+          name:
+            item.name ||
+            item.englishName ||
+            item.shortName ||
+            item.id,
+          language: item.language || ''
+        }))
+        .filter((item) =>
+          item.id && !existing.has(item.id)
+        )
+        .slice(0, 150);
+
+      if (!discovered.length) return;
+
+      let group = TRANSLATIONS.find(
+        (item) =>
+          item.group === 'More available translations'
+      );
+
+      if (!group) {
+        group = {
+          group: 'More available translations',
+          items: []
+        };
+
+        TRANSLATIONS.push(group);
+      }
+
+      discovered.forEach((item) => {
+        group.items.push([
+          item.id,
+          `${item.name}${item.language ? ` · ${item.language}` : ''}`
+        ]);
+      });
+
+      buildTranslationSelect();
+    } catch (error) {
+      console.warn(
+        'Additional translations unavailable:',
+        error
+      );
+    }
   }
 
   async function loadBooks() {
@@ -373,7 +465,7 @@
 
     if (!rawBooks.length) {
       throw new Error(
-        `No books returned for translation ${state.tr}`
+        `No books returned for ${state.tr}.`
       );
     }
 
@@ -411,7 +503,7 @@
       null;
 
     if (!state.books.length) {
-      throw new Error('The API returned no usable books.');
+      throw new Error('No usable books were returned.');
     }
   }
 
@@ -485,7 +577,7 @@
     }
 
     const index = state.books.findIndex(
-      (item) => item.id === state.bookId
+      (book) => book.id === state.bookId
     );
 
     if (index >= 0 && index < state.books.length - 1) {
@@ -493,6 +585,18 @@
     }
 
     return null;
+  }
+
+  function partsToText(parts) {
+    return cleanText(
+      (parts || [])
+        .map((part) =>
+          typeof part === 'string'
+            ? part
+            : part?.text || ''
+        )
+        .join(' ')
+    );
   }
 
   function renderChapter(data) {
@@ -522,18 +626,7 @@
         paragraph = null;
 
         const heading = document.createElement('h3');
-        heading.textContent = item.content
-          ? cleanText(
-              item.content
-                .map((part) =>
-                  typeof part === 'string'
-                    ? part
-                    : part?.text || ''
-                )
-                .join(' ')
-            )
-          : '';
-
+        heading.textContent = partsToText(item.content);
         fragment.appendChild(heading);
         return;
       }
@@ -543,18 +636,7 @@
 
         const subtitle = document.createElement('p');
         subtitle.className = 'subtitle';
-        subtitle.textContent = item.content
-          ? cleanText(
-              item.content
-                .map((part) =>
-                  typeof part === 'string'
-                    ? part
-                    : part?.text || ''
-                )
-                .join(' ')
-            )
-          : '';
-
+        subtitle.textContent = partsToText(item.content);
         fragment.appendChild(subtitle);
         return;
       }
@@ -566,7 +648,9 @@
 
       if (item.type !== 'verse') return;
 
-      if (!paragraph) newParagraph();
+      if (!paragraph) {
+        newParagraph();
+      }
 
       const verseElement = document.createElement('span');
       verseElement.className = 'verse';
@@ -577,7 +661,7 @@
       numberElement.className = 'vnum';
       numberElement.textContent = item.number;
 
-      const partsText = [];
+      const textParts = [];
       let firstNode = true;
 
       (item.content || []).forEach((part) => {
@@ -600,7 +684,7 @@
           return;
         }
 
-        partsText.push(text);
+        textParts.push(text);
 
         const node = document.createElement('span');
 
@@ -639,7 +723,7 @@
 
       state.verses.push({
         n: Number(item.number),
-        text: cleanText(partsText.join(' ')),
+        text: cleanText(textParts.join(' ')),
         el: verseElement
       });
     });
@@ -695,11 +779,11 @@
         play(options.verse || null);
       }
     } catch (error) {
-      console.error('Chapter loading failed:', error);
+      console.error(error);
 
       el.scripture.innerHTML = `
         <div class="errorbox">
-          <strong>Could not load ${reference()}.</strong>
+          <strong>Could not load ${escapeHTML(reference())}.</strong>
           <p>${escapeHTML(error.message)}</p>
           <button id="retryBtn" type="button">
             Try again
@@ -712,20 +796,6 @@
         () => loadChapter(bookId, chapter, options)
       );
     }
-  }
-
-  function escapeHTML(value) {
-    return String(value).replace(
-      /[&<>"']/g,
-      (character) =>
-        ({
-          '&': '&amp;',
-          '<': '&lt;',
-          '>': '&gt;',
-          '"': '&quot;',
-          "'": '&#039;'
-        })[character]
-    );
   }
 
   function setupAudioSources(data) {
@@ -843,9 +913,7 @@
       state.loading = true;
       setPlayingUI();
 
-      const request = el.audio.play();
-
-      request?.catch((error) => {
+      el.audio.play()?.catch((error) => {
         console.error(error);
         state.playing = false;
         state.loading = false;
@@ -896,7 +964,6 @@
       setPlayingUI();
       return;
     }
-
     markVerse(verse.n);
 
     const utterance = new SpeechSynthesisUtterance(
@@ -975,7 +1042,8 @@
   function seekToVerse(number) {
     if (!state.timings) return;
 
-    const time = state.timings[Number(number) - 1];
+    const time =
+      state.timings[Number(number) - 1];
 
     if (typeof time !== 'number') return;
 
@@ -1028,7 +1096,8 @@
         error.message
       );
     }
-}
+  }
+
   async function restorePosition() {
     if (!db || !deviceId) return;
 
@@ -1051,7 +1120,6 @@
     const verse = state.verses.find(
       (item) => item.n === Number(data.verse)
     );
-
     verse?.el.scrollIntoView({
       behavior: 'auto',
       block: 'center'
@@ -1181,8 +1249,7 @@
       )
         ? 'Remove bookmark'
         : 'Bookmark';
-  }
-
+    }
   function openPicker() {
     el.picker.hidden = false;
     el.pickerTitle.textContent = 'Choose a book';
@@ -1190,24 +1257,50 @@
     renderBookPicker('');
   }
 
-  function renderBookPicker(filter) {
-    const query = String(filter || '')
-      .trim()
-      .toLowerCase();
+  function renderBookPicker(filter = '') {
+    const query = filter.trim().toLowerCase();
+
+    const oldTestament = state.books.filter(
+      (book) => book.order < 40
+    );
+
+    const newTestament = state.books.filter(
+      (book) => book.order >= 40
+    );
 
     el.pickerBody.innerHTML = '';
 
-    state.books
-      .filter((book) =>
+    function addSection(title, books) {
+      const matching = books.filter((book) =>
         bookName(book)
           .toLowerCase()
           .includes(query)
-      )
-      .forEach((book) => {
+      );
+
+      if (!matching.length) return;
+
+      const heading = document.createElement('h3');
+      heading.className = 'picker-section-title';
+      heading.textContent = title;
+      el.pickerBody.appendChild(heading);
+
+      const grid = document.createElement('div');
+      grid.className = 'book-grid';
+
+      matching.forEach((book) => {
         const button = document.createElement('button');
-        button.className = 'picker-item';
+        button.className = 'book-card';
         button.type = 'button';
-        button.textContent = bookName(book);
+
+        const name = document.createElement('strong');
+        name.textContent = bookName(book);
+
+        const count = document.createElement('span');
+        count.textContent =
+          `${book.numberOfChapters} ` +
+          `${book.numberOfChapters === 1 ? 'chapter' : 'chapters'}`;
+
+        button.append(name, count);
 
         button.addEventListener('click', () => {
           state.bookId = book.id;
@@ -1215,8 +1308,19 @@
           renderChapterPicker();
         });
 
-        el.pickerBody.appendChild(button);
+        grid.appendChild(button);
       });
+
+      el.pickerBody.appendChild(grid);
+    }
+
+    addSection('Old Testament', oldTestament);
+    addSection('New Testament', newTestament);
+
+    if (!el.pickerBody.children.length) {
+      el.pickerBody.innerHTML =
+        '<p>No books matched your search.</p>';
+    }
   }
 
   function renderChapterPicker() {
@@ -1226,28 +1330,45 @@
     el.pickerBack.hidden = false;
     el.pickerBody.innerHTML = '';
 
+    const intro = document.createElement('p');
+    intro.className = 'picker-intro';
+    intro.textContent =
+      `Choose one of ${book.numberOfChapters} chapters.`;
+
+    el.pickerBody.appendChild(intro);
+
+    const grid = document.createElement('div');
+    grid.className = 'chapter-grid';
+
     for (
       let chapter = 1;
       chapter <= book.numberOfChapters;
       chapter += 1
     ) {
       const button = document.createElement('button');
-      button.className = 'picker-item picker-item--chapter';
+      button.className = 'chapter-card';
       button.type = 'button';
       button.textContent = String(chapter);
+
+      if (chapter === state.chapter) {
+        button.classList.add('is-current');
+        button.setAttribute('aria-current', 'page');
+      }
 
       button.addEventListener('click', () => {
         closeDialogs();
         loadChapter(state.bookId, chapter);
       });
 
-      el.pickerBody.appendChild(button);
+      grid.appendChild(button);
     }
-          }
+
+    el.pickerBody.appendChild(grid);
+  }
+
   function showPopover(verse, event) {
     state.selectedVerse = Number(verse);
     el.pop.hidden = false;
-
     updatePopoverBookmark();
 
     const rect =
@@ -1348,7 +1469,6 @@
       title.textContent =
         `${bookmark.book_name || bookmark.book} ` +
         `${bookmark.chapter}:${bookmark.verse}`;
-
       const text = document.createElement('span');
       text.textContent = bookmark.text || '';
 
@@ -1432,6 +1552,7 @@
           const data = await getJSON(
             `/api/${state.tr}/${book.id}/${chapter}.json`
           );
+
           const content =
             data?.chapter?.content ||
             data?.content ||
@@ -1460,7 +1581,7 @@
             }
           });
         } catch {
-          // Continue searching other chapters.
+          // Continue searching.
         }
 
         if (results.length >= 100) break;
@@ -1529,41 +1650,45 @@
   function setupSettings() {
     el.settingsBtn.addEventListener('click', (event) => {
       event.stopPropagation();
-
-      const open = el.settings.hidden;
-      el.settings.hidden = !open;
+      const opening = el.settings.hidden;
+      el.settings.hidden = !opening;
 
       el.settingsBtn.setAttribute(
         'aria-expanded',
-        String(open)
+        String(opening)
       );
     });
 
+    document.addEventListener('click', (event) => {
+      if (
+        el.settings &&
+        !el.settings.hidden &&
+        !el.settings.contains(event.target) &&
+        event.target !== el.settingsBtn
+      ) {
+        el.settings.hidden = true;
+        el.settingsBtn.setAttribute(
+          'aria-expanded',
+          'false'
+        );
+      }
+    });
+
     el.fontUp.addEventListener('click', () => {
-      const current =
-        parseFloat(
-          getComputedStyle(
-            document.documentElement
-          ).getPropertyValue('--read-size')
-        ) || 1.1875;
+      state.fontStep = Math.min(5, state.fontStep + 1);
 
       document.documentElement.style.setProperty(
         '--read-size',
-        `${Math.min(current + 0.125, 1.8125)}rem`
+        `${1.1875 + state.fontStep * 0.125}rem`
       );
     });
 
     el.fontDown.addEventListener('click', () => {
-      const current =
-        parseFloat(
-          getComputedStyle(
-            document.documentElement
-          ).getPropertyValue('--read-size')
-        ) || 1.1875;
+      state.fontStep = Math.max(-2, state.fontStep - 1);
 
       document.documentElement.style.setProperty(
         '--read-size',
-        `${Math.max(current - 0.125, 0.9375)}rem`
+        `${1.1875 + state.fontStep * 0.125}rem`
       );
     });
 
@@ -1583,7 +1708,7 @@
     });
   }
 
-  function setupAudio() {
+  function setupAudioEvents() {
     el.playBtn.addEventListener('click', () => {
       state.playing ? pause() : play();
     });
@@ -1631,12 +1756,15 @@
     el.narSel.addEventListener('change', async () => {
       const wasPlaying = state.playing;
       const verse = state.currentVerse || null;
+
       stopPlayback();
 
       state.narrator = el.narSel.value;
       await applyNarrator(state.narrator);
 
-      if (wasPlaying) play(verse);
+      if (wasPlaying) {
+        play(verse);
+      }
     });
 
     el.audio.addEventListener('playing', () => {
@@ -1696,8 +1824,7 @@
       toast('Audio unavailable. Try another narrator.');
     });
   }
-
-  function setupNavigation() {
+  function setupNavigationEvents() {
     el.refBtn.addEventListener('click', openPicker);
 
     el.pickerBack.addEventListener('click', () => {
@@ -1710,6 +1837,7 @@
       event.preventDefault();
 
       const value = el.jumpInput.value.trim();
+
       const match = value.match(
         /^(.+?)s+(d+)(?::(d+))?$/
       );
@@ -1771,20 +1899,26 @@
           state.chapter = 1;
         }
 
-        await loadChapter(state.bookId, state.chapter);
+        await loadChapter(
+          state.bookId,
+          state.chapter
+        );
       } catch (error) {
         console.error(error);
-        toast('Could not load that translation.');
+        toast('That translation is unavailable.');
       }
     });
 
     document.querySelectorAll('[data-close]')
       .forEach((button) => {
-        button.addEventListener('click', closeDialogs);
+        button.addEventListener(
+          'click',
+          closeDialogs
+        );
       });
   }
 
-  function setupSearch() {
+  function setupSearchEvents() {
     el.searchBtn.addEventListener('click', () => {
       el.searchDlg.hidden = false;
       el.searchInput.focus();
@@ -1815,7 +1949,7 @@
       });
   }
 
-  function setupDialogs() {
+  function setupDialogEvents() {
     el.bookmarksBtn.addEventListener(
       'click',
       openBookmarks
@@ -1832,12 +1966,14 @@
     initializeDatabase();
     setupTheme();
     setupSettings();
-    setupAudio();
-    setupNavigation();
-    setupSearch();
-    setupDialogs();
+    setupAudioEvents();
+    setupNavigationEvents();
+    setupSearchEvents();
+    setupDialogEvents();
     setupVerseEvents();
+
     buildTranslationSelect();
+    await addAvailableTranslations();
 
     try {
       await loadBooks();
@@ -1883,4 +2019,3 @@
 
   start();
 })();
-    
