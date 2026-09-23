@@ -911,3 +911,10 @@ input[type="checkbox"] {
     transition-duration: .01ms !important;
   }
 }
+@media (max-width: 720px) {
+  .topbar__actions .select {
+    display: block !important;
+    min-width: 145px;
+    max-width: 170px;
+  }
+}
