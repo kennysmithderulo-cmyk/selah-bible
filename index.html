@@ -16,7 +16,7 @@
 
   <link rel="preconnect" href="https://api.fontshare.com">
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
 
   <link
     href="https://api.fontshare.com/v2/css?f[]=zodiak@400,500&f[]=satoshi@400,500,700&display=swap"
@@ -34,19 +34,28 @@
 
   <header class="topbar">
     <div class="topbar__inner">
-      <a class="brand" href="#" id="brandLink" aria-label="Selah home">
-        <svg class="brand__mark" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+      <a class="brand" href="#" aria-label="Selah home">
+        <svg class="brand__mark" viewBox="0 0 40 40" fill="none" aria-hidden="true">
+          <rect
+            x="2"
+            y="2"
+            width="36"
+            height="36"
+            rx="11"
+            fill="currentColor"
+            opacity=".12"
+          />
           <path
-            d="M16 8.5C12.5 6.2 8.2 5.6 4 6.2v18c4.2-.6 8.5 0 12 2.3 3.5-2.3 7.8-2.9 12-2.3v-18c-4.2-.6-8.5 0-12 2.3Z"
+            d="M20 10.5c-4-2.5-8.7-3.1-13-2.4v22.1c4.3-.7 9 0 13 2.5 4-2.5 8.7-3.2 13-2.5V8.1c-4.3-.7-9 0-13 2.4Z"
             stroke="currentColor"
-            stroke-width="1.8"
+            stroke-width="2"
             stroke-linejoin="round"
           />
-          <path d="M16 8.5v18" stroke="currentColor" stroke-width="1.8"/>
+          <path d="M20 10.5v22.2" stroke="currentColor" stroke-width="2"/>
           <path
-            d="M8.5 13.5v4M11.5 11.8v7.4M20.5 11.8v7.4M23.5 13.5v4"
+            d="M12 16v5M15.2 13.9v9.2M24.8 13.9v9.2M28 16v5"
             stroke="currentColor"
-            stroke-width="1.8"
+            stroke-width="2"
             stroke-linecap="round"
           />
         </svg>
@@ -62,17 +71,7 @@
         aria-controls="picker"
       >
         <span id="refLabel">John 3</span>
-
-        <svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true">
-          <path
-            d="m5 7.5 5 5 5-5"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="1.8"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          />
-        </svg>
+        <span aria-hidden="true">⌄</span>
       </button>
 
       <div class="topbar__actions">
@@ -81,24 +80,8 @@
           id="searchBtn"
           type="button"
           aria-label="Search the Bible"
-          aria-haspopup="dialog"
         >
-          <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
-            <circle
-              cx="10.5"
-              cy="10.5"
-              r="6.5"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="1.8"
-            />
-            <path
-              d="m15.5 15.5 5 5"
-              stroke="currentColor"
-              stroke-width="1.8"
-              stroke-linecap="round"
-            />
-          </svg>
+          <span aria-hidden="true">⌕</span>
         </button>
 
         <button
@@ -106,18 +89,8 @@
           id="bookmarksBtn"
           type="button"
           aria-label="Your bookmarks"
-          aria-haspopup="dialog"
         >
-          <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
-            <path
-              d="M6.5 4h11v16.5L12 16.5 6.5 20.5V4Z"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="1.8"
-              stroke-linejoin="round"
-            />
-          </svg>
-
+          <span aria-hidden="true">🔖</span>
           <span class="badge" id="bmBadge" hidden>0</span>
         </button>
 
@@ -129,13 +102,9 @@
           id="settingsBtn"
           type="button"
           aria-label="Reading settings"
-          aria-haspopup="true"
           aria-expanded="false"
         >
-          <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
-            <text x="3" y="17" font-size="13" font-family="Georgia,serif" fill="currentColor">A</text>
-            <text x="12" y="17" font-size="9" font-family="Georgia,serif" fill="currentColor">A</text>
-          </svg>
+          <span aria-hidden="true">Aa</span>
         </button>
       </div>
     </div>
@@ -144,15 +113,14 @@
       <div class="settings__row">
         <span>Text size</span>
         <div class="seg">
-          <button id="fontDown" type="button" aria-label="Smaller text">A−</button>
-          <button id="fontUp" type="button" aria-label="Larger text">A+</button>
+          <button id="fontDown" type="button">A−</button>
+          <button id="fontUp" type="button">A+</button>
         </div>
       </div>
 
       <div class="settings__row">
         <span>Theme</span>
-        <button class="themeswitch" id="themeBtn" type="button" aria-label="Toggle dark mode">
-          <span aria-hidden="true">◐</span>
+        <button class="themeswitch" id="themeBtn" type="button">
           <span id="themeLabel">Dark</span>
         </button>
       </div>
@@ -192,13 +160,11 @@
 
     <nav class="chapnav" aria-label="Chapter navigation">
       <button class="chapnav__btn" id="prevChap" type="button">
-        <span aria-hidden="true">←</span>
-        <span id="prevLabel">Previous</span>
+        ← <span id="prevLabel">Previous</span>
       </button>
 
       <button class="chapnav__btn" id="nextChap" type="button">
-        <span id="nextLabel">Next</span>
-        <span aria-hidden="true">→</span>
+        <span id="nextLabel">Next</span> →
       </button>
     </nav>
 
@@ -243,7 +209,7 @@
 
         <div class="narrator">
           <span aria-hidden="true">🎙</span>
-          <select id="narratorSel" class="select select--bare" title="Narrator"></select>
+          <select id="narratorSel" class="select select--bare"></select>
         </div>
       </div>
 
@@ -253,51 +219,34 @@
         <button class="playbtn" id="playBtn" type="button" aria-label="Play">
           <span class="i-play">▶</span>
           <span class="i-pause">Ⅱ</span>
-          <span class="spinner" aria-hidden="true"></span>
+          <span class="spinner"></span>
         </button>
 
         <button class="iconbtn" id="nextVerse" type="button" aria-label="Next verse">▶</button>
       </div>
 
       <div class="player__right">
-        <button class="speed" id="speedBtn" type="button" aria-label="Playback speed">1×</button>
+        <button class="speed" id="speedBtn" type="button">1×</button>
       </div>
     </div>
   </section>
 
-  <div
-    class="picker"
-    id="picker"
-    role="dialog"
-    aria-modal="true"
-    aria-labelledby="pickerTitle"
-    hidden
-  >
+  <div class="picker" id="picker" role="dialog" aria-modal="true" hidden>
     <div class="picker__backdrop" data-close></div>
 
     <div class="picker__sheet">
       <div class="picker__head">
-        <button
-          class="iconbtn picker__back"
-          id="pickerBack"
-          type="button"
-          aria-label="Back to books"
-          hidden
-        >
-          ←
-        </button>
-
+        <button class="iconbtn picker__back" id="pickerBack" type="button" hidden>←</button>
         <h2 id="pickerTitle">Choose a book</h2>
-
-        <button class="iconbtn" type="button" data-close aria-label="Close">×</button>
+        <button class="iconbtn" type="button" data-close>×</button>
       </div>
 
       <form class="jump" id="jumpForm" autocomplete="off">
         <input
           id="jumpInput"
           type="text"
-          placeholder="Filter books or go to a verse — e.g. Psalm 23 or Rom 8:28"
-          aria-label="Filter books or jump to reference"
+          placeholder="Filter books or enter Psalm 23 or John 3:16"
+          aria-label="Filter books or jump to a reference"
         >
       </form>
 
@@ -305,24 +254,17 @@
     </div>
   </div>
 
-  <div
-    class="picker"
-    id="searchDlg"
-    role="dialog"
-    aria-modal="true"
-    aria-labelledby="searchTitle"
-    hidden
-  >
+  <div class="picker" id="searchDlg" role="dialog" aria-modal="true" hidden>
     <div class="picker__backdrop" data-close></div>
 
     <div class="picker__sheet">
       <div class="picker__head">
         <span></span>
-        <h2 id="searchTitle">Search</h2>
-        <button class="iconbtn" type="button" data-close aria-label="Close">×</button>
+        <h2>Search</h2>
+        <button class="iconbtn" type="button" data-close>×</button>
       </div>
 
-      <form class="jump" id="searchForm" autocomplete="off" role="search">
+      <form class="jump" id="searchForm" autocomplete="off">
         <input
           id="searchInput"
           type="search"
@@ -333,15 +275,11 @@
 
       <div class="searchbar">
         <div class="seg seg--scope" role="radiogroup" aria-label="Search scope">
-          <button type="button" role="radio" data-scope="all" aria-checked="true">Whole Bible</button>
-          <button type="button" role="radio" data-scope="ot" aria-checked="false">Old Testament</button>
-          <button type="button" role="radio" data-scope="nt" aria-checked="false">New Testament</button>
+          <button type="button" data-scope="all" aria-checked="true">Whole Bible</button>
+          <button type="button" data-scope="ot" aria-checked="false">Old Testament</button>
+          <button type="button" data-scope="nt" aria-checked="false">New Testament</button>
         </div>
-
-        <span class="searchbar__tr" id="searchTr"></span>
       </div>
-
-      <div class="chips" id="searchBooks"></div>
 
       <div class="picker__body" id="searchBody">
         <p>Type a word or phrase to search.</p>
@@ -349,21 +287,14 @@
     </div>
   </div>
 
-  <div
-    class="picker"
-    id="bookmarksDlg"
-    role="dialog"
-    aria-modal="true"
-    aria-labelledby="bmTitle"
-    hidden
-  >
+  <div class="picker" id="bookmarksDlg" role="dialog" aria-modal="true" hidden>
     <div class="picker__backdrop" data-close></div>
 
     <div class="picker__sheet picker__sheet--narrow">
       <div class="picker__head">
         <span></span>
-        <h2 id="bmTitle">Bookmarks</h2>
-        <button class="iconbtn" type="button" data-close aria-label="Close">×</button>
+        <h2>Bookmarks</h2>
+        <button class="iconbtn" type="button" data-close>×</button>
       </div>
 
       <div class="picker__body" id="bmBody">
@@ -376,7 +307,6 @@
 
   <audio id="audio" preload="none"></audio>
 
-  <!-- This must load before app.js. -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="app.js"></script>
 </body>
