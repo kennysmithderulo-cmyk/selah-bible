@@ -384,68 +384,147 @@
     el.trSel.value = state.tr;
   }
 
-  async function addAvailableTranslations() {
-    try {
-      const data = await getJSON(
-        '/api/available_translations.json'
+async function addAvailableTranslations() {
+  const fallback = [
+    ['BSB', 'Berean Standard Bible · Audio'],
+    ['eng_kjv', 'King James Version'],
+    ['ENGWEBP', 'World English Bible'],
+    ['eng_asv', 'American Standard Version'],
+    ['eng_net', 'NET Bible'],
+    ['eng_bbe', 'Bible in Basic English'],
+    ['eng_ylt', "Young's Literal Translation"],
+    ['eng_dby', 'Darby Translation'],
+    ['twi_asa', 'Asante Twi'],
+    ['twi_aka', 'Akuapem Twi'],
+    ['ewe_bib', 'Eʋegbe (Ewe)'],
+    ['hau_bib', 'Hausa'],
+    ['yor_bib', 'Yorùbá'],
+    ['swh_onmm', 'Kiswahili'],
+    ['fra_lsg', 'Français — Louis Segond'],
+    ['spa_r09', 'Español — Reina-Valera 1909'],
+    ['por_blj', 'Português — Bíblia Livre'],
+    ['deu_l12', 'Deutsch — Luther 1912']
+  ];
+
+  const groups = [
+    {
+      group: 'English',
+      ids: new Set([
+        'BSB',
+        'eng_kjv',
+        'ENGWEBP',
+        'eng_asv',
+        'eng_net',
+        'eng_bbe',
+        'eng_ylt',
+        'eng_dby'
+      ])
+    },
+    {
+      group: 'Ghana and Africa',
+      ids: new Set([
+        'twi_asa',
+        'twi_aka',
+        'ewe_bib',
+        'hau_bib',
+        'yor_bib',
+        'swh_onmm'
+      ])
+    },
+    {
+      group: 'Other languages',
+      ids: new Set([
+        'fra_lsg',
+        'spa_r09',
+        'por_blj',
+        'deu_l12'
+      ])
+    }
+  ];
+
+  const known = new Set(
+    TRANSLATIONS.flatMap((group) =>
+      group.items.map(([id]) => id)
+    )
+  );
+
+  try {
+    const data = await getJSON(
+      '/api/available_translations.json'
+    );
+
+    const raw = Array.isArray(data)
+      ? data
+      : data?.translations ||
+        data?.data ||
+        data?.available ||
+        [];
+
+    raw.forEach((item) => {
+      const id =
+        typeof item === 'string'
+          ? item
+          : item?.id ||
+            item?.translationId ||
+            item?.abbreviation;
+
+      const name =
+        typeof item === 'string'
+          ? item
+          : item?.name ||
+            item?.englishName ||
+            item?.shortName ||
+            id;
+
+      if (!id || known.has(id)) return;
+
+      const label = `${name}${item?.language ? ` · ${item.language}` : ''}`;
+
+      let target = TRANSLATIONS.find(
+        (group) => group.group === 'More available translations'
       );
 
-      const available = Array.isArray(data)
-        ? data
-        : data.translations || data.data || [];
-
-      const existing = new Set(
-        TRANSLATIONS.flatMap((group) =>
-          group.items.map(([id]) => id)
-        )
-      );
-
-      const discovered = available
-        .map((item) => ({
-          id:
-            item.id ||
-            item.translationId ||
-            item.abbreviation,
-          name:
-            item.name ||
-            item.englishName ||
-            item.shortName ||
-            item.id,
-          language: item.language || ''
-        }))
-        .filter((item) =>
-          item.id && !existing.has(item.id)
-        )
-        .slice(0, 150);
-
-      if (!discovered.length) return;
-
-      let group = TRANSLATIONS.find(
-        (item) =>
-          item.group === 'More available translations'
-      );
-
-      if (!group) {
-        group = {
+      if (!target) {
+        target = {
           group: 'More available translations',
           items: []
         };
 
-        TRANSLATIONS.push(group);
+        TRANSLATIONS.push(target);
       }
 
-      discovered.forEach((item) => {
-        group.items.push([
-          item.id,
-          `${item.name}${item.language ? ` · ${item.language}` : ''}`
-        ]);
-      });
+      target.items.push([id, label]);
+      known.add(id);
+    });
+  } catch (error) {
+    console.warn(
+      'The API translation catalogue could not be loaded:',
+      error
+    );
+  }
 
-      buildTranslationSelect();
-    } catch (error) {
-      console.warn(
-        'Additional translations unavailable:',
-        error
+  /*
+    Always rebuild the selector, even if the catalogue request fails.
+    This is the part that fixes the empty translation menu.
+  */
+  const existingIds = new Set(
+    TRANSLATIONS.flatMap((group) =>
+      group.items.map(([id]) => id)
+    )
+  );
+
+  const fallbackGroup = {
+    group: 'Built-in translations',
+    items: fallback.filter(([id]) => !existingIds.has(id))
+  };
+
+  if (fallbackGroup.items.length) {
+    TRANSLATIONS.push(fallbackGroup);
+  }
+
+  buildTranslationSelect();
+  el.trSel.value = state.tr || 'BSB';
+                }
       );
     }
   }
