@@ -61,38 +61,41 @@ export default async function handler(request, response) {
     'JHN'
   );
 
-  const chapter = first(
+  const chapterText = first(
     query.chapter,
     '3'
   );
 
-  const validPart = /^[A-Za-z0-9_-]+$/;
+  const chapter = Number(chapterText);
 
-  if (!validPart.test(translation)) {
+  if (!/^[A-Za-z0-9_-]+$/.test(translation)) {
     return response.status(400).json({
       error: 'Invalid translation',
       received: translation
     });
   }
 
-  if (!validPart.test(book)) {
+  if (!/^[A-Za-z0-9_-]+$/.test(book)) {
     return response.status(400).json({
       error: 'Invalid book',
       received: book
     });
   }
 
-  if (!/^d+$/.test(chapter)) {
+  if (
+    !Number.isInteger(chapter) ||
+    chapter < 1
+  ) {
     return response.status(400).json({
       error: 'Invalid chapter',
-      received: chapter
+      received: chapterText
     });
   }
 
   const upstreamUrl =
     `${API_BASE}/api/${encodeURIComponent(translation)}` +
     `/${encodeURIComponent(book)}` +
-    `/${encodeURIComponent(chapter)}.json`;
+    `/${chapter}.json`;
 
   try {
     const upstream = await fetch(upstreamUrl);
@@ -100,8 +103,7 @@ export default async function handler(request, response) {
     if (!upstream.ok) {
       return response.status(upstream.status).json({
         error: 'Bible API request failed',
-        status: upstream.status,
-        upstreamUrl
+        status: upstream.status
       });
     }
 
