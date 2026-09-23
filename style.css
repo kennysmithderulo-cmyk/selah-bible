@@ -99,8 +99,6 @@ a {
   transform: translateY(0);
 }
 
-/* Header */
-
 .topbar {
   position: sticky;
   z-index: 20;
@@ -263,8 +261,6 @@ input[type="checkbox"] {
   accent-color: var(--accent);
 }
 
-/* Reader */
-
 .reader {
   width: min(900px, calc(100% - 2rem));
   margin: auto;
@@ -317,13 +313,22 @@ input[type="checkbox"] {
   margin: 0 0 1.55rem;
 }
 
-.scripture h3 {
-  margin: 2.5rem 0 .8rem;
+.scripture h3,
+.scripture h4 {
   color: var(--accent);
   font-family: "Zodiak", Georgia, serif;
-  font-size: 1.2em;
   font-weight: 500;
   line-height: 1.35;
+}
+
+.scripture h3 {
+  margin: 2.5rem 0 .8rem;
+  font-size: 1.2em;
+}
+
+.scripture h4 {
+  margin: 2rem 0 .75rem;
+  font-size: 1.05em;
 }
 
 .subtitle {
@@ -422,8 +427,6 @@ input[type="checkbox"] {
   font-size: .78rem;
   text-align: center;
 }
-
-/* Player */
 
 .player {
   position: fixed;
@@ -548,8 +551,6 @@ input[type="checkbox"] {
   }
 }
 
-/* Dialogs */
-
 .picker {
   position: fixed;
   z-index: 40;
@@ -668,7 +669,7 @@ input[type="checkbox"] {
 }
 
 .book-card:hover,
-.picker-item:hover {
+.chapter-card:hover {
   color: var(--surface);
   background: var(--accent);
   border-color: var(--accent);
