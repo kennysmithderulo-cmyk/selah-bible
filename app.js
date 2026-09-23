@@ -2,10 +2,8 @@
   'use strict';
 
   const API = 'https://bible.helloao.org';
-
   const SUPABASE_URL =
     'https://ylspdrjrvhixrregmqtg.supabase.co';
-
   const SUPABASE_KEY =
     'sb_publishable_Ar8T3NCh77i6YZfjN88wBQ_f8j7oool';
 
@@ -230,9 +228,7 @@
   }
 
   function textFromContent(value) {
-    if (typeof value === 'string') {
-      return value;
-    }
+    if (typeof value === 'string') return value;
 
     if (Array.isArray(value)) {
       return value
@@ -381,12 +377,18 @@
       const optgroup = document.createElement('optgroup');
       optgroup.label = group.group;
 
-      group.items.forEach(([id, label]) => {
-        const option = document.createElement('option');
-        option.value = id;
-        option.textContent = label;
-        optgroup.appendChild(option);
-      });
+      group.items
+        .slice()
+        .sort((a, b) => a[1].localeCompare(b[1]))
+        .forEach(([id, label]) => {
+          const option = document.createElement('option');
+
+          option.value = id;
+          option.textContent = label;
+          option.selected = id === state.tr;
+
+          optgroup.appendChild(option);
+        });
 
       el.trSel.appendChild(optgroup);
     });
@@ -410,165 +412,76 @@
         )
       );
 
-      const additional = available
-        .filter((item) =>
-          item &&
-          item.id &&
-          !known.has(item.id)
-        )
-        .slice(0, 100);
+      const groups = new Map();
 
-      if (!additional.length) return;
+      available.forEach((item) => {
+        if (!item?.id || known.has(item.id)) {
+          return;
+        }
 
-      TRANSLATIONS.push({
-        group: 'More available translations',
-        items: additional.map((item) => [
-          item.id,
+        const language =
+          item.languageEnglishName ||
+          item.languageName ||
+          item.language ||
+          'Other languages';
+
+        const groupName =
+          language.toLowerCase().includes('english')
+            ? 'More English translations'
+            : language.toLowerCase().includes('twi') ||
+              language.toLowerCase().includes('akan') ||
+              language.toLowerCase().includes('ewe') ||
+              language.toLowerCase().includes('hausa') ||
+              language.toLowerCase().includes('yoruba') ||
+              language.toLowerCase().includes('swahili')
+              ? 'Ghana and Africa'
+              : language;
+
+        if (!groups.has(groupName)) {
+          groups.set(groupName, []);
+        }
+
+        const name =
           item.englishName ||
-            item.name ||
-            item.shortName ||
-            item.id
-        ])
+          item.name ||
+          item.shortName ||
+          item.id;
+
+        const label =
+          item.shortName &&
+          item.shortName !== item.englishName
+            ? `${name} (${item.shortName})`
+            : name;
+
+        groups.get(groupName).push([
+          item.id,
+          `${label} · ${language}`
+        ]);
+
+        known.add(item.id);
+      });
+
+      groups.forEach((items, group) => {
+        TRANSLATIONS.push({
+          group,
+          items
+        });
       });
     } catch (error) {
       console.warn(
-        'Optional translation discovery failed:',
+        'Translation discovery failed:',
         error
       );
     }
-  }
-
-  function setThemeLabel() {
-    el.themeLabel.textContent =
-      document.documentElement.dataset.theme === 'dark'
-        ? 'Light'
-        : 'Dark';
-  }
-
-  function setupTheme() {
-    if (!document.documentElement.dataset.theme) {
-      document.documentElement.dataset.theme =
-        'light';
-    }
-
-    setThemeLabel();
-
-    el.themeBtn.addEventListener(
-      'click',
-      () => {
-        const root = document.documentElement;
-
-        root.dataset.theme =
-          root.dataset.theme === 'dark'
-            ? 'light'
-            : 'dark';
-
-        setThemeLabel();
-      }
-    );
-  }
-
-  function setupSettings() {
-    el.settingsBtn.addEventListener(
-      'click',
-      (event) => {
-        event.stopPropagation();
-
-        const opening = el.settings.hidden;
-        el.settings.hidden = !opening;
-
-        el.settingsBtn.setAttribute(
-          'aria-expanded',
-          String(opening)
-        );
-      }
-    );
-
-    document.addEventListener(
-      'click',
-      (event) => {
-        if (
-          !el.settings.hidden &&
-          !el.settings.contains(event.target) &&
-          event.target !== el.settingsBtn
-        ) {
-          el.settings.hidden = true;
-          el.settingsBtn.setAttribute(
-            'aria-expanded',
-            'false'
-          );
-        }
-      }
-    );
-
-    el.fontUp.addEventListener(
-      'click',
-      () => {
-        const current =
-          parseFloat(
-            getComputedStyle(
-              document.documentElement
-            ).getPropertyValue('--read-size')
-          ) || 1.2;
-
-        document.documentElement.style.setProperty(
-          '--read-size',
-          `${Math.min(current + 0.125, 1.8)}rem`
-        );
-      }
-    );
-
-    el.fontDown.addEventListener(
-      'click',
-      () => {
-        const current =
-          parseFloat(
-            getComputedStyle(
-              document.documentElement
-            ).getPropertyValue('--read-size')
-          ) || 1.2;
-
-        document.documentElement.style.setProperty(
-          '--read-size',
-          `${Math.max(current - 0.125, 0.95)}rem`
-        );
-      }
-    );
-
-    el.followToggle.addEventListener(
-      'change',
-      () => {
-        state.follow =
-          el.followToggle.checked;
-      }
-    );
-
-    el.autoNextToggle.addEventListener(
-      'change',
-      () => {
-        state.autoNext =
-          el.autoNextToggle.checked;
-      }
-    );
-
-    el.numsToggle.addEventListener(
-      'change',
-      () => {
-        el.scripture.classList.toggle(
-          'hide-nums',
-          !el.numsToggle.checked
-        );
-      }
-    );
-  }
+          }
     async function loadBooks() {
     const data = await getJSON(
-      `/api/${state.tr}/books.json`
+      `/api/${encodeURIComponent(state.tr)}/books.json`
     );
 
     if (!Array.isArray(data?.books)) {
       throw new Error(
-        `No book list was returned for ${state.tr}.`
+        `No books were returned for ${state.tr}.`
       );
     }
 
@@ -577,7 +490,6 @@
     state.books = data.books
       .map((book) => ({
         ...book,
-        id: book.id,
         order: Number(book.order),
         numberOfChapters: Number(
           book.numberOfChapters
@@ -585,6 +497,7 @@
       }))
       .filter((book) =>
         book.id &&
+        Number.isFinite(book.order) &&
         Number.isFinite(book.numberOfChapters) &&
         book.numberOfChapters > 0
       )
@@ -595,17 +508,27 @@
         `No usable books were returned for ${state.tr}.`
       );
     }
+
+    document.documentElement.dir =
+      state.translation?.textDirection === 'rtl'
+        ? 'rtl'
+        : 'ltr';
   }
 
   function updateHeader() {
     const book = currentBook();
     const name = bookName(book);
 
-    el.refLabel.textContent = `${name} ${state.chapter}`;
+    el.refLabel.textContent =
+      `${name} ${state.chapter}`;
+
     el.chapterBook.textContent = name;
     el.chapterNum.textContent = state.chapter;
+
     el.trNote.textContent =
-      state.translation?.name || '';
+      state.translation?.englishName ||
+      state.translation?.name ||
+      state.tr;
 
     el.bookTitle.textContent =
       book?.title ||
@@ -650,7 +573,11 @@
 
     if (index > 0) {
       const book = state.books[index - 1];
-      return [book.id, book.numberOfChapters];
+
+      return [
+        book.id,
+        book.numberOfChapters
+      ];
     }
 
     return null;
@@ -663,7 +590,10 @@
       book &&
       state.chapter < book.numberOfChapters
     ) {
-      return [state.bookId, state.chapter + 1];
+      return [
+        state.bookId,
+        state.chapter + 1
+      ];
     }
 
     const index = state.books.findIndex(
@@ -674,7 +604,10 @@
       index >= 0 &&
       index < state.books.length - 1
     ) {
-      return [state.books[index + 1].id, 1];
+      return [
+        state.books[index + 1].id,
+        1
+      ];
     }
 
     return null;
@@ -748,21 +681,21 @@
         newParagraph();
       }
 
-      const verseElement =
+      const verse =
         document.createElement('span');
 
-      verseElement.className = 'verse';
-      verseElement.dataset.v = item.number;
-      verseElement.id = `v${item.number}`;
+      verse.className = 'verse';
+      verse.dataset.v = item.number;
+      verse.id = `v${item.number}`;
 
-      const numberElement =
+      const number =
         document.createElement('sup');
 
-      numberElement.className = 'vnum';
-      numberElement.textContent = item.number;
+      number.className = 'vnum';
+      number.textContent = item.number;
 
-      const textParts = [];
-      let firstNode = true;
+      const plainText = [];
+      let first = true;
 
       (item.content || []).forEach((part) => {
         if (
@@ -770,7 +703,7 @@
           typeof part === 'object' &&
           part.lineBreak
         ) {
-          verseElement.appendChild(
+          verse.appendChild(
             document.createElement('br')
           );
           return;
@@ -783,34 +716,34 @@
 
         if (!text) return;
 
-        textParts.push(text);
+        plainText.push(text);
 
-        const node =
+        const span =
           document.createElement('span');
 
         if (part?.poem) {
-          node.className =
+          span.className =
             `poem-line${part.poem > 1 ? ' p2' : ''}`;
         }
 
         if (part?.wordsOfJesus) {
-          node.classList.add('jesus');
+          span.classList.add('jesus');
         }
 
-        if (firstNode) {
-          node.appendChild(numberElement);
-          firstNode = false;
+        if (first) {
+          span.appendChild(number);
+          first = false;
         }
 
-        node.appendChild(
+        span.appendChild(
           document.createTextNode(text)
         );
 
-        verseElement.appendChild(node);
+        verse.appendChild(span);
       });
 
-      if (firstNode) {
-        verseElement.appendChild(numberElement);
+      if (first) {
+        verse.appendChild(number);
       }
 
       if (paragraph.childNodes.length) {
@@ -819,12 +752,12 @@
         );
       }
 
-      paragraph.appendChild(verseElement);
+      paragraph.appendChild(verse);
 
       state.verses.push({
         n: Number(item.number),
-        text: cleanText(textParts.join(' ')),
-        el: verseElement
+        text: cleanText(plainText.join(' ')),
+        el: verse
       });
     });
 
@@ -854,7 +787,9 @@
         `/api/${state.tr}/${bookId}/${chapter}.json`
       );
 
-      if (token !== state.loadToken) return;
+      if (token !== state.loadToken) {
+        return;
+      }
 
       state.data = data;
 
@@ -880,7 +815,7 @@
         play(options.verse || null);
       }
     } catch (error) {
-      console.error('Chapter loading failed:', error);
+      console.error(error);
 
       el.scripture.innerHTML = `
         <div class="errorbox">
@@ -898,19 +833,19 @@
       );
     }
   }
-
-  function setupAudioSources(data) {
+    function setupAudioSources(data) {
     const links =
       data?.thisChapterAudioLinks || {};
 
     el.narSel.innerHTML = '';
 
-    Object.entries(links).forEach(([id]) => {
+    Object.keys(links).forEach((id) => {
       const option =
         document.createElement('option');
 
       option.value = id;
-      option.textContent = NARRATORS[id] || id;
+      option.textContent =
+        NARRATORS[id] || id;
 
       el.narSel.appendChild(option);
     });
@@ -920,7 +855,8 @@
         document.createElement('option');
 
       option.value = 'device';
-      option.textContent = NARRATORS.device;
+      option.textContent =
+        NARRATORS.device;
 
       el.narSel.appendChild(option);
     }
@@ -958,21 +894,6 @@
       el.audio.src = links[narrator];
       el.audio.preload = 'metadata';
       el.audio.playbackRate = state.speed;
-
-      const timingPath =
-        state.data?.thisChapterAudioTimings?.[narrator];
-
-      if (timingPath) {
-        try {
-          const timingData =
-            await getJSON(timingPath);
-
-          state.timings =
-            timingData.verses || null;
-        } catch {
-          state.timings = null;
-        }
-      }
     } else {
       state.mode = 'tts';
       el.audio.removeAttribute('src');
@@ -981,7 +902,8 @@
 
     renderProgress();
   }
-    function setPlayingUI() {
+
+  function setPlayingUI() {
     el.playBtn.classList.toggle(
       'is-playing',
       state.playing
@@ -1063,7 +985,9 @@
   }
 
   function speakCurrent() {
-    if (!state.playing || !synth) return;
+    if (!state.playing || !synth) {
+      return;
+    }
 
     const verse =
       state.verses[state.ttsIndex];
@@ -1143,7 +1067,8 @@
       state.playing
     ) {
       const verse = state.verses.find(
-        (item) => item.n === Number(number)
+        (item) =>
+          item.n === Number(number)
       );
 
       verse?.el.scrollIntoView({
@@ -1203,9 +1128,7 @@
           narrator: state.narrator || null,
           updated_at: new Date().toISOString()
         },
-        {
-          onConflict: 'user_id'
-        }
+        { onConflict: 'user_id' }
       );
 
     if (error) {
@@ -1236,7 +1159,8 @@
     }
 
     const verse = state.verses.find(
-      (item) => item.n === Number(data.verse)
+      (item) =>
+        item.n === Number(data.verse)
     );
 
     verse?.el.scrollIntoView({
@@ -1309,7 +1233,8 @@
     } else {
       const verseData =
         state.verses.find(
-          (item) => item.n === Number(verse)
+          (item) =>
+            item.n === Number(verse)
         );
 
       const { error } = await db
@@ -1470,7 +1395,8 @@
       chapter <= book.numberOfChapters;
       chapter += 1
     ) {
-      const button = document.createElement('button');
+      const button =
+        document.createElement('button');
 
       button.className = 'chapter-card';
       button.type = 'button';
@@ -1516,7 +1442,9 @@
       wrapper.className = 'bookmark-item';
 
       const button = document.createElement('button');
-      button.className = 'bookmark-item__main';
+      button.className =
+        'bookmark-item__main';
+
       button.type = 'button';
 
       const title = document.createElement('strong');
@@ -1547,7 +1475,9 @@
         }
       );
 
-      const remove = document.createElement('button');
+      const remove =
+        document.createElement('button');
+
       remove.className =
         'bookmark-item__remove';
 
@@ -1639,7 +1569,7 @@
             }
           });
         } catch {
-          // Continue with the next chapter.
+          // Continue searching.
         }
 
         if (results.length >= 100) break;
@@ -1666,7 +1596,9 @@
       button.className = 'search-result';
       button.type = 'button';
 
-      const title = document.createElement('strong');
+      const title =
+        document.createElement('strong');
+
       title.textContent =
         `${bookName(result.book)} ` +
         `${result.chapter}:${result.verse}`;
@@ -1797,8 +1729,8 @@
         }
       }
     );
-  }
-    function setupEvents() {
+                            }
+  function setupEvents() {
     el.refBtn.addEventListener(
       'click',
       openPicker
@@ -1890,17 +1822,23 @@
     el.trSel.addEventListener(
       'change',
       async () => {
-        stopPlayback();
-
-        const previousTranslation =
+        const oldTranslation =
           state.tr;
 
         state.tr = el.trSel.value;
+        stopPlayback();
+        el.trSel.disabled = true;
 
         try {
           await loadBooks();
 
-          if (!currentBook()) {
+          const bookStillExists =
+            state.books.some(
+              (book) =>
+                book.id === state.bookId
+            );
+
+          if (!bookStillExists) {
             state.bookId =
               state.books[0].id;
             state.chapter = 1;
@@ -1918,24 +1856,27 @@
         } catch (error) {
           console.error(error);
 
-          state.tr = previousTranslation;
-          el.trSel.value =
-            previousTranslation;
+          state.tr = oldTranslation;
+          el.trSel.value = oldTranslation;
+
+          try {
+            await loadBooks();
+            await loadChapter(
+              state.bookId,
+              state.chapter
+            );
+          } catch {
+            // Keep current content visible.
+          }
 
           toast(
-            'That translation is unavailable.'
+            'That translation could not be loaded.'
           );
+        } finally {
+          el.trSel.disabled = false;
         }
       }
     );
-
-    document.querySelectorAll('[data-close]')
-      .forEach((button) => {
-        button.addEventListener(
-          'click',
-          closeDialogs
-        );
-      });
 
     el.searchBtn.addEventListener(
       'click',
@@ -1982,6 +1923,23 @@
     el.bookmarksBtn.addEventListener(
       'click',
       openBookmarks
+    );
+
+    document.querySelectorAll('[data-close]')
+      .forEach((button) => {
+        button.addEventListener(
+          'click',
+          closeDialogs
+        );
+      });
+
+    document.addEventListener(
+      'keydown',
+      (event) => {
+        if (event.key === 'Escape') {
+          closeDialogs();
+        }
+      }
     );
 
     el.playBtn.addEventListener(
@@ -2256,19 +2214,9 @@
 
   async function start() {
     setupDatabase();
-    setupTheme();
-    setupSettings();
+    buildTranslationSelect();
     setupEvents();
     setupVerseEvents();
-
-    buildTranslationSelect();
-
-    /*
-      This request is optional. It cannot block startup.
-    */
-    loadAvailableTranslations()
-      .then(buildTranslationSelect)
-      .catch(() => {});
 
     try {
       await loadBooks();
@@ -2290,6 +2238,10 @@
           error
         );
       });
+
+      loadAvailableTranslations()
+        .then(buildTranslationSelect)
+        .catch(() => {});
     } catch (error) {
       console.error(
         'Selah startup failed:',
