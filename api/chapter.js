@@ -18,7 +18,9 @@ function extractText(value) {
   }
 
   if (Array.isArray(value)) {
-    return value.map(extractText).join(' ');
+    return value
+      .map((part) => extractText(part))
+      .join('');
   }
 
   if (value && typeof value === 'object') {
@@ -37,6 +39,7 @@ function extractText(value) {
 function cleanText(value) {
   return String(value || '')
     .replace(/s+/g, ' ')
+    .replace(/ ([”’.,;:!?])/g, '$1')
     .trim();
 }
 
@@ -82,10 +85,7 @@ export default async function handler(request, response) {
     });
   }
 
-  if (
-    !Number.isInteger(chapter) ||
-    chapter < 1
-  ) {
+  if (!Number.isInteger(chapter) || chapter < 1) {
     return response.status(400).json({
       error: 'Invalid chapter',
       received: chapterText
@@ -109,6 +109,10 @@ export default async function handler(request, response) {
 
     const data = await upstream.json();
 
+    /*
+      Preserve the complete original chapter object.
+      This is the source used by the frontend renderer.
+    */
     const verses = (
       data.chapter?.content || []
     )
