@@ -15,7 +15,7 @@
         )
       : null;
 
-  const BOOKS_API =
+  const BIBLE_API =
     'https://bible.helloao.org/api';
 
   const $ = (id) =>
@@ -436,7 +436,7 @@
 
   async function loadBooks() {
     const url =
-      `${BOOKS_API}/` +
+      `${BIBLE_API}/` +
       `${encodeURIComponent(state.tr)}/books.json`;
 
     const data =
@@ -651,7 +651,6 @@
       verse.className = 'verse';
       verse.dataset.v =
         String(item.number);
-
       verse.id =
         `v${item.number}`;
 
@@ -777,18 +776,23 @@
 
     try {
       const url =
-        `/api/chapters?translation=${encodeURIComponent(
-          state.tr
-        )}` +
-        `&book=${encodeURIComponent(
-          state.bookId
-        )}` +
-        `&chapter=${encodeURIComponent(
-          state.chapter
-        )}`;
+        `${BIBLE_API}/` +
+        `${encodeURIComponent(state.tr)}/` +
+        `${encodeURIComponent(state.bookId)}/` +
+        `${encodeURIComponent(state.chapter)}.json`;
 
       const data =
         await getJSON(url);
+
+      if (
+        !data ||
+        !data.chapter ||
+        !Array.isArray(data.chapter.content)
+      ) {
+        throw new Error(
+          'The Bible API returned no chapter content.'
+        );
+      }
 
       state.data = data;
 
@@ -872,7 +876,6 @@
       el.audio.src = audioUrl;
       el.audio.playbackRate =
         state.speed;
-
       el.audio.load();
     } else {
       state.mode = 'speech';
@@ -955,16 +958,6 @@
       if (found >= 0) {
         index = found;
       }
-    } else if (state.currentVerse) {
-      const found =
-        state.verses.findIndex(
-          (verse) =>
-            verse.n === state.currentVerse
-        );
-
-      if (found >= 0) {
-        index = found;
-      }
     }
 
     state.speechIndex = index;
@@ -1021,11 +1014,6 @@
     if (voice) {
       utterance.voice = voice;
       utterance.lang = voice.lang;
-    } else {
-      utterance.lang =
-        `${speechLanguage()}-${speechLanguage() === 'en'
-          ? 'US'
-          : ''}`;
     }
 
     utterance.rate = state.speed;
@@ -1042,7 +1030,7 @@
 
       state.speechIndex += 1;
 
-      window.setTimeout(() => {
+      setTimeout(() => {
         speakNextVerse(token);
       }, 100);
     };
@@ -1063,26 +1051,6 @@
     window.speechSynthesis.speak(
       utterance
     );
-  }
-
-  function seekAudioToVerse(verseNumber) {
-    if (
-      !state.timings ||
-      !el.audio
-    ) {
-      play(verseNumber);
-      return;
-    }
-
-    const timing =
-      state.timings[Number(verseNumber) - 1];
-
-    if (typeof timing === 'number') {
-      el.audio.currentTime =
-        Math.max(0, timing - 0.05);
-    }
-
-    play();
   }
 
   function updatePlayButton() {
@@ -1524,6 +1492,7 @@
     el.bookmarksDlg.hidden = true;
     el.pop.hidden = true;
   }
+
   function setupEvents() {
     el.refBtn.addEventListener(
       'click',
@@ -1842,12 +1811,7 @@
           state.selectedVerse;
 
         el.pop.hidden = true;
-
-        if (state.mode === 'audio') {
-          seekAudioToVerse(verse);
-        } else {
-          play(verse);
-        }
+        play(verse);
       }
     );
 
@@ -1885,7 +1849,6 @@
       'submit',
       (event) => {
         event.preventDefault();
-
         searchBible(
           el.searchInput.value
         );
@@ -2001,11 +1964,10 @@
       ) {
         try {
           const url =
-            `/api/chapters?translation=${encodeURIComponent(
-              state.tr
-            )}` +
-            `&book=${encodeURIComponent(book.id)}` +
-            `&chapter=${chapter}`;
+            `${BIBLE_API}/` +
+            `${encodeURIComponent(state.tr)}/` +
+            `${encodeURIComponent(book.id)}/` +
+            `${chapter}.json`;
 
           const data =
             await getJSON(url);
