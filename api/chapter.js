@@ -1,58 +1,68 @@
 const API_BASE =
   'https://bible.helloao.org';
 
+function getQueryValue(value, fallback) {
+  if (Array.isArray(value)) {
+    return String(value[0] || fallback);
+  }
+
+  return String(value || fallback);
+}
+
 export default async function handler(
   request,
   response
 ) {
   if (request.method !== 'GET') {
-    return response
-      .status(405)
-      .json({
-        error: 'Method not allowed'
-      });
+    response.setHeader('Allow', 'GET');
+
+    return response.status(405).json({
+      error: 'Method not allowed'
+    });
   }
 
   const translation =
-    String(
-      request.query?.translation || 'BSB'
+    getQueryValue(
+      request.query?.translation,
+      'BSB'
     );
 
   const book =
-    String(
-      request.query?.book || 'JHN'
+    getQueryValue(
+      request.query?.book,
+      'JHN'
     );
 
   const chapter =
     Number(
-      request.query?.chapter || 3
+      getQueryValue(
+        request.query?.chapter,
+        '3'
+      )
     );
 
   if (!/^[A-Za-z0-9_-]+$/.test(translation)) {
-    return response
-      .status(400)
-      .json({
-        error: 'Invalid translation'
-      });
+    return response.status(400).json({
+      error: 'Invalid translation'
+    });
   }
 
   if (!/^[A-Za-z0-9_-]+$/.test(book)) {
-    return response
-      .status(400)
-      .json({
-        error: 'Invalid book'
-      });
+    return response.status(400).json({
+      error: 'Invalid book'
+    });
   }
 
-  if (!Number.isInteger(chapter) || chapter < 1) {
-    return response
-      .status(400)
-      .json({
-        error: 'Invalid chapter'
-      });
+  if (
+    !Number.isInteger(chapter) ||
+    chapter < 1
+  ) {
+    return response.status(400).json({
+      error: 'Invalid chapter'
+    });
   }
 
-  const upstreamUrl =
+  const url =
     `${API_BASE}/api/` +
     `${encodeURIComponent(translation)}/` +
     `${encodeURIComponent(book)}/` +
@@ -60,7 +70,7 @@ export default async function handler(
 
   try {
     const upstream =
-      await fetch(upstreamUrl);
+      await fetch(url);
 
     const data =
       await upstream.json();
