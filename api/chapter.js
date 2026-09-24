@@ -41,28 +41,7 @@ export default async function handler(
       )
     );
 
-  if (!/^[A-Za-z0-9_-]+$/.test(translation)) {
-    return response.status(400).json({
-      error: 'Invalid translation'
-    });
-  }
-
-  if (!/^[A-Za-z0-9_-]+$/.test(book)) {
-    return response.status(400).json({
-      error: 'Invalid book'
-    });
-  }
-
-  if (
-    !Number.isInteger(chapter) ||
-    chapter < 1
-  ) {
-    return response.status(400).json({
-      error: 'Invalid chapter'
-    });
-  }
-
-  const url =
+  const upstreamUrl =
     `${API_BASE}/api/` +
     `${encodeURIComponent(translation)}/` +
     `${encodeURIComponent(book)}/` +
@@ -70,18 +49,34 @@ export default async function handler(
 
   try {
     const upstream =
-      await fetch(url);
+      await fetch(upstreamUrl);
 
-    const data =
-      await upstream.json();
+    const raw =
+      await upstream.text();
 
     if (!upstream.ok) {
       return response.status(upstream.status).json({
         error: 'Bible API request failed',
         status: upstream.status,
-        details: data
+        upstream: raw.slice(0, 500)
       });
     }
+
+    let data;
+
+    try {
+      data = JSON.parse(raw);
+    } catch {
+      return response.status(502).json({
+        error: 'Bible API returned invalid JSON',
+        upstream: raw.slice(0, 500)
+      });
+    }
+
+    response.setHeader(
+      'Content-Type',
+      'application/json; charset=utf-8'
+    );
 
     response.setHeader(
       'Cache-Control',
