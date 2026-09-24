@@ -2062,6 +2062,7 @@
 
   async function start() {
     try {
+            loadSpeechVoices();
       buildTranslationSelect();
       setupEvents();
 
