@@ -1786,11 +1786,19 @@
       }
     );
 
-    el.popPlay.addEventListener(
+      el.popPlay.addEventListener(
       'click',
       () => {
+        const verse =
+          state.selectedVerse;
+
         el.pop.hidden = true;
-        play();
+
+        if (state.mode === 'audio') {
+          seekAudioToVerse(verse);
+        } else {
+          play(verse);
+        }
       }
     );
 
