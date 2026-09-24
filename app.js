@@ -1782,11 +1782,10 @@
       ) {
         try {
           const url =
-            `/api/chapters?translation=${encodeURIComponent(
-              state.tr
-            )}` +
-            `&book=${encodeURIComponent(book.id)}` +
-            `&chapter=${chapter}`;
+  `https://bible.helloao.org/api/` +
+  `${encodeURIComponent(state.tr)}/` +
+  `${encodeURIComponent(book.id)}/` +
+  `${chapter}.json`;
 
           const data =
             await getJSON(url);
