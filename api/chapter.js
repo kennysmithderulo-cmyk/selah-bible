@@ -1,99 +1,96 @@
-const API_BASE = 'https://bible.helloao.org';
+const API_BASE =
+  'https://bible.helloao.org';
 
-function first(value, fallback) {
-  if (Array.isArray(value)) {
-    return String(value[0] ?? fallback);
-  }
-
-  if (value === undefined || value === null) {
-    return String(fallback);
-  }
-
-  return String(value);
-}
-
-export default async function handler(request, response) {
+export default async function handler(
+  request,
+  response
+) {
   if (request.method !== 'GET') {
-    response.setHeader('Allow', 'GET');
-
-    return response.status(405).json({
-      error: 'Method not allowed'
-    });
+    return response
+      .status(405)
+      .json({
+        error: 'Method not allowed'
+      });
   }
 
-  const query = request.query || {};
+  const translation =
+    String(
+      request.query?.translation || 'BSB'
+    );
 
-  const translation = first(
-    query.translation,
-    'BSB'
-  );
+  const book =
+    String(
+      request.query?.book || 'JHN'
+    );
 
-  const book = first(
-    query.book,
-    'JHN'
-  );
-
-  const chapterText = first(
-    query.chapter,
-    '3'
-  );
-
-  const chapter = Number(chapterText);
+  const chapter =
+    Number(
+      request.query?.chapter || 3
+    );
 
   if (!/^[A-Za-z0-9_-]+$/.test(translation)) {
-    return response.status(400).json({
-      error: 'Invalid translation',
-      received: translation
-    });
+    return response
+      .status(400)
+      .json({
+        error: 'Invalid translation'
+      });
   }
 
   if (!/^[A-Za-z0-9_-]+$/.test(book)) {
-    return response.status(400).json({
-      error: 'Invalid book',
-      received: book
-    });
+    return response
+      .status(400)
+      .json({
+        error: 'Invalid book'
+      });
   }
 
   if (!Number.isInteger(chapter) || chapter < 1) {
-    return response.status(400).json({
-      error: 'Invalid chapter',
-      received: chapterText
-    });
+    return response
+      .status(400)
+      .json({
+        error: 'Invalid chapter'
+      });
   }
 
   const upstreamUrl =
-    `${API_BASE}/api/${encodeURIComponent(translation)}` +
-    `/${encodeURIComponent(book)}` +
-    `/${chapter}.json`;
+    `${API_BASE}/api/` +
+    `${encodeURIComponent(translation)}/` +
+    `${encodeURIComponent(book)}/` +
+    `${chapter}.json`;
 
   try {
-    const upstream = await fetch(upstreamUrl);
+    const upstream =
+      await fetch(upstreamUrl);
+
+    const data =
+      await upstream.json();
 
     if (!upstream.ok) {
-      return response.status(upstream.status).json({
-        error: 'Bible API request failed',
-        status: upstream.status
-      });
+      return response
+        .status(upstream.status)
+        .json({
+          error: 'Bible API request failed',
+          status: upstream.status,
+          details: data
+        });
     }
-
-    const data = await upstream.json();
 
     response.setHeader(
       'Cache-Control',
       's-maxage=86400, stale-while-revalidate=604800'
     );
 
-    /*
-      Return the original API response unchanged.
-      Do not rebuild verse text on the backend.
-    */
-    return response.status(200).json(data);
+    return response
+      .status(200)
+      .json(data);
   } catch (error) {
     console.error(error);
 
-    return response.status(502).json({
-      error: 'Could not reach the Bible API',
-      message: error.message
-    });
+    return response
+      .status(502)
+      .json({
+        error: 'Could not reach Bible API',
+        message: error.message
+      });
   }
 }
