@@ -1,7 +1,11 @@
 (() => {
   'use strict';
 
-  const $ = (id) => document.getElementById(id);
+  const API_BASE =
+    'https://bible.helloao.org/api';
+
+  const $ = (id) =>
+    document.getElementById(id);
 
   const state = {
     tr: 'BSB',
@@ -10,10 +14,9 @@
     chapter: 3,
     data: null,
     verses: [],
-    narrator: 'souer',
-    mode: 'audio',
     playing: false,
-    loading: false,
+    mode: 'audio',
+    narrator: 'souer',
     currentVerse: 0,
     speed: 1,
     follow: true,
@@ -56,15 +59,6 @@
     popBookmark: $('popBookmark'),
     popBookmarkLabel: $('popBookmarkLabel'),
     toast: $('toast'),
-    searchBtn: $('searchBtn'),
-    searchDlg: $('searchDlg'),
-    searchForm: $('searchForm'),
-    searchInput: $('searchInput'),
-    searchBody: $('searchBody'),
-    bookmarksBtn: $('bookmarksBtn'),
-    bookmarksDlg: $('bookmarksDlg'),
-    bmBadge: $('bmBadge'),
-    bmBody: $('bmBody'),
     settingsBtn: $('settingsBtn'),
     settings: $('settingsPanel'),
     themeBtn: $('themeBtn'),
@@ -75,8 +69,6 @@
     autoNextToggle: $('autoNextToggle'),
     numsToggle: $('numsToggle')
   };
-
-  const cache = new Map();
   const translations = [
     {
       name: 'English',
@@ -157,6 +149,7 @@
     zech: 'ZEC',
     mal: 'MAL',
     matt: 'MAT',
+    matthew: 'MAT',
     mt: 'MAT',
     mark: 'MRK',
     mk: 'MRK',
@@ -165,8 +158,8 @@
     john: 'JHN',
     jn: 'JHN',
     acts: 'ACT',
-    rom: 'ROM',
     romans: 'ROM',
+    rom: 'ROM',
     '1cor': '1CO',
     '2cor': '2CO',
     gal: 'GAL',
@@ -182,6 +175,7 @@
     phlm: 'PHM',
     heb: 'HEB',
     jas: 'JAS',
+    james: 'JAS',
     jam: 'JAS',
     '1pet': '1PE',
     '2pet': '2PE',
@@ -189,7 +183,8 @@
     '2jn': '2JN',
     '3jn': '3JN',
     jude: 'JUD',
-    rev: 'REV'
+    rev: 'REV',
+    revelation: 'REV'
   };
   function cleanText(value) {
     return String(value || '')
@@ -235,16 +230,16 @@
     );
   }
 
-  function bookName(item) {
-    return item?.commonName ||
-      item?.name ||
-      item?.id ||
+  function bookName(book) {
+    return book?.commonName ||
+      book?.name ||
+      book?.id ||
       '';
   }
 
   function currentBook() {
     return state.books.find(
-      (item) => item.id === state.bookId
+      (book) => book.id === state.bookId
     );
   }
 
@@ -253,7 +248,7 @@
   }
 
   function timeText(seconds) {
-    if (!Number.isFinite(seconds) || seconds < 0) {
+    if (!Number.isFinite(seconds)) {
       seconds = 0;
     }
 
@@ -265,38 +260,6 @@
     if (!el.toast) {
       return;
     }
-
-    el.toast.textContent = message;
-    el.toast.classList.add('show');
-
-    clearTimeout(showToast.timer);
-
-    showToast.timer = setTimeout(() => {
-      el.toast.classList.remove('show');
-    }, 2500);
-  }
-
-  async function getJSON(url) {
-    if (cache.has(url)) {
-      return cache.get(url);
-    }
-
-    const request = fetch(url).then((response) => {
-      if (!response.ok) {
-        throw new Error(`Request failed: ${response.status}`);
-      }
-
-      return response.json();
-    });
-
-    cache.set(url, request);
-
-    request.catch(() => {
-      cache.delete(url);
-    });
-
-    return request;
-  }
   function buildTranslationSelect() {
     if (!el.trSel) {
       return;
@@ -328,27 +291,29 @@
   }
 
   async function loadBooks() {
-    const data = await getJSON(
-      `/api/${encodeURIComponent(state.tr)}/books.json`
-    );
+    const url =
+      `${API_BASE}/` +
+      `${encodeURIComponent(state.tr)}/books.json`;
+
+    const data = await getJSON(url);
 
     if (!Array.isArray(data.books)) {
       throw new Error(
-        `No books were found for ${state.tr}.`
+        'The books response was invalid.'
       );
     }
 
     state.books = data.books
-      .map((item) => ({
-        ...item,
-        order: Number(item.order),
+      .map((book) => ({
+        ...book,
+        order: Number(book.order),
         numberOfChapters: Number(
-          item.numberOfChapters
+          book.numberOfChapters
         )
       }))
-      .filter((item) =>
-        item.id &&
-        item.numberOfChapters > 0
+      .filter((book) =>
+        book.id &&
+        book.numberOfChapters > 0
       )
       .sort((a, b) => a.order - b.order);
 
@@ -357,12 +322,12 @@
 
     if (!state.books.length) {
       throw new Error(
-        'This translation contains no books.'
+        'No books were found.'
       );
     }
   }
 
-  function previousReference() {
+  function getPreviousReference() {
     if (state.chapter > 1) {
       return [
         state.bookId,
@@ -371,23 +336,23 @@
     }
 
     const index = state.books.findIndex(
-      (item) => item.id === state.bookId
+      (book) => book.id === state.bookId
     );
 
-    if (index > 0) {
-      const previous =
-        state.books[index - 1];
-
-      return [
-        previous.id,
-        previous.numberOfChapters
-      ];
+    if (index <= 0) {
+      return null;
     }
 
-    return null;
+    const previous =
+      state.books[index - 1];
+
+    return [
+      previous.id,
+      previous.numberOfChapters
+    ];
   }
 
-  function nextReference() {
+  function getNextReference() {
     const current = currentBook();
 
     if (
@@ -401,20 +366,20 @@
     }
 
     const index = state.books.findIndex(
-      (item) => item.id === state.bookId
+      (book) => book.id === state.bookId
     );
 
     if (
-      index >= 0 &&
-      index < state.books.length - 1
+      index < 0 ||
+      index >= state.books.length - 1
     ) {
-      return [
-        state.books[index + 1].id,
-        1
-      ];
+      return null;
     }
 
-    return null;
+    return [
+      state.books[index + 1].id,
+      1
+    ];
   }
 
   function updateHeader() {
@@ -436,12 +401,7 @@
 
     if (el.bookTitle) {
       el.bookTitle.textContent =
-        current?.title ||
-        (
-          current?.order >= 40
-            ? 'New Testament'
-            : 'Old Testament'
-        );
+        current?.title || name;
     }
 
     if (el.trNote) {
@@ -451,8 +411,11 @@
         state.tr;
     }
 
-    const previous = previousReference();
-    const next = nextReference();
+    const previous =
+      getPreviousReference();
+
+    const next =
+      getNextReference();
 
     if (el.prevChap) {
       el.prevChap.disabled = !previous;
@@ -466,7 +429,8 @@
       el.prevLabel.textContent = previous
         ? `${bookName(
             state.books.find(
-              (item) => item.id === previous[0]
+              (book) =>
+                book.id === previous[0]
             )
           )} ${previous[1]}`
         : 'Previous';
@@ -476,7 +440,8 @@
       el.nextLabel.textContent = next
         ? `${bookName(
             state.books.find(
-              (item) => item.id === next[0]
+              (book) =>
+                book.id === next[0]
             )
           )} ${next[1]}`
         : 'Next';
@@ -644,15 +609,13 @@
       '<p>Loading Scripture…</p>';
 
     try {
-      const data = await getJSON(
-        `/api/chapter?translation=${encodeURIComponent(
-          state.tr
-        )}` +
-        `&book=${encodeURIComponent(state.bookId)}` +
-        `&chapter=${encodeURIComponent(
-          state.chapter
-        )}`
-      );
+      const url =
+        `${API_BASE}/` +
+        `${encodeURIComponent(state.tr)}/` +
+        `${encodeURIComponent(state.bookId)}/` +
+        `${encodeURIComponent(state.chapter)}.json`;
+
+      const data = await getJSON(url);
 
       state.data = data;
 
@@ -666,6 +629,8 @@
         );
 
         if (verse) {
+          state.currentVerse = verse.n;
+
           verse.el.scrollIntoView({
             behavior: 'smooth',
             block: 'center'
@@ -687,27 +652,23 @@
         </div>
       `;
 
-      const retryBtn = $('retryBtn');
-
-      if (retryBtn) {
-        retryBtn.addEventListener(
-          'click',
-          () => loadChapter(
-            state.bookId,
-            state.chapter,
-            options
-          )
-        );
-      }
+      $('retryBtn')?.addEventListener(
+        'click',
+        () => loadChapter(
+          state.bookId,
+          state.chapter,
+          options
+        )
+      );
     }
   }
   function setupAudio(data) {
-    const links =
-      data?.thisChapterAudioLinks || {};
-
     if (!el.audio) {
       return;
     }
+
+    const links =
+      data?.thisChapterAudioLinks || {};
 
     const audioUrl =
       links[state.narrator] ||
@@ -723,7 +684,7 @@
       el.audio.playbackRate = state.speed;
       el.audio.load();
     } else {
-      state.mode = 'tts';
+      state.mode = 'speech';
       el.audio.removeAttribute('src');
       el.audio.load();
     }
@@ -731,9 +692,57 @@
     updatePlayButton();
   }
 
+  function play() {
+    if (
+      state.mode === 'speech' ||
+      !el.audio?.src
+    ) {
+      speakChapter();
+      return;
+    }
+
+    el.audio.play()
+      .then(() => {
+        state.playing = true;
+        updatePlayButton();
+      })
+      .catch(() => {
+        speakChapter();
+      });
+  }
+
+  function pause() {
+    el.audio?.pause();
+
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+    }
+
+    state.playing = false;
+    updatePlayButton();
+  }
+
+  function stopPlayback() {
+    el.audio?.pause();
+
+    if (el.audio) {
+      el.audio.currentTime = 0;
+    }
+
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+    }
+
+    state.playing = false;
+    updatePlayButton();
+  }
+
   function speakChapter() {
     if (!('speechSynthesis' in window)) {
-      showToast('Speech is not available.');
+      showToast(
+        'Audio is unavailable in this browser.'
+      );
+
       return;
     }
 
@@ -762,49 +771,6 @@
     updatePlayButton();
 
     window.speechSynthesis.speak(speech);
-  }
-
-  function play() {
-    if (state.mode === 'tts' || !el.audio.src) {
-      speakChapter();
-      return;
-    }
-
-    el.audio.play()
-      .then(() => {
-        state.playing = true;
-        updatePlayButton();
-      })
-      .catch(() => {
-        speakChapter();
-      });
-  }
-
-  function pause() {
-    el.audio?.pause();
-
-    if ('speechSynthesis' in window) {
-      window.speechSynthesis.cancel();
-    }
-
-    state.playing = false;
-    updatePlayButton();
-  }
-
-  function stopPlayback() {
-    if (el.audio) {
-      el.audio.pause();
-      el.audio.currentTime = 0;
-    }
-
-    if ('speechSynthesis' in window) {
-      window.speechSynthesis.cancel();
-    }
-
-    state.playing = false;
-    state.loading = false;
-
-    updatePlayButton();
   }
 
   function updatePlayButton() {
@@ -859,13 +825,13 @@
       return;
     }
 
-    const ratio =
+    const percentage =
       el.audio.currentTime / el.audio.duration;
 
     const index = Math.min(
       state.verses.length - 1,
       Math.floor(
-        ratio * state.verses.length
+        percentage * state.verses.length
       )
     );
 
@@ -908,15 +874,6 @@
     );
   }
 
-  function applyBookmarkMarks() {
-    state.verses.forEach((verse) => {
-      verse.el.classList.toggle(
-        'is-bookmarked',
-        isBookmarked(verse.n)
-      );
-    });
-  }
-
   function loadBookmarks() {
     try {
       state.bookmarks = JSON.parse(
@@ -927,8 +884,6 @@
     } catch {
       state.bookmarks = [];
     }
-
-    applyBookmarkMarks();
   }
 
   function saveBookmarks() {
@@ -936,6 +891,15 @@
       'selah_bookmarks',
       JSON.stringify(state.bookmarks)
     );
+  }
+
+  function applyBookmarkMarks() {
+    state.verses.forEach((verse) => {
+      verse.el.classList.toggle(
+        'is-bookmarked',
+        isBookmarked(verse.n)
+      );
+    });
   }
 
   function toggleBookmark(verseNumber) {
@@ -962,7 +926,7 @@
   function updateBookmarkPopover() {
     if (
       !el.popBookmarkLabel ||
-      state.currentVerse === 0
+      !state.currentVerse
     ) {
       return;
     }
@@ -1004,13 +968,13 @@
     ['Old Testament', 'New Testament']
       .forEach((section, sectionIndex) => {
         const books = state.books.filter(
-          (item) =>
+          (book) =>
             (
               sectionIndex === 0
-                ? item.order < 40
-                : item.order >= 40
+                ? book.order < 40
+                : book.order >= 40
             ) &&
-            bookName(item)
+            bookName(book)
               .toLowerCase()
               .includes(query)
         );
@@ -1025,19 +989,19 @@
         heading.textContent = section;
         el.pickerBody.appendChild(heading);
 
-        books.forEach((item) => {
+        books.forEach((book) => {
           const button =
             document.createElement('button');
 
           button.type = 'button';
           button.textContent =
-            `${bookName(item)} ` +
-            `(${item.numberOfChapters})`;
+            `${bookName(book)} ` +
+            `(${book.numberOfChapters})`;
 
           button.addEventListener(
             'click',
             () => {
-              state.bookId = item.id;
+              state.bookId = book.id;
               renderChapters();
             }
           );
@@ -1048,9 +1012,9 @@
   }
 
   function renderChapters() {
-    const current = currentBook();
+    const book = currentBook();
 
-    if (!current || !el.pickerBody) {
+    if (!book || !el.pickerBody) {
       return;
     }
 
@@ -1060,14 +1024,14 @@
 
     if (el.pickerTitle) {
       el.pickerTitle.textContent =
-        bookName(current);
+        bookName(book);
     }
 
     el.pickerBody.innerHTML = '';
 
     for (
       let number = 1;
-      number <= current.numberOfChapters;
+      number <= book.numberOfChapters;
       number += 1
     ) {
       const button =
@@ -1093,15 +1057,9 @@
   }
 
   function closeDialogs() {
-    [
-      el.picker,
-      el.searchDlg,
-      el.bookmarksDlg
-    ].forEach((dialog) => {
-      if (dialog) {
-        dialog.hidden = true;
-      }
-    });
+    if (el.picker) {
+      el.picker.hidden = true;
+    }
 
     if (el.pop) {
       el.pop.hidden = true;
@@ -1117,8 +1075,11 @@
       'click',
       () => {
         el.pickerBack.hidden = true;
-        el.pickerTitle.textContent =
-          'Choose a book';
+
+        if (el.pickerTitle) {
+          el.pickerTitle.textContent =
+            'Choose a book';
+        }
 
         renderBooks();
       }
@@ -1141,13 +1102,12 @@
           return;
         }
 
-        const alias =
+        const name =
           match[1]
             .toLowerCase()
             .replace(/s+/g, '');
 
-        const bookId =
-          aliases[alias];
+        const bookId = aliases[name];
 
         if (!bookId) {
           showToast('Book not found.');
@@ -1179,7 +1139,7 @@
       'click',
       () => {
         const previous =
-          previousReference();
+          getPreviousReference();
 
         if (previous) {
           loadChapter(
@@ -1194,7 +1154,7 @@
       'click',
       () => {
         const next =
-          nextReference();
+          getNextReference();
 
         if (next) {
           loadChapter(
@@ -1215,12 +1175,12 @@
           );
 
         if (index > 0) {
-          state.currentVerse =
-            state.verses[index - 1].n;
+          const verse =
+            state.verses[index - 1];
 
-          document.getElementById(
-            `v${state.currentVerse}`
-          )?.scrollIntoView({
+          state.currentVerse = verse.n;
+
+          verse.el.scrollIntoView({
             behavior: 'smooth',
             block: 'center'
           });
@@ -1241,12 +1201,12 @@
           index >= 0 &&
           index < state.verses.length - 1
         ) {
-          state.currentVerse =
-            state.verses[index + 1].n;
+          const verse =
+            state.verses[index + 1];
 
-          document.getElementById(
-            `v${state.currentVerse}`
-          )?.scrollIntoView({
+          state.currentVerse = verse.n;
+
+          verse.el.scrollIntoView({
             behavior: 'smooth',
             block: 'center'
           });
@@ -1257,7 +1217,10 @@
     el.seek?.addEventListener(
       'input',
       () => {
-        if (el.audio && state.mode === 'audio') {
+        if (
+          el.audio &&
+          state.mode === 'audio'
+        ) {
           el.audio.currentTime =
             Number(el.seek.value);
         }
@@ -1288,16 +1251,6 @@
       }
     );
 
-    el.narSel?.addEventListener(
-      'change',
-      () => {
-        state.narrator =
-          el.narSel.value;
-
-        setupAudio(state.data);
-      }
-    );
-
     el.trSel?.addEventListener(
       'change',
       async () => {
@@ -1313,12 +1266,12 @@
             state.chapter = 1;
           }
 
-          const current =
+          const book =
             currentBook();
 
           state.chapter = Math.min(
             state.chapter,
-            current.numberOfChapters
+            book.numberOfChapters
           );
 
           await loadChapter();
@@ -1329,6 +1282,16 @@
             'Could not change translation.'
           );
         }
+      }
+    );
+
+    el.narSel?.addEventListener(
+      'change',
+      () => {
+        state.narrator =
+          el.narSel.value;
+
+        setupAudio(state.data);
       }
     );
 
@@ -1372,7 +1335,7 @@
         }
 
         const next =
-          nextReference();
+          getNextReference();
 
         if (next) {
           loadChapter(
@@ -1403,8 +1366,6 @@
         if (el.pop) {
           el.pop.hidden = false;
         }
-
-        updateBookmarkPopover();
       }
     );
 
@@ -1437,11 +1398,18 @@
           return;
         }
 
-        await navigator.clipboard.writeText(
-          `${reference()}:${verse.n} — ${verse.text}`
-        );
+        try {
+          await navigator.clipboard.writeText(
+            `${reference()}:${verse.n} — ${verse.text}`
+          );
 
-        showToast('Verse copied.');
+          showToast('Verse copied.');
+        } catch {
+          showToast(
+            'Could not copy the verse.'
+          );
+        }
+
         closeDialogs();
       }
     );
@@ -1454,6 +1422,106 @@
           closeDialogs
         );
       });
+
+    el.settingsBtn?.addEventListener(
+      'click',
+      () => {
+        if (el.settings) {
+          el.settings.hidden =
+            !el.settings.hidden;
+        }
+      }
+    );
+
+    el.themeBtn?.addEventListener(
+      'click',
+      () => {
+        const current =
+          document.documentElement.dataset.theme;
+
+        const next =
+          current === 'dark'
+            ? 'light'
+            : 'dark';
+
+        document.documentElement.dataset.theme =
+          next;
+
+        if (el.themeLabel) {
+          el.themeLabel.textContent =
+            next === 'dark'
+              ? 'Light'
+              : 'Dark';
+        }
+      }
+    );
+
+    el.fontUp?.addEventListener(
+      'click',
+      () => {
+        document.documentElement.style.setProperty(
+          '--read-size',
+          '1.35rem'
+        );
+      }
+    );
+
+    el.fontDown?.addEventListener(
+      'click',
+      () => {
+        document.documentElement.style.setProperty(
+          '--read-size',
+          '1.1rem'
+        );
+      }
+    );
+
+    el.followToggle?.addEventListener(
+      'change',
+      () => {
+        state.follow =
+          el.followToggle.checked;
+      }
+    );
+
+    el.autoNextToggle?.addEventListener(
+      'change',
+      () => {
+        state.autoNext =
+          el.autoNextToggle.checked;
+      }
+    );
+
+    el.numsToggle?.addEventListener(
+      'change',
+      () => {
+        el.scripture.classList.toggle(
+          'hide-nums',
+          !el.numsToggle.checked
+        );
+      }
+    );
+  }
+    el.toast.textContent = message;
+    el.toast.classList.add('show');
+
+    clearTimeout(showToast.timer);
+
+    showToast.timer = setTimeout(() => {
+      el.toast.classList.remove('show');
+    }, 2500);
+  }
+
+  async function getJSON(url) {
+    const response = await fetch(url);
+
+    if (!response.ok) {
+      throw new Error(
+        `Request failed: ${response.status}`
+      );
+    }
+
+    return response.json();
   }
   async function start() {
     buildTranslationSelect();
