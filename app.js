@@ -873,6 +873,97 @@
       if (found >= 0) {
         startIndex = found;
       }
+  function speakNextVerse(token) {
+    if (
+      token !== state.speechToken ||
+      !state.playing
+    ) {
+      return;
+    }
+
+    const verse =
+      state.verses[state.speechIndex];
+
+    if (!verse) {
+      state.playing = false;
+      updatePlayButton();
+
+      if (state.autoNext) {
+        const next =
+          nextReference();
+
+        if (next) {
+          loadChapter(
+            next[0],
+            next[1]
+          ).then(() => {
+            speakChapter(1);
+          });
+        }
+      }
+
+      return;
+    }
+
+    selectVerse(verse.n);
+
+    const voice =
+      chooseSpeechVoice();
+
+    const utterance =
+      new SpeechSynthesisUtterance(
+        prepareSpeechText(verse.text)
+      );
+
+    if (voice) {
+      utterance.voice = voice;
+      utterance.lang = voice.lang;
+    }
+
+    utterance.rate = state.speed;
+    utterance.pitch = 1;
+    utterance.volume = 1;
+
+    utterance.onend = () => {
+      if (
+        token !== state.speechToken ||
+        !state.playing
+      ) {
+        return;
+      }
+
+      state.speechIndex += 1;
+
+      window.setTimeout(() => {
+        speakNextVerse(token);
+      }, 90);
+    };
+
+    utterance.onerror = () => {
+      if (token !== state.speechToken) {
+        return;
+      }
+
+      state.playing = false;
+      updatePlayButton();
+
+      showToast(
+        'Device voice could not read this verse.'
+      );
+    };
+
+    window.speechSynthesis.speak(
+      utterance
+    );
+  }
+
+  function prepareSpeechText(text) {
+    return String(text || '')
+      .replace(/­/g, '')
+      .replace(/[-‍﻿]/g, '')
+      .replace(/s+/g, ' ')
+      .trim();
+  }
     }
 
     state.speechIndex = startIndex;
