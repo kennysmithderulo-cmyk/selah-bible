@@ -1,7 +1,7 @@
 const API_BASE =
   'https://bible.helloao.org';
 
-function getQueryValue(value, fallback) {
+function queryValue(value, fallback) {
   if (Array.isArray(value)) {
     return String(value[0] || fallback);
   }
@@ -22,20 +22,20 @@ export default async function handler(
   }
 
   const translation =
-    getQueryValue(
+    queryValue(
       request.query?.translation,
       'BSB'
     );
 
   const book =
-    getQueryValue(
+    queryValue(
       request.query?.book,
       'JHN'
     );
 
   const chapter =
     Number(
-      getQueryValue(
+      queryValue(
         request.query?.chapter,
         '3'
       )
@@ -76,13 +76,11 @@ export default async function handler(
       await upstream.json();
 
     if (!upstream.ok) {
-      return response
-        .status(upstream.status)
-        .json({
-          error: 'Bible API request failed',
-          status: upstream.status,
-          details: data
-        });
+      return response.status(upstream.status).json({
+        error: 'Bible API request failed',
+        status: upstream.status,
+        details: data
+      });
     }
 
     response.setHeader(
@@ -90,17 +88,13 @@ export default async function handler(
       's-maxage=86400, stale-while-revalidate=604800'
     );
 
-    return response
-      .status(200)
-      .json(data);
+    return response.status(200).json(data);
   } catch (error) {
     console.error(error);
 
-    return response
-      .status(502)
-      .json({
-        error: 'Could not reach Bible API',
-        message: error.message
-      });
+    return response.status(502).json({
+      error: 'Could not reach Bible API',
+      message: error.message
+    });
   }
 }
