@@ -33,6 +33,9 @@
     playing: false,
     currentVerse: 0,
     selectedVerse: 0,
+    speechIndex: 0,
+    speechToken: 0,
+    voices: [],
     speed: 1,
     follow: true,
     autoNext: true,
@@ -186,6 +189,12 @@
     phil: 'PHP',
     php: 'PHP',
     col: 'COL',
+    '1thess': '1TH',
+    '2thess': '2TH',
+    '1tim': '1TI',
+    '2tim': '2TI',
+    tit: 'TIT',
+    phlm: 'PHM',
     heb: 'HEB',
     jas: 'JAS',
     james: 'JAS',
@@ -294,6 +303,75 @@
 
     return response.json();
   }
+
+  function loadSpeechVoices() {
+    if (!('speechSynthesis' in window)) {
+      return;
+    }
+
+    const update = () => {
+      state.voices =
+        window.speechSynthesis.getVoices();
+    };
+
+    update();
+
+    window.speechSynthesis.addEventListener(
+      'voiceschanged',
+      update
+    );
+  }
+
+  function speechLanguage() {
+    if (state.tr === 'fra_lsg') {
+      return 'fr';
+    }
+
+    if (state.tr === 'spa_r09') {
+      return 'es';
+    }
+
+    if (state.tr === 'por_blj') {
+      return 'pt';
+    }
+
+    if (state.tr === 'deu_l12') {
+      return 'de';
+    }
+
+    return 'en';
+  }
+
+  function chooseSpeechVoice() {
+    const voices =
+      state.voices || [];
+
+    const language =
+      speechLanguage();
+
+    return (
+      voices.find((voice) =>
+        voice.lang
+          .toLowerCase()
+          .startsWith(language)
+      ) ||
+      voices.find((voice) =>
+        voice.lang
+          .toLowerCase()
+          .startsWith('en')
+      ) ||
+      voices[0] ||
+      null
+    );
+  }
+
+  function prepareSpeechText(text) {
+    return String(text || '')
+      .replace(/­/g, '')
+      .replace(/[-‍﻿]/g, '')
+      .replace(/s+/g, ' ')
+      .trim();
+  }
   async function initializeSupabase() {
     if (!supabaseClient) {
       return null;
@@ -326,7 +404,8 @@
       return null;
     }
 
-    state.user = data?.user || null;
+    state.user =
+      data?.user || null;
 
     return state.user;
   }
@@ -429,75 +508,7 @@
         state.bookId,
         state.chapter + 1
       ];
-  function loadSpeechVoices() {
-    if (!('speechSynthesis' in window)) {
-      return;
     }
-
-    const update = () => {
-      state.voices =
-        window.speechSynthesis.getVoices();
-    };
-
-    update();
-
-    window.speechSynthesis.addEventListener(
-      'voiceschanged',
-      update
-    );
-  }
-
-        function seekAudioToVerse(verseNumber) {
-    if (
-      !state.timings ||
-      !el.audio
-    ) {
-      play(verseNumber);
-      return;
-    }
-
-    const timing =
-      state.timings[Number(verseNumber) - 1];
-
-    if (typeof timing === 'number') {
-      el.audio.currentTime =
-        Math.max(0, timing - 0.05);
-    }
-
-    play();
-        }
-      
-  function chooseSpeechVoice() {
-    const voices = state.voices || [];
-
-    const language =
-      state.tr === 'fra_lsg'
-        ? 'fr'
-        : state.tr === 'spa_r09'
-          ? 'es'
-          : state.tr === 'por_blj'
-            ? 'pt'
-            : state.tr === 'deu_l12'
-              ? 'de'
-              : state.tr.startsWith('twi')
-                ? 'en'
-                : 'en';
-
-    return (
-      voices.find((voice) =>
-        voice.lang
-          .toLowerCase()
-          .startsWith(language)
-      ) ||
-      voices.find((voice) =>
-        voice.lang
-          .toLowerCase()
-          .startsWith('en')
-      ) ||
-      voices[0] ||
-      null
-    );
-  }
 
     const index = state.books.findIndex(
       (book) => book.id === state.bookId
@@ -527,7 +538,8 @@
       `${name} ${state.chapter}`;
 
     el.chapterBook.textContent = name;
-    el.chapterNum.textContent = state.chapter;
+    el.chapterNum.textContent =
+      state.chapter;
 
     el.bookTitle.textContent =
       book?.title || name;
@@ -765,10 +777,15 @@
 
     try {
       const url =
-  `https://bible.helloao.org/api/` +
-  `${encodeURIComponent(state.tr)}/` +
-  `${encodeURIComponent(state.bookId)}/` +
-  `${encodeURIComponent(state.chapter)}.json`;
+        `/api/chapters?translation=${encodeURIComponent(
+          state.tr
+        )}` +
+        `&book=${encodeURIComponent(
+          state.bookId
+        )}` +
+        `&chapter=${encodeURIComponent(
+          state.chapter
+        )}`;
 
       const data =
         await getJSON(url);
@@ -866,7 +883,7 @@
     updatePlayButton();
   }
 
-    function play(startVerse = null) {
+  function play(startVerse = null) {
     if (
       state.mode === 'speech' ||
       !el.audio.src
@@ -886,7 +903,7 @@
       });
   }
 
-    function pause() {
+  function pause() {
     el.audio.pause();
 
     state.speechToken += 1;
@@ -899,12 +916,9 @@
     updatePlayButton();
   }
 
-    function stopPlayback() {
+  function stopPlayback() {
     el.audio.pause();
-
-    if (el.audio) {
-      el.audio.currentTime = 0;
-    }
+    el.audio.currentTime = 0;
 
     state.speechToken += 1;
 
@@ -918,7 +932,7 @@
     updatePlayButton();
   }
 
-    function speakChapter(startVerse = null) {
+  function speakChapter(startVerse = null) {
     if (!('speechSynthesis' in window)) {
       showToast(
         'Device voice is unavailable.'
@@ -929,7 +943,7 @@
 
     window.speechSynthesis.cancel();
 
-    let startIndex = 0;
+    let index = 0;
 
     if (startVerse !== null) {
       const found =
@@ -939,7 +953,7 @@
         );
 
       if (found >= 0) {
-        startIndex = found;
+        index = found;
       }
     } else if (state.currentVerse) {
       const found =
@@ -949,8 +963,19 @@
         );
 
       if (found >= 0) {
-        startIndex = found;
+        index = found;
       }
+    }
+
+    state.speechIndex = index;
+    state.speechToken += 1;
+    state.playing = true;
+
+    updatePlayButton();
+
+    speakNextVerse(state.speechToken);
+  }
+
   function speakNextVerse(token) {
     if (
       token !== state.speechToken ||
@@ -985,17 +1010,22 @@
 
     selectVerse(verse.n);
 
-    const voice =
-      chooseSpeechVoice();
-
     const utterance =
       new SpeechSynthesisUtterance(
         prepareSpeechText(verse.text)
       );
 
+    const voice =
+      chooseSpeechVoice();
+
     if (voice) {
       utterance.voice = voice;
       utterance.lang = voice.lang;
+    } else {
+      utterance.lang =
+        `${speechLanguage()}-${speechLanguage() === 'en'
+          ? 'US'
+          : ''}`;
     }
 
     utterance.rate = state.speed;
@@ -1014,7 +1044,7 @@
 
       window.setTimeout(() => {
         speakNextVerse(token);
-      }, 90);
+      }, 100);
     };
 
     utterance.onerror = () => {
@@ -1035,25 +1065,24 @@
     );
   }
 
-  function prepareSpeechText(text) {
-    return String(text || '')
-      .replace(/­/g, '')
-      .replace(/[-‍﻿]/g, '')
-      .replace(/s+/g, ' ')
-      .trim();
-  }
+  function seekAudioToVerse(verseNumber) {
+    if (
+      !state.timings ||
+      !el.audio
+    ) {
+      play(verseNumber);
+      return;
     }
 
-    state.speechIndex = startIndex;
-    state.speechToken += 1;
+    const timing =
+      state.timings[Number(verseNumber) - 1];
 
-    const token =
-      state.speechToken;
+    if (typeof timing === 'number') {
+      el.audio.currentTime =
+        Math.max(0, timing - 0.05);
+    }
 
-    state.playing = true;
-    updatePlayButton();
-
-    speakNextVerse(token);
+    play();
   }
 
   function updatePlayButton() {
@@ -1806,7 +1835,7 @@
       }
     );
 
-      el.popPlay.addEventListener(
+    el.popPlay.addEventListener(
       'click',
       () => {
         const verse =
@@ -1856,6 +1885,7 @@
       'submit',
       (event) => {
         event.preventDefault();
+
         searchBible(
           el.searchInput.value
         );
@@ -1971,10 +2001,11 @@
       ) {
         try {
           const url =
-  `https://bible.helloao.org/api/` +
-  `${encodeURIComponent(state.tr)}/` +
-  `${encodeURIComponent(book.id)}/` +
-  `${chapter}.json`;
+            `/api/chapters?translation=${encodeURIComponent(
+              state.tr
+            )}` +
+            `&book=${encodeURIComponent(book.id)}` +
+            `&chapter=${chapter}`;
 
           const data =
             await getJSON(url);
@@ -2004,7 +2035,7 @@
             }
           });
         } catch {
-          // Continue with the next chapter.
+          // Continue searching.
         }
 
         if (results.length >= 100) {
@@ -2062,7 +2093,7 @@
 
   async function start() {
     try {
-            loadSpeechVoices();
+      loadSpeechVoices();
       buildTranslationSelect();
       setupEvents();
 
