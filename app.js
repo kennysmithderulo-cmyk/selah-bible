@@ -626,45 +626,187 @@
           if (part.poem > 1) {
             span.classList.add('p2');
           }
-        }
+function renderChapter(data) {
+  const content =
+    data?.chapter?.content || [];
 
-        if (first) {
-          span.appendChild(number);
-          first = false;
-        }
+  if (!Array.isArray(content) || !content.length) {
+    throw new Error(
+      'The chapter response contains no content.'
+    );
+  }
 
-        span.appendChild(
-          document.createTextNode(text)
+  const fragment =
+    document.createDocumentFragment();
+
+  let paragraph = null;
+
+  state.verses = [];
+
+  function createParagraph() {
+    paragraph =
+      document.createElement('p');
+
+    fragment.appendChild(paragraph);
+  }
+
+  function appendText(parent, text) {
+    if (!text) {
+      return;
+    }
+
+    parent.appendChild(
+      document.createTextNode(text)
+    );
+  }
+
+  content.forEach((item) => {
+    if (!item || typeof item !== 'object') {
+      return;
+    }
+
+    if (
+      item.type === 'heading' ||
+      item.type === 'subtitle'
+    ) {
+      paragraph = null;
+
+      const heading =
+        document.createElement('h3');
+
+      heading.textContent =
+        cleanText(
+          textFromContent(item.content)
         );
 
-        verse.appendChild(span);
-      });
-
-      if (first) {
-        verse.appendChild(number);
+      if (heading.textContent) {
+        fragment.appendChild(heading);
       }
 
-      if (paragraph.childNodes.length) {
-        paragraph.appendChild(
-          document.createTextNode(' ')
+      return;
+    }
+
+    if (item.type === 'line_break') {
+      paragraph = null;
+      return;
+    }
+
+    if (item.type !== 'verse') {
+      return;
+    }
+
+    if (!paragraph) {
+      createParagraph();
+    }
+
+    const verse =
+      document.createElement('span');
+
+    verse.className = 'verse';
+    verse.dataset.v = String(item.number);
+    verse.id = `v${item.number}`;
+
+    const number =
+      document.createElement('sup');
+
+    number.className = 'vnum';
+    number.textContent = String(item.number);
+
+    const plainParts = [];
+    let numberInserted = false;
+
+    const parts =
+      Array.isArray(item.content)
+        ? item.content
+        : [item.content];
+
+    parts.forEach((part) => {
+      if (
+        part &&
+        typeof part === 'object' &&
+        part.lineBreak
+      ) {
+        verse.appendChild(
+          document.createElement('br')
         );
+
+        return;
       }
 
-      paragraph.appendChild(verse);
+      const text =
+        typeof part === 'string'
+          ? part
+          : textFromContent(part);
 
-      state.verses.push({
-        n: Number(item.number),
-        text: cleanText(
-          plainText.join(' ')
-        ),
-        el: verse
-      });
+      if (!text) {
+        return;
+      }
+
+      plainParts.push(text);
+
+      const span =
+        document.createElement('span');
+
+      if (
+        part &&
+        typeof part === 'object' &&
+        part.poem
+      ) {
+        span.classList.add('poem-line');
+
+        if (Number(part.poem) > 1) {
+          span.classList.add('p2');
+        }
+      }
+
+      if (
+        part &&
+        typeof part === 'object' &&
+        part.wordsOfJesus
+      ) {
+        span.classList.add('jesus');
+      }
+
+      if (!numberInserted) {
+        span.appendChild(number);
+        numberInserted = true;
+      }
+
+      appendText(span, text);
+      verse.appendChild(span);
     });
 
-    el.scripture.replaceChildren(fragment);
+    if (!numberInserted) {
+      verse.appendChild(number);
+    }
 
-    applyBookmarkMarks();
+    if (paragraph.childNodes.length) {
+      paragraph.appendChild(
+        document.createTextNode(' ')
+      );
+    }
+
+    paragraph.appendChild(verse);
+
+    state.verses.push({
+      n: Number(item.number),
+      text: cleanText(
+        plainParts.join(' ')
+      ),
+      el: verse
+    });
+  });
+
+  if (!state.verses.length) {
+    throw new Error(
+      'The chapter loaded, but no verses were found.'
+    );
   }
+
+  el.scripture.replaceChildren(fragment);
+
+  applyBookmarkMarks();
+}
   async function loadChapter(
     bookId = state.bookId,
     chapter = state.chapter,
