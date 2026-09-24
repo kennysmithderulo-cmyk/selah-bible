@@ -840,7 +840,7 @@
     updatePlayButton();
   }
 
-  function speakChapter() {
+    function speakChapter(startVerse = null) {
     if (!('speechSynthesis' in window)) {
       showToast(
         'Device voice is unavailable.'
@@ -849,30 +849,42 @@
       return;
     }
 
-    const text = state.verses
-      .map((verse) => verse.text)
-      .join(' ');
-
-    const speech =
-      new SpeechSynthesisUtterance(text);
-
-    speech.rate = state.speed;
-
-    speech.onend = () => {
-      state.playing = false;
-      updatePlayButton();
-    };
-
-    speech.onerror = () => {
-      state.playing = false;
-      updatePlayButton();
-    };
-
     window.speechSynthesis.cancel();
-    window.speechSynthesis.speak(speech);
+
+    let startIndex = 0;
+
+    if (startVerse !== null) {
+      const found =
+        state.verses.findIndex(
+          (verse) =>
+            verse.n === Number(startVerse)
+        );
+
+      if (found >= 0) {
+        startIndex = found;
+      }
+    } else if (state.currentVerse) {
+      const found =
+        state.verses.findIndex(
+          (verse) =>
+            verse.n === state.currentVerse
+        );
+
+      if (found >= 0) {
+        startIndex = found;
+      }
+    }
+
+    state.speechIndex = startIndex;
+    state.speechToken += 1;
+
+    const token =
+      state.speechToken;
 
     state.playing = true;
     updatePlayButton();
+
+    speakNextVerse(token);
   }
 
   function updatePlayButton() {
