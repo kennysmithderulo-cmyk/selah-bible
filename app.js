@@ -798,12 +798,12 @@
     updatePlayButton();
   }
 
-  function play() {
+    function play(startVerse = null) {
     if (
       state.mode === 'speech' ||
       !el.audio.src
     ) {
-      speakChapter();
+      speakChapter(startVerse);
       return;
     }
 
@@ -813,12 +813,15 @@
         updatePlayButton();
       })
       .catch(() => {
-        speakChapter();
+        state.mode = 'speech';
+        speakChapter(startVerse);
       });
   }
 
-  function pause() {
+    function pause() {
     el.audio.pause();
+
+    state.speechToken += 1;
 
     if ('speechSynthesis' in window) {
       window.speechSynthesis.cancel();
@@ -828,15 +831,22 @@
     updatePlayButton();
   }
 
-  function stopPlayback() {
+    function stopPlayback() {
     el.audio.pause();
-    el.audio.currentTime = 0;
+
+    if (el.audio) {
+      el.audio.currentTime = 0;
+    }
+
+    state.speechToken += 1;
 
     if ('speechSynthesis' in window) {
       window.speechSynthesis.cancel();
     }
 
     state.playing = false;
+    state.speechIndex = 0;
+
     updatePlayButton();
   }
 
