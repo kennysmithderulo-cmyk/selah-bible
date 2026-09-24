@@ -1,19 +1,31 @@
 (() => {
   'use strict';
 
-  const API = 'https://bible.helloao.org';
-  const SUPABASE_URL =
-    'https://ylspdrjrvhixrregmqtg.supabase.co';
-  const SUPABASE_KEY =
-    'sb_publishable_Ar8T3NCh77i6YZfjN88wBQ_f8j7oool';
-
   const $ = (id) => document.getElementById(id);
+
+  const state = {
+    tr: 'BSB',
+    books: [],
+    bookId: 'JHN',
+    chapter: 3,
+    data: null,
+    verses: [],
+    narrator: 'souer',
+    mode: 'audio',
+    playing: false,
+    loading: false,
+    currentVerse: 0,
+    speed: 1,
+    follow: true,
+    autoNext: true,
+    bookmarks: []
+  };
 
   const el = {
     audio: $('audio'),
     scripture: $('scripture'),
-    refLabel: $('refLabel'),
     refBtn: $('refBtn'),
+    refLabel: $('refLabel'),
     trSel: $('translationSel'),
     narSel: $('narratorSel'),
     playBtn: $('playBtn'),
@@ -44,19 +56,19 @@
     popBookmark: $('popBookmark'),
     popBookmarkLabel: $('popBookmarkLabel'),
     toast: $('toast'),
-    themeBtn: $('themeBtn'),
-    themeLabel: $('themeLabel'),
-    settingsBtn: $('settingsBtn'),
-    settings: $('settingsPanel'),
     searchBtn: $('searchBtn'),
-    bookmarksBtn: $('bookmarksBtn'),
-    bmBadge: $('bmBadge'),
     searchDlg: $('searchDlg'),
     searchForm: $('searchForm'),
     searchInput: $('searchInput'),
     searchBody: $('searchBody'),
+    bookmarksBtn: $('bookmarksBtn'),
     bookmarksDlg: $('bookmarksDlg'),
+    bmBadge: $('bmBadge'),
     bmBody: $('bmBody'),
+    settingsBtn: $('settingsBtn'),
+    settings: $('settingsPanel'),
+    themeBtn: $('themeBtn'),
+    themeLabel: $('themeLabel'),
     fontUp: $('fontUp'),
     fontDown: $('fontDown'),
     followToggle: $('followToggle'),
@@ -64,45 +76,12 @@
     numsToggle: $('numsToggle')
   };
 
-  const state = {
-    tr: 'BSB',
-    books: [],
-    bookId: 'JHN',
-    chapter: 3,
-    translation: null,
-    data: null,
-    verses: [],
-    narrator: 'souer',
-    timings: null,
-    mode: 'audio',
-    playing: false,
-    loading: false,
-    currentVerse: 0,
-    ttsIndex: 0,
-    speed: 1,
-    follow: true,
-    autoNext: true,
-    selectedVerse: null,
-    bookmarks: [],
-    searchScope: 'all',
-    loadToken: 0
-  };
-
   const cache = new Map();
-  const synth =
-    'speechSynthesis' in window
-      ? window.speechSynthesis
-      : null;
-
-  let db = null;
-  let deviceId = null;
-  let searchToken = 0;
-
-  const TRANSLATIONS = [
+  const translations = [
     {
-      group: 'English',
+      name: 'English',
       items: [
-        ['BSB', 'Berean Standard Bible · Audio'],
+        ['BSB', 'Berean Standard Bible'],
         ['eng_kjv', 'King James Version'],
         ['ENGWEBP', 'World English Bible'],
         ['eng_asv', 'American Standard Version'],
@@ -113,18 +92,18 @@
       ]
     },
     {
-      group: 'Ghana and Africa',
+      name: 'Ghana and Africa',
       items: [
         ['twi_asa', 'Asante Twi'],
         ['twi_aka', 'Akuapem Twi'],
-        ['ewe_bib', 'Eʋegbe (Ewe)'],
+        ['ewe_bib', 'Eʋegbe'],
         ['hau_bib', 'Hausa'],
         ['yor_bib', 'Yorùbá'],
         ['swh_onmm', 'Kiswahili']
       ]
     },
     {
-      group: 'Other languages',
+      name: 'Other languages',
       items: [
         ['fra_lsg', 'Français — Louis Segond'],
         ['spa_r09', 'Español — Reina-Valera 1909'],
@@ -134,15 +113,7 @@
     }
   ];
 
-  const NARRATORS = {
-    souer: 'Souer',
-    hays: 'Hays',
-    david: 'David',
-    gilbert: 'Gilbert',
-    device: 'Device voice'
-  };
-
-  const BOOK_ALIASES = {
+  const aliases = {
     gen: 'GEN',
     ex: 'EXO',
     exod: 'EXO',
@@ -220,7 +191,7 @@
     jude: 'JUD',
     rev: 'REV'
   };
-    function cleanText(value) {
+  function cleanText(value) {
     return String(value || '')
       .replace(/s+/g, ' ')
       .replace(/ ([”’.,;:!?])/g, '$1')
@@ -228,7 +199,9 @@
   }
 
   function textFromContent(value) {
-    if (typeof value === 'string') return value;
+    if (typeof value === 'string') {
+      return value;
+    }
 
     if (Array.isArray(value)) {
       return value
@@ -244,67 +217,34 @@
       if (value.content !== undefined) {
         return textFromContent(value.content);
       }
-
-      if (typeof value.heading === 'string') {
-        return value.heading;
-      }
-
-      if (typeof value.title === 'string') {
-        return value.title;
-      }
     }
 
     return '';
   }
 
-  function formatTime(value) {
-    if (!Number.isFinite(value) || value < 0) {
-      value = 0;
-    }
-
-    const minutes = Math.floor(value / 60);
-    const seconds = Math.floor(value % 60);
-
-    return `${minutes}:${String(seconds).padStart(2, '0')}`;
-  }
-
   function escapeHTML(value) {
     return String(value).replace(
       /[&<>"']/g,
-      (character) =>
-        ({
-          '&': '&amp;',
-          '<': '&lt;',
-          '>': '&gt;',
-          '"': '&quot;',
-          "'": '&#039;'
-        })[character]
+      (character) => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#039;'
+      })[character]
     );
   }
 
-  function toast(message) {
-    if (!el.toast) return;
-
-    el.toast.textContent = message;
-    el.toast.classList.add('show');
-
-    clearTimeout(toast.timer);
-
-    toast.timer = setTimeout(() => {
-      el.toast.classList.remove('show');
-    }, 2400);
-  }
-
-  function bookName(book) {
-    return book?.commonName ||
-      book?.name ||
-      book?.id ||
+  function bookName(item) {
+    return item?.commonName ||
+      item?.name ||
+      item?.id ||
       '';
   }
 
   function currentBook() {
     return state.books.find(
-      (book) => book.id === state.bookId
+      (item) => item.id === state.bookId
     );
   }
 
@@ -312,83 +252,74 @@
     return `${bookName(currentBook())} ${state.chapter}`;
   }
 
-  async function getJSON(path) {
-    const url = path.startsWith('http')
-      ? path
-      : API + path;
+  function timeText(seconds) {
+    if (!Number.isFinite(seconds) || seconds < 0) {
+      seconds = 0;
+    }
 
+    return `${Math.floor(seconds / 60)}:` +
+      `${String(Math.floor(seconds % 60)).padStart(2, '0')}`;
+  }
+
+  function showToast(message) {
+    if (!el.toast) {
+      return;
+    }
+
+    el.toast.textContent = message;
+    el.toast.classList.add('show');
+
+    clearTimeout(showToast.timer);
+
+    showToast.timer = setTimeout(() => {
+      el.toast.classList.remove('show');
+    }, 2500);
+  }
+
+  async function getJSON(url) {
     if (cache.has(url)) {
       return cache.get(url);
     }
 
     const request = fetch(url).then((response) => {
       if (!response.ok) {
-        throw new Error(
-          `Request failed: HTTP ${response.status}`
-        );
+        throw new Error(`Request failed: ${response.status}`);
       }
 
       return response.json();
     });
 
     cache.set(url, request);
-    request.catch(() => cache.delete(url));
+
+    request.catch(() => {
+      cache.delete(url);
+    });
 
     return request;
   }
-
-  function setupDatabase() {
-    if (
-      !window.supabase ||
-      typeof window.supabase.createClient !== 'function'
-    ) {
-      console.warn(
-        'Supabase unavailable. Cloud saving is disabled.'
-      );
+  function buildTranslationSelect() {
+    if (!el.trSel) {
       return;
     }
 
-    db = window.supabase.createClient(
-      SUPABASE_URL,
-      SUPABASE_KEY
-    );
-
-    const key = 'selah_device_id';
-
-    deviceId =
-      localStorage.getItem(key) ||
-      (
-        crypto.randomUUID
-          ? crypto.randomUUID()
-          : `device-${Date.now()}-${Math.random()
-              .toString(36)
-              .slice(2)}`
-      );
-
-    localStorage.setItem(key, deviceId);
-  }
-
-  function buildTranslationSelect() {
     el.trSel.innerHTML = '';
 
-    TRANSLATIONS.forEach((group) => {
-      if (!group.items.length) return;
+    translations.forEach((group) => {
+      const optgroup =
+        document.createElement('optgroup');
 
-      const optgroup = document.createElement('optgroup');
-      optgroup.label = group.group;
+      optgroup.label = group.name;
 
-      group.items
-        .slice()
-        .sort((a, b) => a[1].localeCompare(b[1]))
-        .forEach(([id, label]) => {
-          const option = document.createElement('option');
+      group.items.forEach(([id, label]) => {
+        const option =
+          document.createElement('option');
 
-          option.value = id;
-          option.textContent = label;
-          option.selected = id === state.tr;
+        option.value = id;
+        option.textContent = label;
+        option.selected = id === state.tr;
 
-          optgroup.appendChild(option);
-        });
+        optgroup.appendChild(option);
+      });
 
       el.trSel.appendChild(optgroup);
     });
@@ -396,187 +327,60 @@
     el.trSel.value = state.tr;
   }
 
-  async function loadAvailableTranslations() {
-    try {
-      const data = await getJSON(
-        '/api/available_translations.json'
-      );
-
-      const available = Array.isArray(data?.translations)
-        ? data.translations
-        : [];
-
-      const known = new Set(
-        TRANSLATIONS.flatMap((group) =>
-          group.items.map(([id]) => id)
-        )
-      );
-
-      const groups = new Map();
-
-      available.forEach((item) => {
-        if (!item?.id || known.has(item.id)) {
-          return;
-        }
-
-        const language =
-          item.languageEnglishName ||
-          item.languageName ||
-          item.language ||
-          'Other languages';
-
-        const groupName =
-          language.toLowerCase().includes('english')
-            ? 'More English translations'
-            : language.toLowerCase().includes('twi') ||
-              language.toLowerCase().includes('akan') ||
-              language.toLowerCase().includes('ewe') ||
-              language.toLowerCase().includes('hausa') ||
-              language.toLowerCase().includes('yoruba') ||
-              language.toLowerCase().includes('swahili')
-              ? 'Ghana and Africa'
-              : language;
-
-        if (!groups.has(groupName)) {
-          groups.set(groupName, []);
-        }
-
-        const name =
-          item.englishName ||
-          item.name ||
-          item.shortName ||
-          item.id;
-
-        const label =
-          item.shortName &&
-          item.shortName !== item.englishName
-            ? `${name} (${item.shortName})`
-            : name;
-
-        groups.get(groupName).push([
-          item.id,
-          `${label} · ${language}`
-        ]);
-
-        known.add(item.id);
-      });
-
-      groups.forEach((items, group) => {
-        TRANSLATIONS.push({
-          group,
-          items
-        });
-      });
-    } catch (error) {
-      console.warn(
-        'Translation discovery failed:',
-        error
-      );
-    }
-          }
-    async function loadBooks() {
+  async function loadBooks() {
     const data = await getJSON(
       `/api/${encodeURIComponent(state.tr)}/books.json`
     );
 
-    if (!Array.isArray(data?.books)) {
+    if (!Array.isArray(data.books)) {
       throw new Error(
-        `No books were returned for ${state.tr}.`
+        `No books were found for ${state.tr}.`
       );
     }
 
-    state.translation = data.translation || null;
-
     state.books = data.books
-      .map((book) => ({
-        ...book,
-        order: Number(book.order),
+      .map((item) => ({
+        ...item,
+        order: Number(item.order),
         numberOfChapters: Number(
-          book.numberOfChapters
+          item.numberOfChapters
         )
       }))
-      .filter((book) =>
-        book.id &&
-        Number.isFinite(book.order) &&
-        Number.isFinite(book.numberOfChapters) &&
-        book.numberOfChapters > 0
+      .filter((item) =>
+        item.id &&
+        item.numberOfChapters > 0
       )
       .sort((a, b) => a.order - b.order);
 
+    state.translation =
+      data.translation || null;
+
     if (!state.books.length) {
       throw new Error(
-        `No usable books were returned for ${state.tr}.`
+        'This translation contains no books.'
       );
     }
-
-    document.documentElement.dir =
-      state.translation?.textDirection === 'rtl'
-        ? 'rtl'
-        : 'ltr';
-  }
-
-  function updateHeader() {
-    const book = currentBook();
-    const name = bookName(book);
-
-    el.refLabel.textContent =
-      `${name} ${state.chapter}`;
-
-    el.chapterBook.textContent = name;
-    el.chapterNum.textContent = state.chapter;
-
-    el.trNote.textContent =
-      state.translation?.englishName ||
-      state.translation?.name ||
-      state.tr;
-
-    el.bookTitle.textContent =
-      book?.title ||
-      (book?.order >= 40
-        ? 'New Testament'
-        : 'Old Testament');
-
-    document.title =
-      `${name} ${state.chapter} — Selah`;
-
-    const previous = previousReference();
-    const next = nextReference();
-
-    el.prevChap.disabled = !previous;
-    el.nextChap.disabled = !next;
-
-    el.prevLabel.textContent = previous
-      ? `${bookName(
-          state.books.find(
-            (item) => item.id === previous[0]
-          )
-        )} ${previous[1]}`
-      : 'Previous';
-
-    el.nextLabel.textContent = next
-      ? `${bookName(
-          state.books.find(
-            (item) => item.id === next[0]
-          )
-        )} ${next[1]}`
-      : 'Next';
   }
 
   function previousReference() {
     if (state.chapter > 1) {
-      return [state.bookId, state.chapter - 1];
+      return [
+        state.bookId,
+        state.chapter - 1
+      ];
     }
 
     const index = state.books.findIndex(
-      (book) => book.id === state.bookId
+      (item) => item.id === state.bookId
     );
 
     if (index > 0) {
-      const book = state.books[index - 1];
+      const previous =
+        state.books[index - 1];
 
       return [
-        book.id,
-        book.numberOfChapters
+        previous.id,
+        previous.numberOfChapters
       ];
     }
 
@@ -584,11 +388,11 @@
   }
 
   function nextReference() {
-    const book = currentBook();
+    const current = currentBook();
 
     if (
-      book &&
-      state.chapter < book.numberOfChapters
+      current &&
+      state.chapter < current.numberOfChapters
     ) {
       return [
         state.bookId,
@@ -597,7 +401,7 @@
     }
 
     const index = state.books.findIndex(
-      (book) => book.id === state.bookId
+      (item) => item.id === state.bookId
     );
 
     if (
@@ -613,6 +417,71 @@
     return null;
   }
 
+  function updateHeader() {
+    const current = currentBook();
+    const name = bookName(current);
+
+    if (el.refLabel) {
+      el.refLabel.textContent =
+        `${name} ${state.chapter}`;
+    }
+
+    if (el.chapterBook) {
+      el.chapterBook.textContent = name;
+    }
+
+    if (el.chapterNum) {
+      el.chapterNum.textContent = state.chapter;
+    }
+
+    if (el.bookTitle) {
+      el.bookTitle.textContent =
+        current?.title ||
+        (
+          current?.order >= 40
+            ? 'New Testament'
+            : 'Old Testament'
+        );
+    }
+
+    if (el.trNote) {
+      el.trNote.textContent =
+        state.translation?.englishName ||
+        state.translation?.name ||
+        state.tr;
+    }
+
+    const previous = previousReference();
+    const next = nextReference();
+
+    if (el.prevChap) {
+      el.prevChap.disabled = !previous;
+    }
+
+    if (el.nextChap) {
+      el.nextChap.disabled = !next;
+    }
+
+    if (el.prevLabel) {
+      el.prevLabel.textContent = previous
+        ? `${bookName(
+            state.books.find(
+              (item) => item.id === previous[0]
+            )
+          )} ${previous[1]}`
+        : 'Previous';
+    }
+
+    if (el.nextLabel) {
+      el.nextLabel.textContent = next
+        ? `${bookName(
+            state.books.find(
+              (item) => item.id === next[0]
+            )
+          )} ${next[1]}`
+        : 'Next';
+    }
+  }
   function renderChapter(data) {
     const content =
       data?.chapter?.content || [];
@@ -627,10 +496,13 @@
       document.createDocumentFragment();
 
     let paragraph = null;
+
     state.verses = [];
 
     function newParagraph() {
-      paragraph = document.createElement('p');
+      paragraph =
+        document.createElement('p');
+
       fragment.appendChild(paragraph);
     }
 
@@ -652,30 +524,14 @@
         return;
       }
 
-      if (item.type === 'hebrew_subtitle') {
-        paragraph = null;
-
-        const subtitle =
-          document.createElement('p');
-
-        subtitle.className = 'subtitle';
-        subtitle.textContent = cleanText(
-          textFromContent(item.content)
-        );
-
-        if (subtitle.textContent) {
-          fragment.appendChild(subtitle);
-        }
-
-        return;
-      }
-
       if (item.type === 'line_break') {
         paragraph = null;
         return;
       }
 
-      if (item.type !== 'verse') return;
+      if (item.type !== 'verse') {
+        return;
+      }
 
       if (!paragraph) {
         newParagraph();
@@ -706,6 +562,7 @@
           verse.appendChild(
             document.createElement('br')
           );
+
           return;
         }
 
@@ -714,7 +571,9 @@
             ? part
             : part?.text || '';
 
-        if (!text) return;
+        if (!text) {
+          return;
+        }
 
         plainText.push(text);
 
@@ -723,7 +582,9 @@
 
         if (part?.poem) {
           span.className =
-            `poem-line${part.poem > 1 ? ' p2' : ''}`;
+            `poem-line${
+              part.poem > 1 ? ' p2' : ''
+            }`;
         }
 
         if (part?.wordsOfJesus) {
@@ -756,22 +617,22 @@
 
       state.verses.push({
         n: Number(item.number),
-        text: cleanText(plainText.join(' ')),
+        text: cleanText(
+          plainText.join(' ')
+        ),
         el: verse
       });
     });
 
     el.scripture.replaceChildren(fragment);
+
     applyBookmarkMarks();
   }
-
   async function loadChapter(
-    bookId,
-    chapter,
+    bookId = state.bookId,
+    chapter = state.chapter,
     options = {}
   ) {
-    const token = ++state.loadToken;
-
     stopPlayback();
 
     state.bookId = bookId;
@@ -784,20 +645,19 @@
 
     try {
       const data = await getJSON(
-        `/api/${state.tr}/${bookId}/${chapter}.json`
+        `/api/chapter?translation=${encodeURIComponent(
+          state.tr
+        )}` +
+        `&book=${encodeURIComponent(state.bookId)}` +
+        `&chapter=${encodeURIComponent(
+          state.chapter
+        )}`
       );
-
-      if (token !== state.loadToken) {
-        return;
-      }
 
       state.data = data;
 
       renderChapter(data);
-      setupAudioSources(data);
-      renderProgress();
-
-      restorePosition();
+      setupAudio(data);
 
       if (options.verse) {
         const verse = state.verses.find(
@@ -805,21 +665,21 @@
             item.n === Number(options.verse)
         );
 
-        verse?.el.scrollIntoView({
-          behavior: 'smooth',
-          block: 'center'
-        });
-      }
-
-      if (options.autoplay) {
-        play(options.verse || null);
+        if (verse) {
+          verse.el.scrollIntoView({
+            behavior: 'smooth',
+            block: 'center'
+          });
+        }
       }
     } catch (error) {
       console.error(error);
 
       el.scripture.innerHTML = `
         <div class="errorbox">
-          <strong>Could not load ${escapeHTML(reference())}.</strong>
+          <strong>
+            Could not load ${escapeHTML(reference())}.
+          </strong>
           <p>${escapeHTML(error.message)}</p>
           <button id="retryBtn" type="button">
             Try again
@@ -827,809 +687,409 @@
         </div>
       `;
 
-      $('retryBtn')?.addEventListener(
-        'click',
-        () => loadChapter(bookId, chapter, options)
-      );
+      const retryBtn = $('retryBtn');
+
+      if (retryBtn) {
+        retryBtn.addEventListener(
+          'click',
+          () => loadChapter(
+            state.bookId,
+            state.chapter,
+            options
+          )
+        );
+      }
     }
   }
-    function setupAudioSources(data) {
+  function setupAudio(data) {
     const links =
       data?.thisChapterAudioLinks || {};
 
-    el.narSel.innerHTML = '';
-
-    Object.keys(links).forEach((id) => {
-      const option =
-        document.createElement('option');
-
-      option.value = id;
-      option.textContent =
-        NARRATORS[id] || id;
-
-      el.narSel.appendChild(option);
-    });
-
-    if (synth) {
-      const option =
-        document.createElement('option');
-
-      option.value = 'device';
-      option.textContent =
-        NARRATORS.device;
-
-      el.narSel.appendChild(option);
+    if (!el.audio) {
+      return;
     }
 
-    let narrator = state.narrator;
+    const audioUrl =
+      links[state.narrator] ||
+      links.souer ||
+      links.hays ||
+      links.david ||
+      links.gilbert ||
+      '';
 
-    if (
-      narrator !== 'device' &&
-      !links[narrator]
-    ) {
-      narrator = Object.keys(links)[0] || '';
-    }
-
-    if (!narrator && synth) {
-      narrator = 'device';
-    }
-
-    state.narrator = narrator;
-    el.narSel.value = narrator;
-
-    applyNarrator(narrator);
-  }
-
-  async function applyNarrator(narrator) {
-    const links =
-      state.data?.thisChapterAudioLinks || {};
-
-    state.timings = null;
-
-    if (
-      narrator !== 'device' &&
-      links[narrator]
-    ) {
+    if (audioUrl) {
       state.mode = 'audio';
-      el.audio.src = links[narrator];
-      el.audio.preload = 'metadata';
+      el.audio.src = audioUrl;
       el.audio.playbackRate = state.speed;
+      el.audio.load();
     } else {
       state.mode = 'tts';
       el.audio.removeAttribute('src');
       el.audio.load();
     }
 
-    renderProgress();
+    updatePlayButton();
   }
 
-  function setPlayingUI() {
-    el.playBtn.classList.toggle(
-      'is-playing',
-      state.playing
-    );
-
-    el.playBtn.classList.toggle(
-      'is-loading',
-      state.loading
-    );
-
-    el.playBtn.setAttribute(
-      'aria-label',
-      state.playing ? 'Pause' : 'Play'
-    );
-  }
-
-  function stopPlayback() {
-    synth?.cancel();
-    el.audio.pause();
-
-    state.playing = false;
-    state.loading = false;
-
-    setPlayingUI();
-  }
-
-  function play(fromVerse = null) {
-    if (!state.data) return;
-
-    if (state.mode === 'audio') {
-      if (fromVerse && state.timings) {
-        seekToVerse(fromVerse);
-      }
-
-      state.loading = true;
-      setPlayingUI();
-
-      el.audio.play()?.catch((error) => {
-        console.error(error);
-
-        state.playing = false;
-        state.loading = false;
-
-        setPlayingUI();
-        toast('Audio could not start.');
-      });
-
+  function speakChapter() {
+    if (!('speechSynthesis' in window)) {
+      showToast('Speech is not available.');
       return;
     }
 
-    if (!synth) {
-      toast('Device voice is unavailable.');
-      return;
-    }
+    window.speechSynthesis.cancel();
 
-    if (fromVerse) {
-      const index = state.verses.findIndex(
-        (verse) => verse.n === fromVerse
-      );
+    const text = state.verses
+      .map((verse) => verse.text)
+      .join(' ');
 
-      if (index >= 0) {
-        state.ttsIndex = index;
-      }
-    }
+    const speech =
+      new SpeechSynthesisUtterance(text);
+
+    speech.rate = state.speed;
+
+    speech.onend = () => {
+      state.playing = false;
+      updatePlayButton();
+    };
+
+    speech.onerror = () => {
+      state.playing = false;
+      updatePlayButton();
+    };
 
     state.playing = true;
-    setPlayingUI();
-    speakCurrent();
+    updatePlayButton();
+
+    window.speechSynthesis.speak(speech);
+  }
+
+  function play() {
+    if (state.mode === 'tts' || !el.audio.src) {
+      speakChapter();
+      return;
+    }
+
+    el.audio.play()
+      .then(() => {
+        state.playing = true;
+        updatePlayButton();
+      })
+      .catch(() => {
+        speakChapter();
+      });
   }
 
   function pause() {
-    synth?.cancel();
-    el.audio.pause();
+    el.audio?.pause();
+
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+    }
+
+    state.playing = false;
+    updatePlayButton();
+  }
+
+  function stopPlayback() {
+    if (el.audio) {
+      el.audio.pause();
+      el.audio.currentTime = 0;
+    }
+
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+    }
 
     state.playing = false;
     state.loading = false;
 
-    setPlayingUI();
+    updatePlayButton();
   }
 
-  function speakCurrent() {
-    if (!state.playing || !synth) {
+  function updatePlayButton() {
+    if (!el.playBtn) {
       return;
     }
 
-    const verse =
-      state.verses[state.ttsIndex];
+    el.playBtn.textContent =
+      state.playing ? 'Pause' : 'Play';
+  }
 
-    if (!verse) {
-      state.playing = false;
-      setPlayingUI();
+  function updateProgress() {
+    if (!el.audio) {
       return;
     }
-
-    markVerse(verse.n);
-
-    const utterance =
-      new SpeechSynthesisUtterance(verse.text);
-
-    utterance.rate = state.speed;
-
-    utterance.onend = () => {
-      if (!state.playing) return;
-
-      state.ttsIndex += 1;
-
-      if (
-        state.ttsIndex >=
-        state.verses.length
-      ) {
-        state.playing = false;
-        setPlayingUI();
-
-        if (state.autoNext) {
-          const next = nextReference();
-
-          if (next) {
-            loadChapter(
-              next[0],
-              next[1],
-              { autoplay: true }
-            );
-          }
-        }
-
-        return;
-      }
-
-      speakCurrent();
-    };
-
-    utterance.onerror = () => {
-      state.playing = false;
-      setPlayingUI();
-    };
-
-    synth.speak(utterance);
-  }
-
-  function markVerse(number) {
-    state.verses.forEach((verse) => {
-      verse.el.classList.toggle(
-        'is-playing',
-        verse.n === Number(number)
-      );
-    });
-
-    state.currentVerse = Number(number) || 0;
-
-    el.tNow.textContent = number
-      ? `${reference()}:${number}`
-      : reference();
-
-    if (number) {
-      savePosition(number);
-    }
-
-    if (
-      number &&
-      state.follow &&
-      state.playing
-    ) {
-      const verse = state.verses.find(
-        (item) =>
-          item.n === Number(number)
-      );
-
-      verse?.el.scrollIntoView({
-        behavior: 'smooth',
-        block: 'center'
-      });
-    }
-  }
-
-  function seekToVerse(number) {
-    if (!state.timings) return;
-
-    const time =
-      state.timings[Number(number) - 1];
-
-    if (typeof time !== 'number') return;
-
-    el.audio.currentTime =
-      Math.max(0, time - 0.05);
-
-    markVerse(number);
-  }
-
-  function renderProgress() {
-    const duration =
-      Number.isFinite(el.audio.duration)
-        ? el.audio.duration
-        : 0;
 
     const current =
       Number.isFinite(el.audio.currentTime)
         ? el.audio.currentTime
         : 0;
 
-    el.seek.max = duration || 1000;
-    el.seek.value = duration ? current : 0;
+    const duration =
+      Number.isFinite(el.audio.duration)
+        ? el.audio.duration
+        : 0;
 
-    el.tCur.textContent =
-      formatTime(current);
+    if (el.seek) {
+      el.seek.max = duration || 100;
+      el.seek.value = duration
+        ? current
+        : 0;
+    }
 
-    el.tDur.textContent =
-      formatTime(duration);
-  }
+    if (el.tCur) {
+      el.tCur.textContent =
+        timeText(current);
+    }
 
-  async function savePosition(verse) {
-    if (!db || !deviceId) return;
-
-    const { error } = await db
-      .from('selah_positions')
-      .upsert(
-        {
-          user_id: deviceId,
-          tr: state.tr,
-          book: state.bookId,
-          chapter: state.chapter,
-          verse: Number(verse) || 0,
-          narrator: state.narrator || null,
-          updated_at: new Date().toISOString()
-        },
-        { onConflict: 'user_id' }
-      );
-
-    if (error) {
-      console.warn(
-        'Position save failed:',
-        error.message
-      );
+    if (el.tDur) {
+      el.tDur.textContent =
+        timeText(duration);
     }
   }
 
-  async function restorePosition() {
-    if (!db || !deviceId) return;
-
-    const { data, error } = await db
-      .from('selah_positions')
-      .select('*')
-      .eq('user_id', deviceId)
-      .maybeSingle();
-
-    if (error || !data) return;
-
+  function updateCurrentVerse() {
     if (
-      data.tr !== state.tr ||
-      data.book !== state.bookId ||
-      Number(data.chapter) !== Number(state.chapter)
+      !el.audio ||
+      !state.verses.length ||
+      !Number.isFinite(el.audio.duration) ||
+      el.audio.duration <= 0
     ) {
       return;
     }
 
-    const verse = state.verses.find(
-      (item) =>
-        item.n === Number(data.verse)
+    const ratio =
+      el.audio.currentTime / el.audio.duration;
+
+    const index = Math.min(
+      state.verses.length - 1,
+      Math.floor(
+        ratio * state.verses.length
+      )
     );
 
-    verse?.el.scrollIntoView({
-      behavior: 'auto',
-      block: 'center'
-    });
-  }
+    const current =
+      state.verses[index];
 
-  async function loadBookmarks() {
-    if (!db || !deviceId) return;
+    state.currentVerse = current.n;
 
-    const { data, error } = await db
-      .from('selah_bookmarks')
-      .select('*')
-      .eq('user_id', deviceId)
-      .order('created_at', {
-        ascending: false
-      });
-
-    if (error) {
-      console.warn(
-        'Bookmark load failed:',
-        error.message
+    state.verses.forEach((verse) => {
+      verse.el.classList.toggle(
+        'is-playing',
+        verse.n === current.n
       );
-      return;
+    });
+
+    if (el.tNow) {
+      el.tNow.textContent =
+        `${reference()}:${current.n}`;
     }
 
-    state.bookmarks = data || [];
-
-    updateBookmarkBadge();
-    applyBookmarkMarks();
+    if (state.follow) {
+      current.el.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center'
+      });
+    }
+  }
+  function bookmarkKey(verseNumber) {
+    return [
+      state.tr,
+      state.bookId,
+      state.chapter,
+      verseNumber
+    ].join(':');
   }
 
-  function isBookmarked(book, chapter, verse, tr) {
-    return state.bookmarks.some(
-      (item) =>
-        item.tr === (tr || state.tr) &&
-        item.book === book &&
-        Number(item.chapter) === Number(chapter) &&
-        Number(item.verse) === Number(verse)
+  function isBookmarked(verseNumber) {
+    return state.bookmarks.includes(
+      bookmarkKey(verseNumber)
     );
-  }
-
-  async function toggleBookmark(verse) {
-    if (!db || !deviceId) {
-      toast('Bookmarks are unavailable.');
-      return;
-    }
-
-    const existing = state.bookmarks.find(
-      (item) =>
-        item.tr === state.tr &&
-        item.book === state.bookId &&
-        Number(item.chapter) === Number(state.chapter) &&
-        Number(item.verse) === Number(verse)
-    );
-
-    if (existing) {
-      const { error } = await db
-        .from('selah_bookmarks')
-        .delete()
-        .eq('id', existing.id);
-
-      if (error) {
-        toast('Could not remove bookmark.');
-        return;
-      }
-
-      toast('Bookmark removed.');
-    } else {
-      const verseData =
-        state.verses.find(
-          (item) =>
-            item.n === Number(verse)
-        );
-
-      const { error } = await db
-        .from('selah_bookmarks')
-        .insert({
-          user_id: deviceId,
-          tr: state.tr,
-          book: state.bookId,
-          chapter: state.chapter,
-          verse: Number(verse),
-          book_name: bookName(currentBook()),
-          text: verseData?.text || ''
-        });
-
-      if (error) {
-        console.error(error);
-        toast('Could not save bookmark.');
-        return;
-      }
-
-      toast('Bookmark saved.');
-    }
-
-    await loadBookmarks();
-    updatePopoverBookmark();
   }
 
   function applyBookmarkMarks() {
     state.verses.forEach((verse) => {
       verse.el.classList.toggle(
         'is-bookmarked',
-        isBookmarked(
-          state.bookId,
-          state.chapter,
-          verse.n,
-          state.tr
-        )
+        isBookmarked(verse.n)
       );
     });
   }
 
-  function updateBookmarkBadge() {
-    const count = state.bookmarks.length;
+  function loadBookmarks() {
+    try {
+      state.bookmarks = JSON.parse(
+        localStorage.getItem(
+          'selah_bookmarks'
+        ) || '[]'
+      );
+    } catch {
+      state.bookmarks = [];
+    }
 
-    el.bmBadge.hidden = count === 0;
-    el.bmBadge.textContent = String(count);
+    applyBookmarkMarks();
   }
 
-  function updatePopoverBookmark() {
-    if (!state.selectedVerse) return;
+  function saveBookmarks() {
+    localStorage.setItem(
+      'selah_bookmarks',
+      JSON.stringify(state.bookmarks)
+    );
+  }
+
+  function toggleBookmark(verseNumber) {
+    const key =
+      bookmarkKey(verseNumber);
+
+    if (isBookmarked(verseNumber)) {
+      state.bookmarks =
+        state.bookmarks.filter(
+          (item) => item !== key
+        );
+
+      showToast('Bookmark removed.');
+    } else {
+      state.bookmarks.push(key);
+      showToast('Bookmark saved.');
+    }
+
+    saveBookmarks();
+    applyBookmarkMarks();
+    updateBookmarkPopover();
+  }
+
+  function updateBookmarkPopover() {
+    if (
+      !el.popBookmarkLabel ||
+      state.currentVerse === 0
+    ) {
+      return;
+    }
 
     el.popBookmarkLabel.textContent =
-      isBookmarked(
-        state.bookId,
-        state.chapter,
-        state.selectedVerse,
-        state.tr
-      )
+      isBookmarked(state.currentVerse)
         ? 'Remove bookmark'
         : 'Bookmark';
   }
-    function openPicker() {
+  function openPicker() {
+    if (!el.picker) {
+      return;
+    }
+
     el.picker.hidden = false;
-    el.pickerTitle.textContent = 'Choose a book';
-    el.pickerBack.hidden = true;
-    renderBookPicker('');
+
+    if (el.pickerBack) {
+      el.pickerBack.hidden = true;
+    }
+
+    if (el.pickerTitle) {
+      el.pickerTitle.textContent =
+        'Choose a book';
+    }
+
+    renderBooks();
   }
 
-  function renderBookPicker(filter = '') {
-    const query = filter.trim().toLowerCase();
+  function renderBooks(filter = '') {
+    if (!el.pickerBody) {
+      return;
+    }
 
-    const oldTestament = state.books.filter(
-      (book) => book.order < 40
-    );
-
-    const newTestament = state.books.filter(
-      (book) => book.order >= 40
-    );
+    const query =
+      String(filter).toLowerCase();
 
     el.pickerBody.innerHTML = '';
 
-    function addSection(title, books) {
-      const matching = books.filter((book) =>
-        bookName(book)
-          .toLowerCase()
-          .includes(query)
-      );
-
-      if (!matching.length) return;
-
-      const heading = document.createElement('h3');
-      heading.className =
-        'picker-section-title';
-      heading.textContent = title;
-
-      el.pickerBody.appendChild(heading);
-
-      const grid = document.createElement('div');
-      grid.className = 'book-grid';
-
-      matching.forEach((book) => {
-        const button = document.createElement('button');
-        button.className = 'book-card';
-        button.type = 'button';
-
-        const name = document.createElement('strong');
-        name.textContent = bookName(book);
-
-        const count = document.createElement('span');
-        count.textContent =
-          `${book.numberOfChapters} chapters`;
-
-        button.append(name, count);
-
-        button.addEventListener(
-          'click',
-          () => {
-            state.bookId = book.id;
-            state.chapter = 1;
-            renderChapterPicker();
-          }
+    ['Old Testament', 'New Testament']
+      .forEach((section, sectionIndex) => {
+        const books = state.books.filter(
+          (item) =>
+            (
+              sectionIndex === 0
+                ? item.order < 40
+                : item.order >= 40
+            ) &&
+            bookName(item)
+              .toLowerCase()
+              .includes(query)
         );
 
-        grid.appendChild(button);
+        if (!books.length) {
+          return;
+        }
+
+        const heading =
+          document.createElement('h3');
+
+        heading.textContent = section;
+        el.pickerBody.appendChild(heading);
+
+        books.forEach((item) => {
+          const button =
+            document.createElement('button');
+
+          button.type = 'button';
+          button.textContent =
+            `${bookName(item)} ` +
+            `(${item.numberOfChapters})`;
+
+          button.addEventListener(
+            'click',
+            () => {
+              state.bookId = item.id;
+              renderChapters();
+            }
+          );
+
+          el.pickerBody.appendChild(button);
+        });
       });
-
-      el.pickerBody.appendChild(grid);
-    }
-
-    addSection('Old Testament', oldTestament);
-    addSection('New Testament', newTestament);
-
-    if (!el.pickerBody.children.length) {
-      el.pickerBody.innerHTML =
-        '<p>No books matched your search.</p>';
-    }
   }
 
-  function renderChapterPicker() {
-    const book = currentBook();
+  function renderChapters() {
+    const current = currentBook();
 
-    el.pickerTitle.textContent = bookName(book);
-    el.pickerBack.hidden = false;
+    if (!current || !el.pickerBody) {
+      return;
+    }
+
+    if (el.pickerBack) {
+      el.pickerBack.hidden = false;
+    }
+
+    if (el.pickerTitle) {
+      el.pickerTitle.textContent =
+        bookName(current);
+    }
+
     el.pickerBody.innerHTML = '';
 
-    const intro = document.createElement('p');
-    intro.className = 'picker-intro';
-    intro.textContent =
-      `Choose one of ${book.numberOfChapters} chapters.`;
-
-    el.pickerBody.appendChild(intro);
-
-    const grid = document.createElement('div');
-    grid.className = 'chapter-grid';
-
     for (
-      let chapter = 1;
-      chapter <= book.numberOfChapters;
-      chapter += 1
+      let number = 1;
+      number <= current.numberOfChapters;
+      number += 1
     ) {
       const button =
         document.createElement('button');
 
-      button.className = 'chapter-card';
       button.type = 'button';
-      button.textContent = String(chapter);
-
-      if (chapter === state.chapter) {
-        button.classList.add('is-current');
-      }
+      button.textContent = number;
 
       button.addEventListener(
         'click',
         () => {
           closeDialogs();
+
           loadChapter(
             state.bookId,
-            chapter
+            number
           );
         }
       );
 
-      grid.appendChild(button);
+      el.pickerBody.appendChild(button);
     }
-
-    el.pickerBody.appendChild(grid);
-  }
-
-  function openBookmarks() {
-    el.bookmarksDlg.hidden = false;
-    renderBookmarks();
-  }
-
-  function renderBookmarks() {
-    el.bmBody.innerHTML = '';
-
-    if (!state.bookmarks.length) {
-      el.bmBody.innerHTML =
-        '<p>No bookmarks yet.</p>';
-      return;
-    }
-
-    state.bookmarks.forEach((bookmark) => {
-      const wrapper = document.createElement('div');
-      wrapper.className = 'bookmark-item';
-
-      const button = document.createElement('button');
-      button.className =
-        'bookmark-item__main';
-
-      button.type = 'button';
-
-      const title = document.createElement('strong');
-      title.textContent =
-        `${bookmark.book_name || bookmark.book} ` +
-        `${bookmark.chapter}:${bookmark.verse}`;
-
-      const text = document.createElement('span');
-      text.textContent = bookmark.text || '';
-
-      button.append(title, text);
-
-      button.addEventListener(
-        'click',
-        () => {
-          closeDialogs();
-
-          state.tr = bookmark.tr;
-          el.trSel.value = bookmark.tr;
-
-          loadChapter(
-            bookmark.book,
-            bookmark.chapter,
-            {
-              verse: Number(bookmark.verse)
-            }
-          );
-        }
-      );
-
-      const remove =
-        document.createElement('button');
-
-      remove.className =
-        'bookmark-item__remove';
-
-      remove.type = 'button';
-      remove.textContent = 'Remove';
-
-      remove.addEventListener(
-        'click',
-        async () => {
-          if (!db) return;
-
-          const { error } = await db
-            .from('selah_bookmarks')
-            .delete()
-            .eq('id', bookmark.id);
-
-          if (error) {
-            toast('Could not remove bookmark.');
-            return;
-          }
-
-          await loadBookmarks();
-          renderBookmarks();
-        }
-      );
-
-      wrapper.append(button, remove);
-      el.bmBody.appendChild(wrapper);
-    });
-  }
-
-  async function searchBible(query) {
-    const term = query.trim().toLowerCase();
-    const token = ++searchToken;
-
-    if (!term) {
-      el.searchBody.innerHTML =
-        '<p>Type a word or phrase to search.</p>';
-      return;
-    }
-
-    el.searchBody.innerHTML =
-      '<p>Searching the current translation…</p>';
-
-    const results = [];
-
-    const books = state.books.filter((book) => {
-      if (state.searchScope === 'ot') {
-        return book.order < 40;
-      }
-
-      if (state.searchScope === 'nt') {
-        return book.order >= 40;
-      }
-
-      return true;
-    });
-
-    for (const book of books) {
-      for (
-        let chapter = 1;
-        chapter <= book.numberOfChapters;
-        chapter += 1
-      ) {
-        if (token !== searchToken) return;
-
-        try {
-          const data = await getJSON(
-            `/api/${state.tr}/${book.id}/${chapter}.json`
-          );
-
-          const content =
-            data?.chapter?.content || [];
-
-          content.forEach((item) => {
-            if (item.type !== 'verse') return;
-
-            const text = cleanText(
-              textFromContent(item.content)
-            );
-
-            if (text.toLowerCase().includes(term)) {
-              results.push({
-                book,
-                chapter,
-                verse: Number(item.number),
-                text
-              });
-            }
-          });
-        } catch {
-          // Continue searching.
-        }
-
-        if (results.length >= 100) break;
-      }
-
-      if (results.length >= 100) break;
-    }
-
-    renderSearchResults(results);
-  }
-
-  function renderSearchResults(results) {
-    el.searchBody.innerHTML = '';
-
-    if (!results.length) {
-      el.searchBody.innerHTML =
-        '<p>No matches found.</p>';
-      return;
-    }
-
-    results.forEach((result) => {
-      const button = document.createElement('button');
-
-      button.className = 'search-result';
-      button.type = 'button';
-
-      const title =
-        document.createElement('strong');
-
-      title.textContent =
-        `${bookName(result.book)} ` +
-        `${result.chapter}:${result.verse}`;
-
-      const text = document.createElement('span');
-      text.textContent = result.text;
-
-      button.append(title, text);
-
-      button.addEventListener(
-        'click',
-        () => {
-          closeDialogs();
-
-          loadChapter(
-            result.book.id,
-            result.chapter,
-            {
-              verse: result.verse
-            }
-          );
-        }
-      );
-
-      el.searchBody.appendChild(button);
-    });
-  }
-
-  function hidePopover() {
-    el.pop.hidden = true;
-    state.selectedVerse = null;
   }
 
   function closeDialogs() {
@@ -1638,116 +1098,33 @@
       el.searchDlg,
       el.bookmarksDlg
     ].forEach((dialog) => {
-      if (dialog) dialog.hidden = true;
+      if (dialog) {
+        dialog.hidden = true;
+      }
     });
 
-    hidePopover();
+    if (el.pop) {
+      el.pop.hidden = true;
+    }
   }
-
-  function setupVerseEvents() {
-    el.scripture.addEventListener(
-      'click',
-      (event) => {
-        const verse =
-          event.target.closest('.verse');
-
-        if (!verse) return;
-
-        state.selectedVerse =
-          Number(verse.dataset.v);
-
-        el.pop.hidden = false;
-        updatePopoverBookmark();
-
-        const rect =
-          verse.getBoundingClientRect();
-
-        el.pop.style.left =
-          `${Math.max(12, rect.left)}px`;
-
-        el.pop.style.top =
-          `${rect.bottom + window.scrollY + 8}px`;
-      }
-    );
-
-    el.popPlay.addEventListener(
-      'click',
-      () => {
-        const verse =
-          state.selectedVerse;
-
-        hidePopover();
-        play(verse);
-      }
-    );
-
-    el.popBookmark.addEventListener(
-      'click',
-      () => {
-        const verse =
-          state.selectedVerse;
-
-        hidePopover();
-        toggleBookmark(verse);
-      }
-    );
-
-    el.popCopy.addEventListener(
-      'click',
-      async () => {
-        const verse =
-          state.verses.find(
-            (item) =>
-              item.n === state.selectedVerse
-          );
-
-        if (!verse) return;
-
-        try {
-          await navigator.clipboard.writeText(
-            `${reference()}:${verse.n} — ${verse.text}`
-          );
-
-          toast('Verse copied.');
-        } catch {
-          toast('Copy failed.');
-        }
-
-        hidePopover();
-      }
-    );
-
-    document.addEventListener(
-      'click',
-      (event) => {
-        if (
-          !el.pop.hidden &&
-          !el.pop.contains(event.target) &&
-          !event.target.closest('.verse')
-        ) {
-          hidePopover();
-        }
-      }
-    );
-                            }
   function setupEvents() {
-    el.refBtn.addEventListener(
+    el.refBtn?.addEventListener(
       'click',
       openPicker
     );
 
-    el.pickerBack.addEventListener(
+    el.pickerBack?.addEventListener(
       'click',
       () => {
+        el.pickerBack.hidden = true;
         el.pickerTitle.textContent =
           'Choose a book';
 
-        el.pickerBack.hidden = true;
-        renderBookPicker('');
+        renderBooks();
       }
     );
 
-    el.jumpForm.addEventListener(
+    el.jumpForm?.addEventListener(
       'submit',
       (event) => {
         event.preventDefault();
@@ -1760,19 +1137,20 @@
         );
 
         if (!match) {
-          renderBookPicker(value);
+          renderBooks(value);
           return;
         }
 
-        const alias = match[1]
-          .toLowerCase()
-          .replace(/s+/g, '');
+        const alias =
+          match[1]
+            .toLowerCase()
+            .replace(/s+/g, '');
 
         const bookId =
-          BOOK_ALIASES[alias];
+          aliases[alias];
 
         if (!bookId) {
-          toast('Book not found.');
+          showToast('Book not found.');
           return;
         }
 
@@ -1790,7 +1168,14 @@
       }
     );
 
-    el.prevChap.addEventListener(
+    el.playBtn?.addEventListener(
+      'click',
+      () => {
+        state.playing ? pause() : play();
+      }
+    );
+
+    el.prevChap?.addEventListener(
       'click',
       () => {
         const previous =
@@ -1805,10 +1190,11 @@
       }
     );
 
-    el.nextChap.addEventListener(
+    el.nextChap?.addEventListener(
       'click',
       () => {
-        const next = nextReference();
+        const next =
+          nextReference();
 
         if (next) {
           loadChapter(
@@ -1819,178 +1205,66 @@
       }
     );
 
-    el.trSel.addEventListener(
-      'change',
-      async () => {
-        const oldTranslation =
-          state.tr;
-
-        state.tr = el.trSel.value;
-        stopPlayback();
-        el.trSel.disabled = true;
-
-        try {
-          await loadBooks();
-
-          const bookStillExists =
-            state.books.some(
-              (book) =>
-                book.id === state.bookId
-            );
-
-          if (!bookStillExists) {
-            state.bookId =
-              state.books[0].id;
-            state.chapter = 1;
-          }
-
-          state.chapter = Math.min(
-            state.chapter,
-            currentBook().numberOfChapters
-          );
-
-          await loadChapter(
-            state.bookId,
-            state.chapter
-          );
-        } catch (error) {
-          console.error(error);
-
-          state.tr = oldTranslation;
-          el.trSel.value = oldTranslation;
-
-          try {
-            await loadBooks();
-            await loadChapter(
-              state.bookId,
-              state.chapter
-            );
-          } catch {
-            // Keep current content visible.
-          }
-
-          toast(
-            'That translation could not be loaded.'
-          );
-        } finally {
-          el.trSel.disabled = false;
-        }
-      }
-    );
-
-    el.searchBtn.addEventListener(
+    el.prevVerse?.addEventListener(
       'click',
       () => {
-        el.searchDlg.hidden = false;
-        el.searchInput.focus();
-      }
-    );
-
-    el.searchForm.addEventListener(
-      'submit',
-      (event) => {
-        event.preventDefault();
-        searchBible(el.searchInput.value);
-      }
-    );
-
-    document.querySelectorAll('[data-scope]')
-      .forEach((button) => {
-        button.addEventListener(
-          'click',
-          () => {
-            state.searchScope =
-              button.dataset.scope;
-
-            document.querySelectorAll(
-              '[data-scope]'
-            ).forEach((item) => {
-              item.setAttribute(
-                'aria-checked',
-                String(item === button)
-              );
-            });
-
-            if (el.searchInput.value.trim()) {
-              searchBible(
-                el.searchInput.value
-              );
-            }
-          }
-        );
-      });
-
-    el.bookmarksBtn.addEventListener(
-      'click',
-      openBookmarks
-    );
-
-    document.querySelectorAll('[data-close]')
-      .forEach((button) => {
-        button.addEventListener(
-          'click',
-          closeDialogs
-        );
-      });
-
-    document.addEventListener(
-      'keydown',
-      (event) => {
-        if (event.key === 'Escape') {
-          closeDialogs();
-        }
-      }
-    );
-
-    el.playBtn.addEventListener(
-      'click',
-      () => {
-        state.playing ? pause() : play();
-      }
-    );
-
-    el.prevVerse.addEventListener(
-      'click',
-      () => {
-        const index = state.verses.findIndex(
-          (verse) =>
-            verse.n === state.currentVerse
-        );
+        const index =
+          state.verses.findIndex(
+            (verse) =>
+              verse.n === state.currentVerse
+          );
 
         if (index > 0) {
-          play(state.verses[index - 1].n);
+          state.currentVerse =
+            state.verses[index - 1].n;
+
+          document.getElementById(
+            `v${state.currentVerse}`
+          )?.scrollIntoView({
+            behavior: 'smooth',
+            block: 'center'
+          });
         }
       }
     );
 
-    el.nextVerse.addEventListener(
+    el.nextVerse?.addEventListener(
       'click',
       () => {
-        const index = state.verses.findIndex(
-          (verse) =>
-            verse.n === state.currentVerse
-        );
+        const index =
+          state.verses.findIndex(
+            (verse) =>
+              verse.n === state.currentVerse
+          );
 
         if (
           index >= 0 &&
           index < state.verses.length - 1
         ) {
-          play(state.verses[index + 1].n);
+          state.currentVerse =
+            state.verses[index + 1].n;
+
+          document.getElementById(
+            `v${state.currentVerse}`
+          )?.scrollIntoView({
+            behavior: 'smooth',
+            block: 'center'
+          });
         }
       }
     );
 
-    el.seek.addEventListener(
+    el.seek?.addEventListener(
       'input',
       () => {
-        if (state.mode === 'audio') {
+        if (el.audio && state.mode === 'audio') {
           el.audio.currentTime =
             Number(el.seek.value);
         }
       }
     );
 
-    el.speedBtn.addEventListener(
+    el.speedBtn?.addEventListener(
       'click',
       () => {
         const speeds =
@@ -2000,223 +1274,191 @@
           speeds.indexOf(state.speed);
 
         state.speed =
-          speeds[(index + 1) % speeds.length];
+          speeds[
+            (index + 1) % speeds.length
+          ];
 
         el.speedBtn.textContent =
           `${state.speed}×`;
 
-        el.audio.playbackRate =
-          state.speed;
+        if (el.audio) {
+          el.audio.playbackRate =
+            state.speed;
+        }
       }
     );
 
-    el.narSel.addEventListener(
+    el.narSel?.addEventListener(
       'change',
-      async () => {
-        const wasPlaying =
-          state.playing;
-
-        const verse =
-          state.currentVerse || null;
-
-        stopPlayback();
-
+      () => {
         state.narrator =
           el.narSel.value;
 
-        await applyNarrator(
-          state.narrator
-        );
-
-        if (wasPlaying) {
-          play(verse);
-        }
+        setupAudio(state.data);
       }
     );
 
-    el.audio.addEventListener(
-      'playing',
-      () => {
-        state.playing = true;
-        state.loading = false;
-        setPlayingUI();
-      }
-    );
+    el.trSel?.addEventListener(
+      'change',
+      async () => {
+        state.tr = el.trSel.value;
 
-    el.audio.addEventListener(
-      'pause',
-      () => {
-        state.playing = false;
-        state.loading = false;
-        setPlayingUI();
-      }
-    );
+        try {
+          await loadBooks();
 
-    el.audio.addEventListener(
-      'loadedmetadata',
-      renderProgress
-    );
+          if (!currentBook()) {
+            state.bookId =
+              state.books[0].id;
 
-    el.audio.addEventListener(
-      'timeupdate',
-      () => {
-        renderProgress();
-
-        if (!state.timings) return;
-
-        let verseNumber = 0;
-
-        state.timings.forEach(
-          (start, index) => {
-            if (start <= el.audio.currentTime) {
-              verseNumber = index + 1;
-            }
+            state.chapter = 1;
           }
-        );
 
-        if (
-          verseNumber &&
-          verseNumber !== state.currentVerse
-        ) {
-          markVerse(verseNumber);
-        }
-      }
-    );
+          const current =
+            currentBook();
 
-    el.audio.addEventListener(
-      'ended',
-      () => {
-        state.playing = false;
-        setPlayingUI();
+          state.chapter = Math.min(
+            state.chapter,
+            current.numberOfChapters
+          );
 
-        if (!state.autoNext) return;
+          await loadChapter();
+        } catch (error) {
+          console.error(error);
 
-        const next = nextReference();
-
-        if (next) {
-          loadChapter(
-            next[0],
-            next[1],
-            { autoplay: true }
+          showToast(
+            'Could not change translation.'
           );
         }
       }
     );
 
-    el.audio.addEventListener(
-      'error',
+    el.audio?.addEventListener(
+      'playing',
+      () => {
+        state.playing = true;
+        updatePlayButton();
+      }
+    );
+
+    el.audio?.addEventListener(
+      'pause',
       () => {
         state.playing = false;
-        state.loading = false;
-        setPlayingUI();
-
-        toast(
-          'Audio unavailable. Try another narrator.'
-        );
+        updatePlayButton();
       }
     );
 
-    el.settingsBtn.addEventListener(
+    el.audio?.addEventListener(
+      'timeupdate',
+      () => {
+        updateProgress();
+        updateCurrentVerse();
+      }
+    );
+
+    el.audio?.addEventListener(
+      'loadedmetadata',
+      updateProgress
+    );
+
+    el.audio?.addEventListener(
+      'ended',
+      () => {
+        state.playing = false;
+        updatePlayButton();
+
+        if (!state.autoNext) {
+          return;
+        }
+
+        const next =
+          nextReference();
+
+        if (next) {
+          loadChapter(
+            next[0],
+            next[1]
+          ).then(play);
+        }
+      }
+    );
+
+    el.scripture?.addEventListener(
       'click',
       (event) => {
-        event.stopPropagation();
+        const verse =
+          event.target.closest('.verse');
 
-        const opening =
-          el.settings.hidden;
+        if (!verse) {
+          return;
+        }
 
-        el.settings.hidden = !opening;
+        state.currentVerse =
+          Number(verse.dataset.v);
 
-        el.settingsBtn.setAttribute(
-          'aria-expanded',
-          String(opening)
+        toggleBookmark(
+          state.currentVerse
         );
+
+        if (el.pop) {
+          el.pop.hidden = false;
+        }
+
+        updateBookmarkPopover();
       }
     );
 
-    el.themeBtn.addEventListener(
+    el.popBookmark?.addEventListener(
       'click',
       () => {
-        const root =
-          document.documentElement;
-
-        root.dataset.theme =
-          root.dataset.theme === 'dark'
-            ? 'light'
-            : 'dark';
-
-        el.themeLabel.textContent =
-          root.dataset.theme === 'dark'
-            ? 'Light'
-            : 'Dark';
+        if (state.currentVerse) {
+          toggleBookmark(
+            state.currentVerse
+          );
+        }
       }
     );
 
-    el.fontUp.addEventListener(
+    el.popPlay?.addEventListener(
       'click',
-      () => {
-        const current =
-          parseFloat(
-            getComputedStyle(
-              document.documentElement
-            ).getPropertyValue('--read-size')
-          ) || 1.2;
-
-        document.documentElement.style.setProperty(
-          '--read-size',
-          `${Math.min(current + 0.125, 1.8)}rem`
-        );
-      }
+      play
     );
 
-    el.fontDown.addEventListener(
+    el.popCopy?.addEventListener(
       'click',
-      () => {
-        const current =
-          parseFloat(
-            getComputedStyle(
-              document.documentElement
-            ).getPropertyValue('--read-size')
-          ) || 1.2;
+      async () => {
+        const verse =
+          state.verses.find(
+            (item) =>
+              item.n === state.currentVerse
+          );
 
-        document.documentElement.style.setProperty(
-          '--read-size',
-          `${Math.max(current - 0.125, 0.95)}rem`
+        if (!verse) {
+          return;
+        }
+
+        await navigator.clipboard.writeText(
+          `${reference()}:${verse.n} — ${verse.text}`
         );
+
+        showToast('Verse copied.');
+        closeDialogs();
       }
     );
 
-    el.followToggle.addEventListener(
-      'change',
-      () => {
-        state.follow =
-          el.followToggle.checked;
-      }
-    );
-
-    el.autoNextToggle.addEventListener(
-      'change',
-      () => {
-        state.autoNext =
-          el.autoNextToggle.checked;
-      }
-    );
-
-    el.numsToggle.addEventListener(
-      'change',
-      () => {
-        el.scripture.classList.toggle(
-          'hide-nums',
-          !el.numsToggle.checked
+    document
+      .querySelectorAll('[data-close]')
+      .forEach((button) => {
+        button.addEventListener(
+          'click',
+          closeDialogs
         );
-      }
-    );
+      });
   }
-
   async function start() {
-    setupDatabase();
     buildTranslationSelect();
+    loadBookmarks();
     setupEvents();
-    setupVerseEvents();
 
     try {
       await loadBooks();
@@ -2224,44 +1466,24 @@
       if (!currentBook()) {
         state.bookId =
           state.books[0].id;
+
         state.chapter = 1;
       }
 
-      await loadChapter(
-        state.bookId,
-        state.chapter
-      );
-
-      loadBookmarks().catch((error) => {
-        console.warn(
-          'Bookmarks unavailable:',
-          error
-        );
-      });
-
-      loadAvailableTranslations()
-        .then(buildTranslationSelect)
-        .catch(() => {});
+      await loadChapter();
     } catch (error) {
-      console.error(
-        'Selah startup failed:',
-        error
-      );
+      console.error(error);
 
-      el.scripture.innerHTML = `
-        <div class="errorbox">
-          <strong>Selah could not load Scripture.</strong>
-          <p>${escapeHTML(error.message)}</p>
-          <button id="reloadApp" type="button">
-            Try again
-          </button>
-        </div>
-      `;
-
-      $('reloadApp')?.addEventListener(
-        'click',
-        () => window.location.reload()
-      );
+      if (el.scripture) {
+        el.scripture.innerHTML = `
+          <div class="errorbox">
+            <strong>
+              Selah could not load Scripture.
+            </strong>
+            <p>${escapeHTML(error.message)}</p>
+          </div>
+        `;
+      }
     }
   }
 
