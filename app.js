@@ -697,15 +697,10 @@
 
     try {
       const url =
-        `/api/chapters?translation=${encodeURIComponent(
-          state.tr
-        )}` +
-        `&book=${encodeURIComponent(
-          state.bookId
-        )}` +
-        `&chapter=${encodeURIComponent(
-          state.chapter
-        )}`;
+  `https://bible.helloao.org/api/` +
+  `${encodeURIComponent(state.tr)}/` +
+  `${encodeURIComponent(state.bookId)}/` +
+  `${encodeURIComponent(state.chapter)}.json`;
 
       const data =
         await getJSON(url);
