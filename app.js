@@ -447,6 +447,26 @@
     );
   }
 
+        function seekAudioToVerse(verseNumber) {
+    if (
+      !state.timings ||
+      !el.audio
+    ) {
+      play(verseNumber);
+      return;
+    }
+
+    const timing =
+      state.timings[Number(verseNumber) - 1];
+
+    if (typeof timing === 'number') {
+      el.audio.currentTime =
+        Math.max(0, timing - 0.05);
+    }
+
+    play();
+        }
+      
   function chooseSpeechVoice() {
     const voices = state.voices || [];
 
