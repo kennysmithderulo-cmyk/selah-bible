@@ -429,7 +429,55 @@
         state.bookId,
         state.chapter + 1
       ];
+  function loadSpeechVoices() {
+    if (!('speechSynthesis' in window)) {
+      return;
     }
+
+    const update = () => {
+      state.voices =
+        window.speechSynthesis.getVoices();
+    };
+
+    update();
+
+    window.speechSynthesis.addEventListener(
+      'voiceschanged',
+      update
+    );
+  }
+
+  function chooseSpeechVoice() {
+    const voices = state.voices || [];
+
+    const language =
+      state.tr === 'fra_lsg'
+        ? 'fr'
+        : state.tr === 'spa_r09'
+          ? 'es'
+          : state.tr === 'por_blj'
+            ? 'pt'
+            : state.tr === 'deu_l12'
+              ? 'de'
+              : state.tr.startsWith('twi')
+                ? 'en'
+                : 'en';
+
+    return (
+      voices.find((voice) =>
+        voice.lang
+          .toLowerCase()
+          .startsWith(language)
+      ) ||
+      voices.find((voice) =>
+        voice.lang
+          .toLowerCase()
+          .startsWith('en')
+      ) ||
+      voices[0] ||
+      null
+    );
+  }
 
     const index = state.books.findIndex(
       (book) => book.id === state.bookId
