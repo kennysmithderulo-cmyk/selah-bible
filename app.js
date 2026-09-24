@@ -73,7 +73,6 @@
     popPlay: $('popPlay'),
     popCopy: $('popCopy'),
     popBookmark: $('popBookmark'),
-    popBookmarkLabel: $('popBookmarkLabel'),
     toast: $('toast'),
     searchBtn: $('searchBtn'),
     searchDlg: $('searchDlg'),
@@ -187,12 +186,6 @@
     phil: 'PHP',
     php: 'PHP',
     col: 'COL',
-    '1thess': '1TH',
-    '2thess': '2TH',
-    '1tim': '1TI',
-    '2tim': '2TI',
-    tit: 'TIT',
-    phlm: 'PHM',
     heb: 'HEB',
     jas: 'JAS',
     james: 'JAS',
@@ -303,25 +296,13 @@
   }
   async function initializeSupabase() {
     if (!supabaseClient) {
-      console.warn(
-        'Supabase library was not loaded.'
-      );
-
       return null;
     }
 
     const {
-      data: sessionData,
-      error: sessionError
+      data: sessionData
     } =
       await supabaseClient.auth.getSession();
-
-    if (sessionError) {
-      console.warn(
-        'Could not load Supabase session:',
-        sessionError.message
-      );
-    }
 
     if (sessionData?.session?.user) {
       state.user =
@@ -379,7 +360,8 @@
       `${BOOKS_API}/` +
       `${encodeURIComponent(state.tr)}/books.json`;
 
-    const data = await getJSON(url);
+    const data =
+      await getJSON(url);
 
     if (!Array.isArray(data.books)) {
       throw new Error(
@@ -450,7 +432,7 @@
     }
 
     const index = state.books.findIndex(
-      (item) => item.id === state.bookId
+      (book) => book.id === state.bookId
     );
 
     if (
@@ -522,9 +504,12 @@
     const content =
       data?.chapter?.content || [];
 
-    if (!content.length) {
+    if (
+      !Array.isArray(content) ||
+      !content.length
+    ) {
       throw new Error(
-        'The chapter contained no content.'
+        'The chapter response contains no content.'
       );
     }
 
@@ -535,7 +520,7 @@
 
     state.verses = [];
 
-    function newParagraph() {
+    function createParagraph() {
       paragraph =
         document.createElement('p');
 
@@ -543,7 +528,14 @@
     }
 
     content.forEach((item) => {
-      if (item.type === 'heading') {
+      if (!item || typeof item !== 'object') {
+        return;
+      }
+
+      if (
+        item.type === 'heading' ||
+        item.type === 'subtitle'
+      ) {
         paragraph = null;
 
         const heading =
@@ -570,26 +562,35 @@
       }
 
       if (!paragraph) {
-        newParagraph();
+        createParagraph();
       }
 
       const verse =
         document.createElement('span');
 
       verse.className = 'verse';
-      verse.dataset.v = item.number;
-      verse.id = `v${item.number}`;
+      verse.dataset.v =
+        String(item.number);
+
+      verse.id =
+        `v${item.number}`;
 
       const number =
         document.createElement('sup');
 
       number.className = 'vnum';
-      number.textContent = item.number;
+      number.textContent =
+        String(item.number);
 
-      const plainText = [];
-      let first = true;
+      const plainParts = [];
+      let numberInserted = false;
 
-      (item.content || []).forEach((part) => {
+      const parts =
+        Array.isArray(item.content)
+          ? item.content
+          : [item.content];
+
+      parts.forEach((part) => {
         if (
           part &&
           typeof part === 'object' &&
@@ -605,208 +606,80 @@
         const text =
           typeof part === 'string'
             ? part
-            : part?.text || '';
+            : textFromContent(part);
 
         if (!text) {
           return;
         }
 
-        plainText.push(text);
+        plainParts.push(text);
 
         const span =
           document.createElement('span');
 
-        if (part?.wordsOfJesus) {
+        if (
+          part &&
+          typeof part === 'object' &&
+          part.poem
+        ) {
+          span.classList.add('poem-line');
+
+          if (Number(part.poem) > 1) {
+            span.classList.add('p2');
+          }
+        }
+
+        if (
+          part &&
+          typeof part === 'object' &&
+          part.wordsOfJesus
+        ) {
           span.classList.add('jesus');
         }
 
-        if (part?.poem) {
-          span.classList.add('poem-line');
-
-          if (part.poem > 1) {
-            span.classList.add('p2');
-          }
-function renderChapter(data) {
-  const content =
-    data?.chapter?.content || [];
-
-  if (!Array.isArray(content) || !content.length) {
-    throw new Error(
-      'The chapter response contains no content.'
-    );
-  }
-
-  const fragment =
-    document.createDocumentFragment();
-
-  let paragraph = null;
-
-  state.verses = [];
-
-  function createParagraph() {
-    paragraph =
-      document.createElement('p');
-
-    fragment.appendChild(paragraph);
-  }
-
-  function appendText(parent, text) {
-    if (!text) {
-      return;
-    }
-
-    parent.appendChild(
-      document.createTextNode(text)
-    );
-  }
-
-  content.forEach((item) => {
-    if (!item || typeof item !== 'object') {
-      return;
-    }
-
-    if (
-      item.type === 'heading' ||
-      item.type === 'subtitle'
-    ) {
-      paragraph = null;
-
-      const heading =
-        document.createElement('h3');
-
-      heading.textContent =
-        cleanText(
-          textFromContent(item.content)
-        );
-
-      if (heading.textContent) {
-        fragment.appendChild(heading);
-      }
-
-      return;
-    }
-
-    if (item.type === 'line_break') {
-      paragraph = null;
-      return;
-    }
-
-    if (item.type !== 'verse') {
-      return;
-    }
-
-    if (!paragraph) {
-      createParagraph();
-    }
-
-    const verse =
-      document.createElement('span');
-
-    verse.className = 'verse';
-    verse.dataset.v = String(item.number);
-    verse.id = `v${item.number}`;
-
-    const number =
-      document.createElement('sup');
-
-    number.className = 'vnum';
-    number.textContent = String(item.number);
-
-    const plainParts = [];
-    let numberInserted = false;
-
-    const parts =
-      Array.isArray(item.content)
-        ? item.content
-        : [item.content];
-
-    parts.forEach((part) => {
-      if (
-        part &&
-        typeof part === 'object' &&
-        part.lineBreak
-      ) {
-        verse.appendChild(
-          document.createElement('br')
-        );
-
-        return;
-      }
-
-      const text =
-        typeof part === 'string'
-          ? part
-          : textFromContent(part);
-
-      if (!text) {
-        return;
-      }
-
-      plainParts.push(text);
-
-      const span =
-        document.createElement('span');
-
-      if (
-        part &&
-        typeof part === 'object' &&
-        part.poem
-      ) {
-        span.classList.add('poem-line');
-
-        if (Number(part.poem) > 1) {
-          span.classList.add('p2');
+        if (!numberInserted) {
+          span.appendChild(number);
+          numberInserted = true;
         }
-      }
 
-      if (
-        part &&
-        typeof part === 'object' &&
-        part.wordsOfJesus
-      ) {
-        span.classList.add('jesus');
-      }
+        span.appendChild(
+          document.createTextNode(text)
+        );
+
+        verse.appendChild(span);
+      });
 
       if (!numberInserted) {
-        span.appendChild(number);
-        numberInserted = true;
+        verse.appendChild(number);
       }
 
-      appendText(span, text);
-      verse.appendChild(span);
+      if (paragraph.childNodes.length) {
+        paragraph.appendChild(
+          document.createTextNode(' ')
+        );
+      }
+
+      paragraph.appendChild(verse);
+
+      state.verses.push({
+        n: Number(item.number),
+        text: cleanText(
+          plainParts.join(' ')
+        ),
+        el: verse
+      });
     });
 
-    if (!numberInserted) {
-      verse.appendChild(number);
-    }
-
-    if (paragraph.childNodes.length) {
-      paragraph.appendChild(
-        document.createTextNode(' ')
+    if (!state.verses.length) {
+      throw new Error(
+        'The chapter loaded, but no verses were found.'
       );
     }
 
-    paragraph.appendChild(verse);
+    el.scripture.replaceChildren(fragment);
 
-    state.verses.push({
-      n: Number(item.number),
-      text: cleanText(
-        plainParts.join(' ')
-      ),
-      el: verse
-    });
-  });
-
-  if (!state.verses.length) {
-    throw new Error(
-      'The chapter loaded, but no verses were found.'
-    );
+    applyBookmarkMarks();
   }
-
-  el.scripture.replaceChildren(fragment);
-
-  applyBookmarkMarks();
-}
   async function loadChapter(
     bookId = state.bookId,
     chapter = state.chapter,
@@ -917,7 +790,9 @@ function renderChapter(data) {
     if (audioUrl) {
       state.mode = 'audio';
       el.audio.src = audioUrl;
-      el.audio.playbackRate = state.speed;
+      el.audio.playbackRate =
+        state.speed;
+
       el.audio.load();
     } else {
       state.mode = 'speech';
@@ -972,7 +847,10 @@ function renderChapter(data) {
 
   function speakChapter() {
     if (!('speechSynthesis' in window)) {
-      showToast('Device voice is unavailable.');
+      showToast(
+        'Device voice is unavailable.'
+      );
+
       return;
     }
 
@@ -1024,7 +902,9 @@ function renderChapter(data) {
         : 0;
 
     el.seek.max = duration || 100;
-    el.seek.value = duration ? current : 0;
+    el.seek.value = duration
+      ? current
+      : 0;
 
     el.tCur.textContent =
       timeText(current);
@@ -1792,7 +1672,6 @@ function renderChapter(data) {
       'submit',
       (event) => {
         event.preventDefault();
-
         searchBible(
           el.searchInput.value
         );
@@ -1884,6 +1763,118 @@ function renderChapter(data) {
           closeDialogs
         );
       });
+  }
+  async function searchBible(query) {
+    const term =
+      String(query || '')
+        .toLowerCase()
+        .trim();
+
+    if (!term) {
+      return;
+    }
+
+    el.searchBody.innerHTML =
+      '<p class="muted">Searching…</p>';
+
+    const results = [];
+
+    for (const book of state.books) {
+      for (
+        let chapter = 1;
+        chapter <= book.numberOfChapters;
+        chapter += 1
+      ) {
+        try {
+          const url =
+            `/api/chapters?translation=${encodeURIComponent(
+              state.tr
+            )}` +
+            `&book=${encodeURIComponent(book.id)}` +
+            `&chapter=${chapter}`;
+
+          const data =
+            await getJSON(url);
+
+          const verses =
+            (data.chapter?.content || [])
+              .filter(
+                (item) =>
+                  item.type === 'verse'
+              );
+
+          verses.forEach((item) => {
+            const text =
+              cleanText(
+                textFromContent(item.content)
+              );
+
+            if (
+              text.toLowerCase().includes(term)
+            ) {
+              results.push({
+                book,
+                chapter,
+                verse: Number(item.number),
+                text
+              });
+            }
+          });
+        } catch {
+          // Continue with the next chapter.
+        }
+
+        if (results.length >= 100) {
+          break;
+        }
+      }
+
+      if (results.length >= 100) {
+        break;
+      }
+    }
+
+    el.searchBody.innerHTML = '';
+
+    if (!results.length) {
+      el.searchBody.innerHTML =
+        '<p class="muted">No matches found.</p>';
+
+      return;
+    }
+
+    results.forEach((result) => {
+      const button =
+        document.createElement('button');
+
+      button.type = 'button';
+      button.className = 'search-row';
+
+      button.innerHTML =
+        `<strong>${escapeHTML(
+          bookName(result.book)
+        )} ${result.chapter}:${result.verse}</strong>` +
+        `<span>${escapeHTML(
+          result.text
+        )}</span>`;
+
+      button.addEventListener(
+        'click',
+        () => {
+          el.searchDlg.hidden = true;
+
+          loadChapter(
+            result.book.id,
+            result.chapter,
+            {
+              verse: result.verse
+            }
+          );
+        }
+      );
+
+      el.searchBody.appendChild(button);
+    });
   }
 
   async function start() {
