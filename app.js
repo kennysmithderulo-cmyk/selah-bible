@@ -324,22 +324,22 @@
 
   function speechLanguage() {
     if (state.tr === 'fra_lsg') {
-      return 'fr';
+      return 'fr-FR';
     }
 
     if (state.tr === 'spa_r09') {
-      return 'es';
+      return 'es-ES';
     }
 
     if (state.tr === 'por_blj') {
-      return 'pt';
+      return 'pt-PT';
     }
 
     if (state.tr === 'deu_l12') {
-      return 'de';
+      return 'de-DE';
     }
 
-    return 'en';
+    return 'en-US';
   }
 
   function chooseSpeechVoice() {
@@ -347,18 +347,24 @@
       state.voices || [];
 
     const language =
-      speechLanguage();
+      speechLanguage().toLowerCase();
 
     return (
-      voices.find((voice) =>
-        voice.lang
-          .toLowerCase()
-          .startsWith(language)
+      voices.find(
+        (voice) =>
+          voice.lang.toLowerCase() === language
       ) ||
-      voices.find((voice) =>
-        voice.lang
-          .toLowerCase()
-          .startsWith('en')
+      voices.find(
+        (voice) =>
+          voice.lang
+            .toLowerCase()
+            .startsWith(language.slice(0, 2))
+      ) ||
+      voices.find(
+        (voice) =>
+          voice.lang
+            .toLowerCase()
+            .startsWith('en')
       ) ||
       voices[0] ||
       null
@@ -366,11 +372,33 @@
   }
 
   function prepareSpeechText(text) {
-    return String(text || '')
-      .replace(/­/g, '')
-      .replace(/[-‍﻿]/g, '')
-      .replace(/s+/g, ' ')
-      .trim();
+    let spoken =
+      String(text || '')
+        .replace(/­/g, '')
+        .replace(/[-‍﻿]/g, '')
+        .replace(/s+/g, ' ')
+        .trim();
+
+    const pronunciationMap = [
+      [/\bJesus's\b/gi, 'Jee-zus-es'],
+      [/\bJesus\b/gi, 'Jee-zus'],
+      [/\bMoses\b/gi, 'Moe-ziz'],
+      [/\bdisciples\b/gi, 'duh-sigh-pulz'],
+      [/\bsalvation\b/gi, 'sal-vay-shun'],
+      [/\bPharisees\b/gi, 'Fair-uh-seez'],
+      [/\bSadducees\b/gi, 'Sad-you-seez']
+    ];
+
+    pronunciationMap.forEach(
+      ([pattern, replacement]) => {
+        spoken = spoken.replace(
+          pattern,
+          replacement
+        );
+      }
+    );
+
+    return spoken;
   }
   async function initializeSupabase() {
     if (!supabaseClient) {
@@ -1011,9 +1039,11 @@
     const voice =
       chooseSpeechVoice();
 
+    utterance.lang =
+      speechLanguage();
+
     if (voice) {
       utterance.voice = voice;
-      utterance.lang = voice.lang;
     }
 
     utterance.rate = state.speed;
@@ -1032,7 +1062,7 @@
 
       setTimeout(() => {
         speakNextVerse(token);
-      }, 100);
+      }, 120);
     };
 
     utterance.onerror = () => {
@@ -1174,11 +1204,34 @@
     );
   }
 
+  function saveLocalBookmarks() {
+    localStorage.setItem(
+      'selah_bookmarks',
+      JSON.stringify(state.bookmarks)
+    );
+  }
+
+  function loadLocalBookmarks() {
+    try {
+      state.bookmarks =
+        JSON.parse(
+          localStorage.getItem(
+            'selah_bookmarks'
+          ) || '[]'
+        );
+    } catch {
+      state.bookmarks = [];
+    }
+  }
+
   async function loadBookmarks() {
     if (
       !supabaseClient ||
       !state.user
     ) {
+      loadLocalBookmarks();
+      updateBookmarkBadge();
+      applyBookmarkMarks();
       return;
     }
 
@@ -1195,7 +1248,14 @@
         });
 
     if (error) {
-      console.warn(error.message);
+      console.warn(
+        'Supabase bookmark loading failed:',
+        error.message
+      );
+
+      loadLocalBookmarks();
+      updateBookmarkBadge();
+      applyBookmarkMarks();
       return;
     }
 
@@ -1216,12 +1276,36 @@
   }
 
   async function toggleBookmark(verseNumber) {
+    const key =
+      bookmarkKey(verseNumber);
+
     if (
       !supabaseClient ||
       !state.user
     ) {
+      const exists =
+        state.bookmarks.some(
+          (item) => item.key === key
+        );
+
+      state.bookmarks =
+        exists
+          ? state.bookmarks.filter(
+              (item) => item.key !== key
+            )
+          : [
+              ...state.bookmarks,
+              { key }
+            ];
+
+      saveLocalBookmarks();
+      updateBookmarkBadge();
+      applyBookmarkMarks();
+
       showToast(
-        'Sign in to save bookmarks.'
+        exists
+          ? 'Bookmark removed.'
+          : 'Bookmark saved on this device.'
       );
 
       return;
@@ -1229,9 +1313,7 @@
 
     const existing =
       state.bookmarks.find(
-        (item) =>
-          item.key ===
-          bookmarkKey(verseNumber)
+        (item) => item.key === key
       );
 
     if (existing) {
@@ -1239,11 +1321,12 @@
         await supabaseClient
           .from('selah_bookmarks')
           .delete()
-          .eq('id', existing.id);
+          .eq('id', existing.id)
+          .eq('user_id', state.user.id);
 
       if (error) {
         showToast(
-          'Could not remove bookmark.'
+          `Could not remove bookmark: ${error.message}`
         );
 
         return;
@@ -1271,7 +1354,10 @@
           });
 
       if (error) {
-        showToast('Could not save bookmark.');
+        showToast(
+          `Could not save bookmark: ${error.message}`
+        );
+
         return;
       }
 
@@ -1282,6 +1368,10 @@
   }
 
   function updateBookmarkBadge() {
+    if (!el.bmBadge) {
+      return;
+    }
+
     el.bmBadge.hidden =
       state.bookmarks.length === 0;
 
@@ -1376,29 +1466,36 @@
       row.type = 'button';
       row.className = 'bookmark-row';
 
-      row.innerHTML =
-        `<strong>${escapeHTML(
-          bookmark.row.book_name
-        )} ${bookmark.row.chapter}:` +
-        `${bookmark.row.verse}</strong>` +
-        `<span>${escapeHTML(
-          bookmark.row.verse_text
-        )}</span>`;
+      if (bookmark.row) {
+        row.innerHTML =
+          `<strong>${escapeHTML(
+            bookmark.row.book_name
+          )} ${bookmark.row.chapter}:` +
+          `${bookmark.row.verse}</strong>` +
+          `<span>${escapeHTML(
+            bookmark.row.verse_text
+          )}</span>`;
 
-      row.addEventListener(
-        'click',
-        () => {
-          el.bookmarksDlg.hidden = true;
+        row.addEventListener(
+          'click',
+          () => {
+            el.bookmarksDlg.hidden = true;
 
-          loadChapter(
-            bookmark.row.book_id,
-            bookmark.row.chapter,
-            {
-              verse: bookmark.row.verse
-            }
-          );
-        }
-      );
+            loadChapter(
+              bookmark.row.book_id,
+              bookmark.row.chapter,
+              {
+                verse: bookmark.row.verse
+              }
+            );
+          }
+        );
+      } else {
+        row.textContent =
+          'Saved bookmark';
+
+        row.disabled = true;
+      }
 
       el.bmBody.appendChild(row);
     });
@@ -1492,7 +1589,6 @@
     el.bookmarksDlg.hidden = true;
     el.pop.hidden = true;
   }
-
   function setupEvents() {
     el.refBtn.addEventListener(
       'click',
@@ -1563,7 +1659,8 @@
             .toLowerCase()
             .replace(/s+/g, '');
 
-        const bookId = aliases[alias];
+        const bookId =
+          aliases[alias];
 
         if (!bookId) {
           showToast('Book not found.');
@@ -1849,6 +1946,7 @@
       'submit',
       (event) => {
         event.preventDefault();
+
         searchBible(
           el.searchInput.value
         );
