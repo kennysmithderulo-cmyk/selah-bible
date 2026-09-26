@@ -23,18 +23,22 @@
 
   const state = {
     translation: "BSB",
+    translationInfo: null,
     books: [],
     bookId: "JHN",
     chapter: 3,
     verses: [],
     selectedVerse: 0,
-    playing: false,
+    currentVerse: 0,
     narrator: "souer",
-    audioMode: "device",
-    voices: [],
+    audioMode: "speech",
+    playing: false,
     speechIndex: 0,
     speechToken: 0,
+    voices: [],
     speed: 1,
+    follow: true,
+    autoNext: true,
     bookmarks: [],
     user: null
   };
@@ -64,7 +68,6 @@
     duration: $("tDur"),
     nowPlaying: $("tNow"),
     speed: $("speedBtn"),
-    narratorSelect: $("narratorSel"),
     picker: $("picker"),
     pickerBody: $("pickerBody"),
     pickerTitle: $("pickerTitle"),
@@ -264,7 +267,7 @@
     }, 2800);
   }
 
-  async function json(url) {
+  async function getJSON(url) {
     const response = await fetch(url);
 
     if (!response.ok) {
@@ -285,17 +288,46 @@
     );
   }
 
-  function currentBook() {
+  function getCurrentBook() {
     return state.books.find(
       (book) => book.id === state.bookId
     );
   }
 
-  function reference() {
+  function getReference() {
     return `${bookName(
-      currentBook()
+      getCurrentBook()
     )} ${state.chapter}`;
   }
+  function buildTranslationSelector() {
+    if (!el.translation) {
+      return;
+    }
+
+    el.translation.innerHTML = "";
+
+    translations.forEach((group) => {
+      const optgroup =
+        document.createElement("optgroup");
+
+      optgroup.label = group.group;
+
+      group.items.forEach(([id, name]) => {
+        const option =
+          document.createElement("option");
+
+        option.value = id;
+        option.textContent = name;
+        option.selected =
+          id === state.translation;
+
+        optgroup.appendChild(option);
+      });
+
+      el.translation.appendChild(optgroup);
+    });
+  }
+
   async function loadBooks() {
     const url =
       `${API}/` +
@@ -303,7 +335,7 @@
         state.translation
       )}/books.json`;
 
-    const data = await json(url);
+    const data = await getJSON(url);
 
     if (
       !data ||
@@ -342,7 +374,7 @@
       data.translation || null;
   }
 
-  function previousReference() {
+  function getPreviousReference() {
     if (state.chapter > 1) {
       return [
         state.bookId,
@@ -368,8 +400,8 @@
     ];
   }
 
-  function nextReference() {
-    const book = currentBook();
+  function getNextReference() {
+    const book = getCurrentBook();
 
     if (
       book &&
@@ -400,8 +432,11 @@
   }
 
   function updateHeader() {
-    const book = currentBook();
-    const name = bookName(book);
+    const book =
+      getCurrentBook();
+
+    const name =
+      bookName(book);
 
     if (el.ref) {
       el.ref.textContent =
@@ -444,10 +479,10 @@
     }
 
     const previous =
-      previousReference();
+      getPreviousReference();
 
     const next =
-      nextReference();
+      getNextReference();
 
     if (el.previousChapter) {
       el.previousChapter.disabled =
@@ -464,9 +499,8 @@
         previous
           ? `${bookName(
               state.books.find(
-                (bookItem) =>
-                  bookItem.id ===
-                  previous[0]
+                (item) =>
+                  item.id === previous[0]
               )
             )} ${previous[1]}`
           : "Previous";
@@ -477,9 +511,8 @@
         next
           ? `${bookName(
               state.books.find(
-                (bookItem) =>
-                  bookItem.id ===
-                  next[0]
+                (item) =>
+                  item.id === next[0]
               )
             )} ${next[1]}`
           : "Next";
@@ -506,7 +539,7 @@
 
     state.verses = [];
 
-    function newParagraph() {
+    function createParagraph() {
       paragraph =
         document.createElement("p");
 
@@ -556,7 +589,7 @@
       }
 
       if (!paragraph) {
-        newParagraph();
+        createParagraph();
       }
 
       const verse =
@@ -579,7 +612,7 @@
           : [item.content];
 
       const textParts = [];
-      let insertedNumber = false;
+      let numberInserted = false;
 
       parts.forEach((part) => {
         if (
@@ -628,9 +661,9 @@
           );
         }
 
-        if (!insertedNumber) {
+        if (!numberInserted) {
           span.appendChild(number);
-          insertedNumber = true;
+          numberInserted = true;
         }
 
         span.appendChild(
@@ -640,7 +673,7 @@
         verse.appendChild(span);
       });
 
-      if (!insertedNumber) {
+      if (!numberInserted) {
         verse.appendChild(number);
       }
 
@@ -679,6 +712,8 @@
     chapter = state.chapter,
     verseNumber = null
   ) {
+    stopPlayback();
+
     state.bookId = bookId;
     state.chapter = Number(chapter);
 
@@ -702,7 +737,7 @@
       )}.json`;
 
     try {
-      const data = await json(url);
+      const data = await getJSON(url);
 
       state.data = data;
 
@@ -721,12 +756,14 @@
           <div class="errorbox">
             <strong>
               Could not load ${escapeHTML(
-                reference()
+                getReference()
               )}.
             </strong>
+
             <p>${escapeHTML(
               error.message
             )}</p>
+
             <button
               id="retryBtn"
               type="button"
@@ -807,7 +844,7 @@
       );
   }
 
-  function language() {
+  function speechLanguage() {
     if (state.translation === "fra_lsg") {
       return "fr-FR";
     }
@@ -829,7 +866,7 @@
 
   function voiceForLanguage() {
     const target =
-      language().toLowerCase();
+      speechLanguage().toLowerCase();
 
     return (
       state.voices.find(
@@ -896,8 +933,13 @@
           links[id]
             ? name
             : `${name} · unavailable`;
+
         option.disabled =
           !links[id];
+
+        option.selected =
+          id === state.narrator &&
+          Boolean(links[id]);
 
         el.narrator.appendChild(
           option
@@ -980,7 +1022,8 @@
     const voice =
       voiceForLanguage();
 
-    utterance.lang = language();
+    utterance.lang =
+      speechLanguage();
 
     if (voice) {
       utterance.voice = voice;
@@ -1023,6 +1066,7 @@
     };
 
     selectVerse(verse.number);
+
     window.speechSynthesis.speak(
       utterance
     );
@@ -1095,7 +1139,7 @@
     playSpeech();
   }
 
-  function stopAudio() {
+  function stopPlayback() {
     el.audio?.pause();
 
     if (el.audio) {
@@ -1114,6 +1158,103 @@
     updatePlayButton();
   }
 
+  function updateProgress() {
+    if (
+      !el.audio ||
+      !el.seek ||
+      !el.currentTime ||
+      !el.duration
+    ) {
+      return;
+    }
+
+    const current =
+      Number.isFinite(
+        el.audio.currentTime
+      )
+        ? el.audio.currentTime
+        : 0;
+
+    const duration =
+      Number.isFinite(
+        el.audio.duration
+      )
+        ? el.audio.duration
+        : 0;
+
+    el.seek.max =
+      duration || 100;
+
+    el.seek.value =
+      duration
+        ? current
+        : 0;
+
+    el.currentTime.textContent =
+      formatTime(current);
+
+    el.duration.textContent =
+      formatTime(duration);
+  }
+
+  function formatTime(seconds) {
+    const safe =
+      Number.isFinite(seconds)
+        ? seconds
+        : 0;
+
+    return (
+      `${Math.floor(safe / 60)}:` +
+      `${String(
+        Math.floor(safe % 60)
+      ).padStart(2, "0")}`
+    );
+  }
+
+  function updateCurrentVerse() {
+    if (
+      !el.audio ||
+      !state.verses.length ||
+      !Number.isFinite(
+        el.audio.duration
+      ) ||
+      el.audio.duration <= 0
+    ) {
+      return;
+    }
+
+    const index = Math.min(
+      state.verses.length - 1,
+      Math.floor(
+        (
+          el.audio.currentTime /
+          el.audio.duration
+        ) *
+        state.verses.length
+      )
+    );
+
+    const verse =
+      state.verses[index];
+
+    state.currentVerse =
+      verse.number;
+
+    state.verses.forEach(
+      (item) => {
+        item.element.classList.toggle(
+          "is-playing",
+          item.number ===
+            verse.number
+        );
+      }
+    );
+
+    if (el.nowPlaying) {
+      el.nowPlaying.textContent =
+        `${getReference()}:${verse.number}`;
+    }
+  }
   function bookmarkKey(number) {
     return [
       state.translation,
@@ -1123,22 +1264,11 @@
     ].join(":");
   }
 
-  function marked(number) {
+  function isBookmarked(number) {
     return state.bookmarks.some(
-      (item) =>
-        item.key ===
+      (bookmark) =>
+        bookmark.key ===
         bookmarkKey(number)
-    );
-  }
-
-  function applyBookmarks() {
-    state.verses.forEach(
-      (verse) => {
-        verse.element.classList.toggle(
-          "is-bookmarked",
-          marked(verse.number)
-        );
-      }
     );
   }
 
@@ -1176,14 +1306,27 @@
       state.bookmarks.length;
   }
 
+  function applyBookmarkMarks() {
+    state.verses.forEach(
+      (verse) => {
+        verse.element.classList.toggle(
+          "is-bookmarked",
+          isBookmarked(
+            verse.number
+          )
+        );
+      }
+    );
+  }
+
   function toggleBookmark(number) {
     const key =
       bookmarkKey(number);
 
     const index =
       state.bookmarks.findIndex(
-        (item) =>
-          item.key === key
+        (bookmark) =>
+          bookmark.key === key
       );
 
     if (index >= 0) {
@@ -1192,9 +1335,7 @@
         1
       );
 
-      toast(
-        "Bookmark removed."
-      );
+      toast("Bookmark removed.");
     } else {
       const verse =
         state.verses.find(
@@ -1205,12 +1346,10 @@
 
       state.bookmarks.push({
         key,
-        translation:
-          state.translation,
         bookId: state.bookId,
         bookName:
           bookName(
-            currentBook()
+            getCurrentBook()
           ),
         chapter: state.chapter,
         verse: Number(number),
@@ -1224,8 +1363,9 @@
 
     saveLocalBookmarks();
     updateBookmarkBadge();
-    applyBookmarks();
+    applyBookmarkMarks();
   }
+
   function renderBookmarks() {
     if (!el.bookmarksBody) {
       return;
@@ -1355,7 +1495,7 @@
 
   function renderChapters() {
     const book =
-      currentBook();
+      getCurrentBook();
 
     if (
       !book ||
@@ -1454,7 +1594,6 @@
           : "Light";
     }
   }
-
   function setupEvents() {
     el.refButton?.addEventListener(
       "click",
@@ -1490,7 +1629,7 @@
       "click",
       () => {
         const previous =
-          previousReference();
+          getPreviousReference();
 
         if (previous) {
           loadChapter(
@@ -1505,7 +1644,7 @@
       "click",
       () => {
         const next =
-          nextReference();
+          getNextReference();
 
         if (next) {
           loadChapter(
@@ -1558,11 +1697,11 @@
       }
     );
 
-    el.narratorSelect?.addEventListener(
+    el.narrator?.addEventListener(
       "change",
       () => {
         state.narrator =
-          el.narratorSelect.value;
+          el.narrator.value;
 
         if (
           state.narrator ===
@@ -1585,7 +1724,7 @@
         try {
           await loadBooks();
 
-          if (!currentBook()) {
+          if (!getCurrentBook()) {
             state.bookId =
               state.books[0].id;
 
@@ -1596,48 +1735,6 @@
         } catch (error) {
           toast(
             `Translation error: ${error.message}`
-          );
-        }
-      }
-    );
-
-    el.previousVerse?.addEventListener(
-      "click",
-      () => {
-        const index =
-          state.verses.findIndex(
-            (verse) =>
-              verse.number ===
-              state.currentVerse
-          );
-
-        if (index > 0) {
-          selectVerse(
-            state.verses[index - 1]
-              .number
-          );
-        }
-      }
-    );
-
-    el.nextVerse?.addEventListener(
-      "click",
-      () => {
-        const index =
-          state.verses.findIndex(
-            (verse) =>
-              verse.number ===
-              state.currentVerse
-          );
-
-        if (
-          index >= 0 &&
-          index <
-            state.verses.length - 1
-        ) {
-          selectVerse(
-            state.verses[index + 1]
-              .number
           );
         }
       }
@@ -1732,7 +1829,7 @@
 
         try {
           await navigator.clipboard.writeText(
-            `${reference()}:${verse.number} — ${verse.text}`
+            `${getReference()}:${verse.number} — ${verse.text}`
           );
 
           toast("Verse copied.");
@@ -1971,16 +2068,18 @@
       ) {
         try {
           const data =
-            await json(
-              `${API}/${state.translation}/` +
-              `${book.id}/${chapter}.json`
+            await getJSON(
+              `${API}/` +
+              `${state.translation}/` +
+              `${book.id}/` +
+              `${chapter}.json`
             );
 
-          const verses =
+          const content =
             data?.chapter?.content ||
             [];
 
-          verses
+          content
             .filter(
               (item) =>
                 item.type === "verse"
@@ -2081,7 +2180,7 @@
 
       await loadBooks();
 
-      if (!currentBook()) {
+      if (!getCurrentBook()) {
         state.bookId =
           state.books[0].id;
 
@@ -2099,6 +2198,7 @@
             <strong>
               Selah could not start.
             </strong>
+
             <p>${escapeHTML(
               error.message
             )}</p>
