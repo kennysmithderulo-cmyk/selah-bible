@@ -1,0 +1,543 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#1f4d45">
+
+  <title>Selah Study Bible</title>
+  <meta
+    name="description"
+    content="A professional study Bible for pastors, elders, teachers, and serious students of Scripture."
+  >
+
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="favicon.svg">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Libre+Baskerville:wght@400;700&display=swap"
+    rel="stylesheet"
+  >
+
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+  <div id="app-shell" class="app-shell">
+
+    <header class="topbar">
+      <button
+        id="mobile-menu-button"
+        class="icon-button mobile-only"
+        type="button"
+        aria-label="Open navigation"
+      >
+        ☰
+      </button>
+
+      <a class="brand" href="#" data-view="read" aria-label="Selah home">
+        <span class="brand-mark">S</span>
+        <span class="brand-copy">
+          <strong>Selah</strong>
+          <small>Study Bible</small>
+        </span>
+      </a>
+
+      <div class="topbar-actions">
+        <button id="global-search-button" class="topbar-button" type="button">
+          Search
+        </button>
+
+        <button id="theme-button" class="icon-button" type="button" aria-label="Change theme">
+          ◐
+        </button>
+
+        <button id="account-button" class="account-button" type="button">
+          <span class="account-avatar">P</span>
+          <span class="account-label">Account</span>
+        </button>
+      </div>
+    </header>
+
+    <div class="app-layout">
+
+      <aside id="sidebar" class="sidebar">
+        <nav class="main-nav" aria-label="Main navigation">
+          <button class="nav-item active" type="button" data-view="read">
+            <span class="nav-icon">▤</span>
+            <span>Read</span>
+          </button>
+
+          <button class="nav-item" type="button" data-view="study">
+            <span class="nav-icon">⌕</span>
+            <span>Study</span>
+          </button>
+
+          <button class="nav-item" type="button" data-view="notes">
+            <span class="nav-icon">✎</span>
+            <span>Notes</span>
+          </button>
+
+          <button class="nav-item" type="button" data-view="sermons">
+            <span class="nav-icon">▥</span>
+            <span>Sermons</span>
+          </button>
+
+          <button class="nav-item" type="button" data-view="library">
+            <span class="nav-icon">▦</span>
+            <span>Library</span>
+          </button>
+        </nav>
+
+        <div class="sidebar-divider"></div>
+
+        <div class="sidebar-section">
+          <p class="sidebar-label">Quick access</p>
+
+          <button class="sidebar-link" type="button" data-action="bookmarks">
+            <span>🔖</span>
+            <span>Bookmarks</span>
+          </button>
+
+          <button class="sidebar-link" type="button" data-action="highlights">
+            <span>✦</span>
+            <span>Highlights</span>
+          </button>
+
+          <button class="sidebar-link" type="button" data-action="recent">
+            <span>◷</span>
+            <span>Recent study</span>
+          </button>
+        </div>
+
+        <div class="sidebar-bottom">
+          <div class="offline-status">
+            <span class="status-dot"></span>
+            <span id="connection-status">Ready for study</span>
+          </div>
+        </div>
+      </aside>
+
+      <main class="main-content">
+
+        <section id="view-read" class="app-view active-view">
+          <div class="page-heading">
+            <div>
+              <p class="eyebrow">Scripture</p>
+              <h1>Read the Word</h1>
+              <p class="page-description">
+                Read, listen, highlight, and study Scripture at your own pace.
+              </p>
+            </div>
+
+            <button class="secondary-button" type="button" data-view="study">
+              Open study workspace
+            </button>
+          </div>
+
+          <section class="reader-toolbar panel">
+            <div class="toolbar-group">
+              <label for="translation-select">Translation</label>
+              <select id="translation-select">
+                <option value="BSB">Berean Standard Bible</option>
+              </select>
+            </div>
+
+            <div class="toolbar-group">
+              <label for="book-select">Book</label>
+              <select id="book-select"></select>
+            </div>
+
+            <div class="toolbar-group">
+              <label for="chapter-select">Chapter</label>
+              <select id="chapter-select"></select>
+            </div>
+
+            <button id="reader-search-button" class="secondary-button" type="button">
+              Search Bible
+            </button>
+          </section>
+
+          <section class="reader-layout">
+            <article class="scripture-card panel">
+              <div class="scripture-card-header">
+                <div>
+                  <p id="passage-label" class="eyebrow">Loading passage</p>
+                  <h2 id="passage-title">Scripture</h2>
+                </div>
+
+                <div class="passage-actions">
+                  <button id="chapter-previous" class="icon-button" type="button" aria-label="Previous chapter">
+                    ‹
+                  </button>
+                  <button id="chapter-next" class="icon-button" type="button" aria-label="Next chapter">
+                    ›
+                  </button>
+                </div>
+              </div>
+
+              <div id="scripture-status" class="status-message" aria-live="polite">
+                Loading Scripture…
+              </div>
+
+              <div id="scripture-content" class="scripture-content">
+                <!-- Chapter verses are rendered by app.js -->
+              </div>
+
+              <div class="reader-footer">
+                <button id="reader-play-button" class="primary-button" type="button">
+                  ▶ Play chapter
+                </button>
+
+                <span id="reader-save-status" class="muted-text">
+                  Your reading position is saved automatically.
+                </span>
+              </div>
+            </article>
+
+            <aside class="reader-side-panel panel">
+              <div class="side-panel-heading">
+                <div>
+                  <p class="eyebrow">Study tools</p>
+                  <h2>Go deeper</h2>
+                </div>
+              </div>
+
+              <button class="study-tool-card" type="button" data-study-tab="overview">
+                <span class="tool-card-icon">◎</span>
+                <span>
+                  <strong>Passage overview</strong>
+                  <small>See the structure and main theme.</small>
+                </span>
+              </button>
+
+              <button class="study-tool-card" type="button" data-study-tab="cross-references">
+                <span class="tool-card-icon">↗</span>
+                <span>
+                  <strong>Cross-references</strong>
+                  <small>Compare Scripture with Scripture.</small>
+                </span>
+              </button>
+
+              <button class="study-tool-card" type="button" data-study-tab="notes">
+                <span class="tool-card-icon">✎</span>
+                <span>
+                  <strong>Study notes</strong>
+                  <small>Record observations and applications.</small>
+                </span>
+              </button>
+
+              <button class="study-tool-card" type="button" data-study-tab="words">
+                <span class="tool-card-icon">Aa</span>
+                <span>
+                  <strong>Word study</strong>
+                  <small>Explore important biblical terms.</small>
+                </span>
+              </button>
+            </aside>
+          </section>
+        </section>
+
+        <section id="view-study" class="app-view">
+          <div class="page-heading">
+            <div>
+              <p class="eyebrow">Study workspace</p>
+              <h1 id="study-heading">Study Scripture</h1>
+              <p class="page-description">
+                Observe the passage, explore its connections, and prepare to teach it faithfully.
+              </p>
+            </div>
+
+            <button id="study-add-note-button" class="primary-button" type="button">
+              + Add study note
+            </button>
+          </div>
+
+          <section class="study-workspace panel">
+            <div class="study-workspace-header">
+              <div>
+                <p id="study-passage-label" class="eyebrow">Current passage</p>
+                <h2 id="study-passage-title">Select a passage</h2>
+              </div>
+
+              <button id="study-change-passage" class="secondary-button" type="button">
+                Change passage
+              </button>
+            </div>
+
+            <div class="study-tabs" role="tablist" aria-label="Study tools">
+              <button class="study-tab active" type="button" data-study-tab="overview">
+                Overview
+              </button>
+
+              <button class="study-tab" type="button" data-study-tab="cross-references">
+                Cross-references
+              </button>
+
+              <button class="study-tab" type="button" data-study-tab="notes">
+                Notes
+              </button>
+
+              <button class="study-tab" type="button" data-study-tab="words">
+                Word study
+              </button>
+
+              <button class="study-tab" type="button" data-study-tab="application">
+                Application
+              </button>
+            </div>
+
+            <div id="study-panel-overview" class="study-panel active-study-panel">
+              <div class="study-introduction">
+                <span class="section-icon">◎</span>
+                <div>
+                  <h3>Passage overview</h3>
+                  <p>
+                    Begin with careful observation. Consider the passage’s context,
+                    structure, repeated ideas, and movement.
+                  </p>
+                </div>
+              </div>
+
+              <div class="study-grid">
+                <div class="study-card">
+                  <span class="card-label">Context</span>
+                  <p id="study-context">
+                    Context notes for the selected passage will appear here.
+                  </p>
+                </div>
+
+                <div class="study-card">
+                  <span class="card-label">Structure</span>
+                  <p id="study-structure">
+                    Passage structure will appear here.
+                  </p>
+                </div>
+
+                <div class="study-card">
+                  <span class="card-label">Main theme</span>
+                  <p id="study-theme">
+                    Identify the central message of the passage.
+                  </p>
+                </div>
+
+                <div class="study-card">
+                  <span class="card-label">Key observations</span>
+                  <p id="study-observations">
+                    Your observations will appear here.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div id="study-panel-cross-references" class="study-panel">
+              <div class="empty-study-state">
+                <span class="empty-state-icon">↗</span>
+                <h3>Cross-references</h3>
+                <p>
+                  Scripture connections for the selected passage will appear here.
+                </p>
+                <p class="muted-text">
+                  We will connect this panel to a properly licensed or open Scripture reference source.
+                </p>
+              </div>
+            </div>
+
+            <div id="study-panel-notes" class="study-panel">
+              <div class="study-panel-heading">
+                <div>
+                  <h3>Notes for this passage</h3>
+                  <p class="muted-text">
+                    Record observations, interpretations, applications, and teaching ideas.
+                  </p>
+                </div>
+
+                <button id="study-panel-add-note" class="secondary-button" type="button">
+                  + New note
+                </button>
+              </div>
+
+              <div id="passage-notes-list" class="notes-list">
+                <div class="empty-study-state compact">
+                  <span class="empty-state-icon">✎</span>
+                  <p>No notes have been added to this passage yet.</p>
+                </div>
+              </div>
+            </div>
+
+            <div id="study-panel-words" class="study-panel">
+              <div class="empty-study-state">
+                <span class="empty-state-icon">Aa</span>
+                <h3>Word study</h3>
+                <p>
+                  Select a verse or word to begin a biblical word study.
+                </p>
+                <p class="muted-text">
+                  Original-language tools will be added after the core study workspace is stable.
+                </p>
+              </div>
+            </div>
+
+            <div id="study-panel-application" class="study-panel">
+              <div class="study-introduction">
+                <span class="section-icon">✓</span>
+                <div>
+                  <h3>Application</h3>
+                  <p>
+                    Move from understanding the passage to faithful obedience and ministry.
+                  </p>
+                </div>
+              </div>
+
+              <div class="application-prompts">
+                <label>
+                  What should I believe?
+                  <textarea id="application-believe" placeholder="Write your observation..."></textarea>
+                </label>
+
+                <label>
+                  What should I do?
+                  <textarea id="application-do" placeholder="Write a practical response..."></textarea>
+                </label>
+
+                <label>
+                  How can I teach this?
+                  <textarea id="application-teach" placeholder="Write a teaching idea..."></textarea>
+                </label>
+              </div>
+            </div>
+          </section>
+        </section>
+
+        <section id="view-notes" class="app-view">
+          <div class="page-heading">
+            <div>
+              <p class="eyebrow">Personal study</p>
+              <h1>Notes and highlights</h1>
+              <p class="page-description">
+                Keep your observations, prayers, applications, and teaching ideas together.
+              </p>
+            </div>
+
+            <button id="notes-add-button" class="primary-button" type="button">
+              + New note
+            </button>
+          </div>
+
+          <section class="notes-toolbar panel">
+            <input
+              id="notes-search-input"
+              type="search"
+              placeholder="Search your notes..."
+              aria-label="Search your notes"
+            >
+
+            <select id="notes-type-filter" aria-label="Filter notes by type">
+              <option value="">All note types</option>
+              <option value="observation">Observation</option>
+              <option value="interpretation">Interpretation</option>
+              <option value="application">Application</option>
+              <option value="prayer">Prayer</option>
+              <option value="teaching">Teaching idea</option>
+            </select>
+          </section>
+
+          <section id="all-notes-list" class="notes-list panel">
+            <div class="empty-study-state">
+              <span class="empty-state-icon">✎</span>
+              <h3>Your study notes will appear here</h3>
+              <p>
+                Start by adding an observation to the passage you are reading.
+              </p>
+            </div>
+          </section>
+        </section>
+
+        <section id="view-sermons" class="app-view">
+          <div class="page-heading">
+            <div>
+              <p class="eyebrow">Pastoral preparation</p>
+              <h1>Sermon workshop</h1>
+              <p class="page-description">
+                Prepare sermons and lessons from careful study of Scripture.
+              </p>
+            </div>
+
+            <button id="new-sermon-button" class="primary-button" type="button">
+              + New sermon
+            </button>
+          </div>
+
+          <section id="sermon-projects-list" class="sermon-projects-grid">
+            <div class="empty-study-state panel">
+              <span class="empty-state-icon">▥</span>
+              <h3>No sermon projects yet</h3>
+              <p>
+                Create a sermon project to organize your big idea, outline, applications, and manuscript.
+              </p>
+            </div>
+          </section>
+        </section>
+
+        <section id="view-library" class="app-view">
+          <div class="page-heading">
+            <div>
+              <p class="eyebrow">Study resources</p>
+              <h1>Library</h1>
+              <p class="page-description">
+                A carefully organized collection of resources for Bible study and ministry.
+              </p>
+            </div>
+          </div>
+
+          <section class="library-grid">
+            <article class="library-card panel">
+              <span class="library-icon">▤</span>
+              <h2>Commentaries</h2>
+              <p>
+                Trusted commentary resources will be organized here with clear authorship and licensing.
+              </p>
+              <span class="coming-soon-label">Coming in a future release</span>
+            </article>
+
+            <article class="library-card panel">
+              <span class="library-icon">⌕</span>
+              <h2>Bible dictionaries</h2>
+              <p>
+                Explore people, places, words, customs, and important biblical themes.
+              </p>
+              <span class="coming-soon-label">Coming in a future release</span>
+            </article>
+
+            <article class="library-card panel">
+              <span class="library-icon">◫</span>
+              <h2>Church resources</h2>
+              <p>
+                Study creeds, confessions, church history, and pastoral leadership.
+              </p>
+              <span class="coming-soon-label">Coming in a future release</span>
+            </article>
+          </section>
+        </section>
+
+      </main>
+    </div>
+  </div>
+
+  <div id="verse-action-menu" class="floating-menu hidden" role="menu">
+    <button type="button" data-verse-action="study">Study this verse</button>
+    <button type="button" data-verse-action="highlight">Highlight</button>
+    <button type="button" data-verse-action="note">Add note</button>
+    <button type="button" data-verse-action="bookmark">Bookmark</button>
+    <button type="button" data-verse-action="copy">Copy</button>
+    <button type="button" data-verse-action="play">Play from here</button>
+  </div>
+
+  <div id="note-modal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="note-modal-title">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div>
+          <p class="eyebrow">Personal study</p>
+          <h2 id="note-modal-title">Add s
