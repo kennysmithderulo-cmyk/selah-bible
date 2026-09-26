@@ -466,14 +466,14 @@
     });
   }
 
-  async function loadBooks() {
+    async function loadBooks() {
     const url =
       `${BIBLE_API}/` +
       `${encodeURIComponent(state.tr)}/books.json`;
 
     const data = await getJSON(url);
 
-    if (!Array.isArray(data.books)) {
+    if (!data || !Array.isArray(data.books)) {
       throw new Error(
         "The books response was invalid."
       );
@@ -487,20 +487,25 @@
           book.numberOfChapters
         )
       }))
-      .filter(
-        (book) =>
+      .filter((book) => {
+        return (
           book.id &&
           book.numberOfChapters > 0
-      )
-      .sort((a, b) => a.order - b.order);
-
-    state.translation =
-      data.translation || null;
+        );
+      })
+      .sort((a, b) => {
+        return a.order - b.order;
+      });
 
     if (!state.books.length) {
-      throw new Error("No books were found.");
+      throw new Error(
+        "No books were found for this translation."
+      );
     }
-  }
+
+    state.translationInfo =
+      data.translation || null;
+    }
   function previousReference() {
     if (state.chapter > 1) {
       return [
