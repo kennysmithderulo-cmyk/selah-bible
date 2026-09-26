@@ -2359,6 +2359,209 @@ function selahLoadTheme() {
 
   document.documentElement.dataset.theme = savedTheme;
 }   
+ function selahLoadLocalNotes() {
+  try {
+    const saved = localStorage.getItem("selah_study_notes");
+
+    state.studyNotes = saved
+      ? JSON.parse(saved)
+      : [];
+  } catch (error) {
+    console.error("Could not load local study notes:", error);
+    state.studyNotes = [];
+  }
+}
+
+function selahSaveLocalNotes() {
+  localStorage.setItem(
+    "selah_study_notes",
+    JSON.stringify(state.studyNotes)
+  );
+}
+    function selahNoteTypeName(type) {
+  return String(type || "observation")
+    .replaceAll("-", " ")
+    .replace(/\bw/g, (letter) => letter.toUpperCase());
+}
+
+function selahNoteReference(note) {
+  const book = note.bookName || note.book || "";
+  const chapter = note.chapter || "";
+  const verse = note.verse ? `:${note.verse}` : "";
+
+  return `${book} ${chapter}${verse}`;
+}
+
+function selahNoteHTML(note) {
+  return `
+    <article
+      class="note-item"
+      data-note-id="${selahEscapeHTML(note.id)}"
+    >
+      <div class="note-item-header">
+        <div>
+          <span class="note-reference">
+            ${selahEscapeHTML(selahNoteReference(note))}
+          </span>
+
+          <h3>
+            ${selahEscapeHTML(
+              note.title || selahNoteTypeName(note.noteType)
+            )}
+          </h3>
+
+          <span class="card-label">
+            ${selahEscapeHTML(
+              selahNoteTypeName(note.noteType)
+            )}
+          </span>
+        </div>
+
+        <div class="note-item-actions">
+          <button
+            class="small-action-button"
+            type="button"
+            data-edit-study-note="${selahEscapeHTML(note.id)}"
+          >
+            Edit
+          </button>
+
+          <button
+            class="small-action-button"
+            type="button"
+            data-delete-study-note="${selahEscapeHTML(note.id)}"
+          >
+            Delete
+          </button>
+        </div>
+      </div>
+
+      <p class="note-item-content">
+        ${selahEscapeHTML(note.content)}
+      </p>
+    </article>
+  `;
+}
+
+function selahRenderPassageNotes() {
+  const container = document.querySelector(
+    "#passage-notes-list"
+  );
+
+  if (!container) return;
+
+  const currentBook = state.book;
+  const currentChapter = Number(state.chapter);
+
+  const notes = state.studyNotes.filter((note) => {
+    return (
+      note.book === currentBook &&
+      Number(note.chapter) === currentChapter
+    );
+  });
+
+  if (!notes.length) {
+    container.innerHTML = `
+      <div class="empty-study-state compact">
+        <span class="empty-state-icon">✎</span>
+        <p>No notes have been added to this passage yet.</p>
+      </div>
+    `;
+
+    return;
+  }
+
+  container.innerHTML = notes.map(selahNoteHTML).join("");
+}
+
+function selahRenderAllNotes() {
+  const container = document.querySelector("#all-notes-list");
+
+  if (!container) return;
+
+  const search =
+    document
+      .querySelector("#notes-search-input")
+      ?.value
+      .trim()
+      .toLowerCase() || "";
+
+  const type =
+    document.querySelector("#notes-type-filter")?.value || "";
+
+  const notes = state.studyNotes.filter((note) => {
+    const searchable = [
+      note.title,
+      note.content,
+      note.bookName,
+      note.noteType
+    ]
+      .join(" ")
+      .toLowerCase();
+
+    return (
+      (!search || searchable.includes(search)) &&
+      (!type || note.noteType === type)
+    );
+  });
+
+  if (!notes.length) {
+    container.innerHTML = `
+      <div class="empty-study-state">
+        <span class="empty-state-icon">✎</span>
+        <h3>Your study notes will appear here</h3>
+        <p>
+          Start by adding an observation to the passage
+          you are reading.
+        </p>
+      </div>
+    `;
+
+    return;
+  }
+
+  container.innerHTML = notes.map(selahNoteHTML).join("");
+}
+      function selahOpenNoteModal(note = null) {
+  const modal = document.querySelector("#note-modal");
+
+  if (!modal) return;
+
+  document.querySelector("#note-id").value =
+    note?.id || "";
+
+  document.querySelector("#note-type").value =
+    note?.noteType || "observation";
+
+  document.querySelector("#note-title").value =
+    note?.title || "";
+
+  document.querySelector("#note-content").value =
+    note?.content || "";
+
+  document.querySelector("#note-modal-title").textContent =
+    note ? "Edit study note" : "Add study note";
+
+  document.querySelector("#note-form-status").textContent = "";
+
+  selahUpdateStudyReference();
+  modal.classList.remove("hidden");
+
+  document.querySelector("#note-content")?.focus();
+}
+
+function selahCloseNoteModal() {
+  document.querySelector("#note-modal")?.classList.add("hidden");
+}
+
+function selahCurrentNoteReference() {
+  return {
+    book: state.book,
+    bookName: selahBookName(),
+    chapter: Number(state.chapter),
+    verse: state.selectedStudyVerse?.number || null
+  };
+}
                          
   start();
 })();
