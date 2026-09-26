@@ -41,6 +41,10 @@
     autoNext: true,
     bookmarks: [],
     user: null
+      currentView: "read",
+  currentStudyTab: "overview",
+  selectedStudyVerse: null,
+  studyNotes: [],
   };
 
   const el = {
@@ -2183,6 +2187,134 @@
       `;
     }
   }
+function selahEscapeHTML(value) {
+  return String(value ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
 
+function selahBookName() {
+  const bookSelect = document.querySelector("#book-select");
+
+  if (bookSelect?.selectedOptions?.[0]) {
+    return bookSelect.selectedOptions[0].textContent;
+  }
+
+  return state.book || "";
+}
+
+function selahPassageReference() {
+  return `${selahBookName()} ${state.chapter || ""}`;
+}
+
+function selahShowToast(message) {
+  const toast = document.querySelector("#toast");
+
+  if (!toast) {
+    window.alert(message);
+    return;
+  }
+
+  toast.textContent = message;
+  toast.classList.remove("hidden");
+
+  window.clearTimeout(selahShowToast.timer);
+
+  selahShowToast.timer = window.setTimeout(() => {
+    toast.classList.add("hidden");
+  }, 3000);
+}
+  function selahShowView(viewName) {
+  document.querySelectorAll(".app-view").forEach((view) => {
+    view.classList.remove("active-view");
+  });
+
+  const targetView = document.querySelector(`#view-${viewName}`);
+
+  if (targetView) {
+    targetView.classList.add("active-view");
+  }
+
+  document.querySelectorAll("[data-view]").forEach((button) => {
+    button.classList.toggle(
+      "active",
+      button.dataset.view === viewName
+    );
+  });
+
+  state.currentView = viewName;
+
+  if (viewName === "study") {
+    selahUpdateStudyReference();
+    selahRenderPassageNotes();
+  }
+
+  if (viewName === "notes") {
+    selahRenderAllNotes();
+  }
+
+  document.querySelector("#sidebar")?.classList.remove("mobile-open");
+  }
+  function selahShowStudyTab(tabName) {
+  document.querySelectorAll(".study-tab").forEach((tab) => {
+    tab.classList.toggle(
+      "active",
+      tab.dataset.studyTab === tabName
+    );
+  });
+
+  document.querySelectorAll(".study-panel").forEach((panel) => {
+    panel.classList.remove("active-study-panel");
+  });
+
+  const targetPanel = document.querySelector(
+    `#study-panel-${tabName}`
+  );
+
+  if (targetPanel) {
+    targetPanel.classList.add("active-study-panel");
+  }
+
+  state.currentStudyTab = tabName;
+
+  if (tabName === "notes") {
+    selahRenderPassageNotes();
+  }
+  }
+  function selahUpdateStudyReference() {
+  const reference = selahPassageReference();
+
+  const studyHeading = document.querySelector("#study-heading");
+  const studyLabel = document.querySelector("#study-passage-label");
+  const studyTitle = document.querySelector("#study-passage-title");
+  const noteReference = document.querySelector("#note-reference-label");
+
+  if (studyHeading) {
+    studyHeading.textContent = `Study ${reference}`;
+  }
+
+  if (studyLabel) {
+    studyLabel.textContent =
+      state.translation
+        ? `${state.translation} · Current passage`
+        : "Current passage";
+  }
+
+  if (studyTitle) {
+    studyTitle.textContent = reference;
+  }
+
+  if (noteReference) {
+    const verse = state.selectedStudyVerse?.number;
+
+    noteReference.textContent = verse
+      ? `${reference}:${verse}`
+      : reference;
+  }
+  }
+  
   start();
 })();
