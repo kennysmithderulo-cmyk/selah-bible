@@ -1,11 +1,11 @@
 (() => {
-  'use strict';
+  "use strict";
 
   const SUPABASE_URL =
-    'https://ylspdrjrvhixrregmqtg.supabase.co';
+    "https://ylspdrjrvhixrregmqtg.supabase.co";
 
   const SUPABASE_KEY =
-    'sb_publishable_Ar8T3NCh77i6YZfjN88wBQ_f8j7oool';
+    "sb_publishable_Ar8T3NCh77i6YZfjN88wBQ_f8j7oool";
 
   const supabaseClient =
     window.supabase?.createClient
@@ -16,20 +16,20 @@
       : null;
 
   const BIBLE_API =
-    'https://bible.helloao.org/api';
+    "https://bible.helloao.org/api";
 
   const $ = (id) =>
     document.getElementById(id);
 
   const state = {
-    tr: 'BSB',
+    tr: "BSB",
     books: [],
-    bookId: 'JHN',
+    bookId: "JHN",
     chapter: 3,
     data: null,
     verses: [],
-    narrator: 'souer',
-    mode: 'audio',
+    narrator: "souer",
+    mode: "audio",
     playing: false,
     currentVerse: 0,
     selectedVerse: 0,
@@ -41,196 +41,193 @@
     autoNext: true,
     bookmarks: [],
     user: null
-      currentView: "read",
-  currentStudyTab: "overview",
-  selectedStudyVerse: null,
-  studyNotes: [],
   };
 
   const el = {
-    audio: $('audio'),
-    scripture: $('scripture'),
-    refBtn: $('refBtn'),
-    refLabel: $('refLabel'),
-    trSel: $('translationSel'),
-    narSel: $('narratorSel'),
-    playBtn: $('playBtn'),
-    prevVerse: $('prevVerse'),
-    nextVerse: $('nextVerse'),
-    seek: $('seek'),
-    tCur: $('tCur'),
-    tDur: $('tDur'),
-    tNow: $('tNow'),
-    speedBtn: $('speedBtn'),
-    prevChap: $('prevChap'),
-    nextChap: $('nextChap'),
-    prevLabel: $('prevLabel'),
-    nextLabel: $('nextLabel'),
-    chapterBook: $('chapterBook'),
-    chapterNum: $('chapterNum'),
-    bookTitle: $('bookTitle'),
-    trNote: $('translationNote'),
-    picker: $('picker'),
-    pickerBody: $('pickerBody'),
-    pickerTitle: $('pickerTitle'),
-    pickerBack: $('pickerBack'),
-    jumpForm: $('jumpForm'),
-    jumpInput: $('jumpInput'),
-    pop: $('versePop'),
-    popPlay: $('popPlay'),
-    popCopy: $('popCopy'),
-    popBookmark: $('popBookmark'),
-    toast: $('toast'),
-    searchBtn: $('searchBtn'),
-    searchDlg: $('searchDlg'),
-    searchForm: $('searchForm'),
-    searchInput: $('searchInput'),
-    searchBody: $('searchBody'),
-    bookmarksBtn: $('bookmarksBtn'),
-    bookmarksDlg: $('bookmarksDlg'),
-    bmBadge: $('bmBadge'),
-    bmBody: $('bmBody'),
-    settingsBtn: $('settingsBtn'),
-    settings: $('settingsPanel'),
-    themeBtn: $('themeBtn'),
-    themeLabel: $('themeLabel'),
-    fontUp: $('fontUp'),
-    fontDown: $('fontDown'),
-    followToggle: $('followToggle'),
-    autoNextToggle: $('autoNextToggle'),
-    numsToggle: $('numsToggle'),
-    continueBtn: $('continueBtn'),
-    browseBtn: $('browseBtn'),
-    readerBookmarkBtn: $('readerBookmarkBtn'),
-    heroReference: $('heroReference'),
-    heroTranslation: $('heroTranslation')
+    audio: $("audio"),
+    scripture: $("scripture"),
+    refBtn: $("refBtn"),
+    refLabel: $("refLabel"),
+    trSel: $("translationSel"),
+    narSel: $("narratorSel"),
+    playBtn: $("playBtn"),
+    prevVerse: $("prevVerse"),
+    nextVerse: $("nextVerse"),
+    seek: $("seek"),
+    tCur: $("tCur"),
+    tDur: $("tDur"),
+    tNow: $("tNow"),
+    speedBtn: $("speedBtn"),
+    prevChap: $("prevChap"),
+    nextChap: $("nextChap"),
+    prevLabel: $("prevLabel"),
+    nextLabel: $("nextLabel"),
+    chapterBook: $("chapterBook"),
+    chapterNum: $("chapterNum"),
+    bookTitle: $("bookTitle"),
+    trNote: $("translationNote"),
+    picker: $("picker"),
+    pickerBody: $("pickerBody"),
+    pickerTitle: $("pickerTitle"),
+    pickerBack: $("pickerBack"),
+    jumpForm: $("jumpForm"),
+    jumpInput: $("jumpInput"),
+    pop: $("versePop"),
+    popPlay: $("popPlay"),
+    popCopy: $("popCopy"),
+    popBookmark: $("popBookmark"),
+    toast: $("toast"),
+    searchBtn: $("searchBtn"),
+    searchDlg: $("searchDlg"),
+    searchForm: $("searchForm"),
+    searchInput: $("searchInput"),
+    searchBody: $("searchBody"),
+    bookmarksBtn: $("bookmarksBtn"),
+    bookmarksDlg: $("bookmarksDlg"),
+    bmBadge: $("bmBadge"),
+    bmBody: $("bmBody"),
+    settingsBtn: $("settingsBtn"),
+    settings: $("settingsPanel"),
+    themeBtn: $("themeBtn"),
+    themeLabel: $("themeLabel"),
+    fontUp: $("fontUp"),
+    fontDown: $("fontDown"),
+    followToggle: $("followToggle"),
+    autoNextToggle: $("autoNextToggle"),
+    numsToggle: $("numsToggle"),
+    continueBtn: $("continueBtn"),
+    browseBtn: $("browseBtn"),
+    readerBookmarkBtn: $("readerBookmarkBtn"),
+    heroReference: $("heroReference"),
+    heroTranslation: $("heroTranslation")
   };
+
   const translations = [
     {
-      group: 'English',
+      group: "English",
       items: [
-        ['BSB', 'Berean Standard Bible'],
-        ['eng_kjv', 'King James Version'],
-        ['ENGWEBP', 'World English Bible'],
-        ['eng_asv', 'American Standard Version'],
-        ['eng_net', 'NET Bible'],
-        ['eng_bbe', 'Bible in Basic English'],
-        ['eng_ylt', "Young's Literal Translation"],
-        ['eng_dby', 'Darby Translation']
+        ["BSB", "Berean Standard Bible"],
+        ["eng_kjv", "King James Version"],
+        ["ENGWEBP", "World English Bible"],
+        ["eng_asv", "American Standard Version"],
+        ["eng_net", "NET Bible"],
+        ["eng_bbe", "Bible in Basic English"],
+        ["eng_ylt", "Young's Literal Translation"],
+        ["eng_dby", "Darby Translation"]
       ]
     },
     {
-      group: 'Ghana and Africa',
+      group: "Ghana and Africa",
       items: [
-        ['twi_asa', 'Asante Twi'],
-        ['twi_aka', 'Akuapem Twi'],
-        ['ewe_bib', 'Eʋegbe'],
-        ['hau_bib', 'Hausa'],
-        ['yor_bib', 'Yorùbá'],
-        ['swh_onmm', 'Kiswahili']
+        ["twi_asa", "Asante Twi"],
+        ["twi_aka", "Akuapem Twi"],
+        ["ewe_bib", "Eʋegbe"],
+        ["hau_bib", "Hausa"],
+        ["yor_bib", "Yorùbá"],
+        ["swh_onmm", "Kiswahili"]
       ]
     },
     {
-      group: 'Other languages',
+      group: "Other languages",
       items: [
-        ['fra_lsg', 'Français — Louis Segond'],
-        ['spa_r09', 'Español — Reina-Valera 1909'],
-        ['por_blj', 'Português — Bíblia Livre'],
-        ['deu_l12', 'Deutsch — Luther 1912']
+        ["fra_lsg", "Français — Louis Segond"],
+        ["spa_r09", "Español — Reina-Valera 1909"],
+        ["por_blj", "Português — Bíblia Livre"],
+        ["deu_l12", "Deutsch — Luther 1912"]
       ]
     }
   ];
 
   const aliases = {
-    gen: 'GEN',
-    ex: 'EXO',
-    exod: 'EXO',
-    lev: 'LEV',
-    num: 'NUM',
-    deut: 'DEU',
-    josh: 'JOS',
-    judg: 'JDG',
-    ruth: 'RUT',
-    ps: 'PSA',
-    psa: 'PSA',
-    prov: 'PRO',
-    ecc: 'ECC',
-    eccl: 'ECC',
-    song: 'SNG',
-    isa: 'ISA',
-    jer: 'JER',
-    lam: 'LAM',
-    ezek: 'EZK',
-    dan: 'DAN',
-    hos: 'HOS',
-    joel: 'JOL',
-    amos: 'AMO',
-    obad: 'OBA',
-    jonah: 'JON',
-    mic: 'MIC',
-    nah: 'NAM',
-    hab: 'HAB',
-    zeph: 'ZEP',
-    hag: 'HAG',
-    zech: 'ZEC',
-    mal: 'MAL',
-    matt: 'MAT',
-    matthew: 'MAT',
-    mt: 'MAT',
-    mark: 'MRK',
-    mk: 'MRK',
-    luke: 'LUK',
-    lk: 'LUK',
-    john: 'JHN',
-    jn: 'JHN',
-    acts: 'ACT',
-    rom: 'ROM',
-    romans: 'ROM',
-    '1cor': '1CO',
-    '2cor': '2CO',
-    gal: 'GAL',
-    eph: 'EPH',
-    phil: 'PHP',
-    php: 'PHP',
-    col: 'COL',
-    '1thess': '1TH',
-    '2thess': '2TH',
-    '1tim': '1TI',
-    '2tim': '2TI',
-    tit: 'TIT',
-    phlm: 'PHM',
-    heb: 'HEB',
-    jas: 'JAS',
-    james: 'JAS',
-    '1pet': '1PE',
-    '2pet': '2PE',
-    '1jn': '1JN',
-    '2jn': '2JN',
-    '3jn': '3JN',
-    jude: 'JUD',
-    rev: 'REV',
-    revelation: 'REV'
+    gen: "GEN",
+    ex: "EXO",
+    exod: "EXO",
+    lev: "LEV",
+    num: "NUM",
+    deut: "DEU",
+    josh: "JOS",
+    judg: "JDG",
+    ruth: "RUT",
+    ps: "PSA",
+    psa: "PSA",
+    prov: "PRO",
+    ecc: "ECC",
+    eccl: "ECC",
+    song: "SNG",
+    isa: "ISA",
+    jer: "JER",
+    lam: "LAM",
+    ezek: "EZK",
+    dan: "DAN",
+    hos: "HOS",
+    joel: "JOL",
+    amos: "AMO",
+    obad: "OBA",
+    jonah: "JON",
+    mic: "MIC",
+    nah: "NAM",
+    hab: "HAB",
+    zeph: "ZEP",
+    hag: "HAG",
+    zech: "ZEC",
+    mal: "MAL",
+    matt: "MAT",
+    matthew: "MAT",
+    mt: "MAT",
+    mark: "MRK",
+    mk: "MRK",
+    luke: "LUK",
+    lk: "LUK",
+    john: "JHN",
+    jn: "JHN",
+    acts: "ACT",
+    rom: "ROM",
+    romans: "ROM",
+    "1cor": "1CO",
+    "2cor": "2CO",
+    gal: "GAL",
+    eph: "EPH",
+    phil: "PHP",
+    php: "PHP",
+    col: "COL",
+    "1thess": "1TH",
+    "2thess": "2TH",
+    "1tim": "1TI",
+    "2tim": "2TI",
+    tit: "TIT",
+    phlm: "PHM",
+    heb: "HEB",
+    jas: "JAS",
+    james: "JAS",
+    "1pet": "1PE",
+    "2pet": "2PE",
+    "1jn": "1JN",
+    "2jn": "2JN",
+    "3jn": "3JN",
+    jude: "JUD",
+    rev: "REV",
+    revelation: "REV"
   };
   function cleanText(value) {
-    return String(value || '')
-      .replace(/s+/g, ' ')
-      .replace(/ ([”’.,;:!?])/g, '$1')
+    return String(value || "")
+      .replace(/s+/g, " ")
+      .replace(/s([”’.,;:!?])/g, "$1")
       .trim();
   }
 
   function textFromContent(value) {
-    if (typeof value === 'string') {
+    if (typeof value === "string") {
       return value;
     }
 
     if (Array.isArray(value)) {
       return value
         .map((part) => textFromContent(part))
-        .join('');
+        .join("");
     }
 
-    if (value && typeof value === 'object') {
-      if (typeof value.text === 'string') {
+    if (value && typeof value === "object") {
+      if (typeof value.text === "string") {
         return value.text;
       }
 
@@ -239,27 +236,29 @@
       }
     }
 
-    return '';
+    return "";
   }
 
   function escapeHTML(value) {
-    return String(value).replace(
+    return String(value ?? "").replace(
       /[&<>"']/g,
       (character) => ({
-        '&': '&amp;',
-        '<': '&lt;',
-        '>': '&gt;',
-        '"': '&quot;',
-        "'": '&#039;'
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#039;"
       })[character]
     );
   }
 
   function bookName(book) {
-    return book?.commonName ||
+    return (
+      book?.commonName ||
       book?.name ||
       book?.id ||
-      '';
+      ""
+    );
   }
 
   function currentBook() {
@@ -277,8 +276,10 @@
       seconds = 0;
     }
 
-    return `${Math.floor(seconds / 60)}:` +
-      `${String(Math.floor(seconds % 60)).padStart(2, '0')}`;
+    return (
+      `${Math.floor(seconds / 60)}:` +
+      `${String(Math.floor(seconds % 60)).padStart(2, "0")}`
+    );
   }
 
   function showToast(message) {
@@ -287,12 +288,12 @@
     }
 
     el.toast.textContent = message;
-    el.toast.classList.add('show');
+    el.toast.classList.add("show");
 
     clearTimeout(showToast.timer);
 
     showToast.timer = setTimeout(() => {
-      el.toast.classList.remove('show');
+      el.toast.classList.remove("show");
     }, 2600);
   }
 
@@ -300,16 +301,14 @@
     const response = await fetch(url);
 
     if (!response.ok) {
-      throw new Error(
-        `Request failed: ${response.status}`
-      );
+      throw new Error(`Request failed: ${response.status}`);
     }
 
     return response.json();
   }
 
   function loadSpeechVoices() {
-    if (!('speechSynthesis' in window)) {
+    if (!("speechSynthesis" in window)) {
       return;
     }
 
@@ -321,37 +320,34 @@
     update();
 
     window.speechSynthesis.addEventListener(
-      'voiceschanged',
+      "voiceschanged",
       update
     );
   }
 
   function speechLanguage() {
-    if (state.tr === 'fra_lsg') {
-      return 'fr-FR';
+    if (state.tr === "fra_lsg") {
+      return "fr-FR";
     }
 
-    if (state.tr === 'spa_r09') {
-      return 'es-ES';
+    if (state.tr === "spa_r09") {
+      return "es-ES";
     }
 
-    if (state.tr === 'por_blj') {
-      return 'pt-PT';
+    if (state.tr === "por_blj") {
+      return "pt-PT";
     }
 
-    if (state.tr === 'deu_l12') {
-      return 'de-DE';
+    if (state.tr === "deu_l12") {
+      return "de-DE";
     }
 
-    return 'en-US';
+    return "en-US";
   }
 
   function chooseSpeechVoice() {
-    const voices =
-      state.voices || [];
-
-    const language =
-      speechLanguage().toLowerCase();
+    const voices = state.voices || [];
+    const language = speechLanguage().toLowerCase();
 
     return (
       voices.find(
@@ -368,7 +364,7 @@
         (voice) =>
           voice.lang
             .toLowerCase()
-            .startsWith('en')
+            .startsWith("en")
       ) ||
       voices[0] ||
       null
@@ -376,84 +372,88 @@
   }
 
   function prepareSpeechText(text) {
-    let spoken =
-      String(text || '')
-        .replace(/­/g, '')
-        .replace(/[-‍﻿]/g, '')
-        .replace(/s+/g, ' ')
-        .trim();
+    let spoken = String(text || "")
+      .replace(/­/g, "")
+      .replace(/[-‍﻿]/g, "")
+      .replace(/s+/g, " ")
+      .trim();
 
     const pronunciationMap = [
-      [/\bJesus's\b/gi, 'Jee-zus-es'],
-      [/\bJesus\b/gi, 'Jee-zus'],
-      [/\bMoses\b/gi, 'Moe-ziz'],
-      [/\bdisciples\b/gi, 'duh-sigh-pulz'],
-      [/\bsalvation\b/gi, 'sal-vay-shun'],
-      [/\bPharisees\b/gi, 'Fair-uh-seez'],
-      [/\bSadducees\b/gi, 'Sad-you-seez']
+      [/\bJesus's\b/gi, "Jee-zus-es"],
+      [/\bJesus\b/gi, "Jee-zus"],
+      [/\bMoses\b/gi, "Moe-ziz"],
+      [/\bdisciples\b/gi, "duh-sigh-pulz"],
+      [/\bsalvation\b/gi, "sal-vay-shun"],
+      [/\bPharisees\b/gi, "Fair-uh-seez"],
+      [/\bSadducees\b/gi, "Sad-you-seez"]
     ];
 
     pronunciationMap.forEach(
       ([pattern, replacement]) => {
-        spoken = spoken.replace(
-          pattern,
-          replacement
-        );
+        spoken = spoken.replace(pattern, replacement);
       }
     );
 
     return spoken;
   }
+
   async function initializeSupabase() {
     if (!supabaseClient) {
       return null;
     }
 
-    const {
-      data: sessionData
-    } =
-      await supabaseClient.auth.getSession();
+    try {
+      const {
+        data: sessionData
+      } = await supabaseClient.auth.getSession();
 
-    if (sessionData?.session?.user) {
-      state.user =
-        sessionData.session.user;
+      if (sessionData?.session?.user) {
+        state.user = sessionData.session.user;
+        return state.user;
+      }
 
+      const {
+        data,
+        error
+      } = await supabaseClient.auth.signInAnonymously();
+
+      if (error) {
+        console.warn(
+          "Anonymous sign-in failed:",
+          error.message
+        );
+
+        return null;
+      }
+
+      state.user = data?.user || null;
       return state.user;
-    }
-
-    const {
-      data,
-      error
-    } =
-      await supabaseClient.auth.signInAnonymously();
-
-    if (error) {
+    } catch (error) {
       console.warn(
-        'Anonymous sign-in failed:',
+        "Supabase initialization failed:",
         error.message
       );
 
       return null;
     }
-
-    state.user =
-      data?.user || null;
-
-    return state.user;
   }
 
   function buildTranslationSelect() {
-    el.trSel.innerHTML = '';
+    if (!el.trSel) {
+      return;
+    }
+
+    el.trSel.innerHTML = "";
 
     translations.forEach((group) => {
       const optgroup =
-        document.createElement('optgroup');
+        document.createElement("optgroup");
 
       optgroup.label = group.group;
 
       group.items.forEach(([id, name]) => {
         const option =
-          document.createElement('option');
+          document.createElement("option");
 
         option.value = id;
         option.textContent = name;
@@ -471,12 +471,11 @@
       `${BIBLE_API}/` +
       `${encodeURIComponent(state.tr)}/books.json`;
 
-    const data =
-      await getJSON(url);
+    const data = await getJSON(url);
 
     if (!Array.isArray(data.books)) {
       throw new Error(
-        'The books response was invalid.'
+        "The books response was invalid."
       );
     }
 
@@ -488,9 +487,10 @@
           book.numberOfChapters
         )
       }))
-      .filter((book) =>
-        book.id &&
-        book.numberOfChapters > 0
+      .filter(
+        (book) =>
+          book.id &&
+          book.numberOfChapters > 0
       )
       .sort((a, b) => a.order - b.order);
 
@@ -498,12 +498,9 @@
       data.translation || null;
 
     if (!state.books.length) {
-      throw new Error(
-        'No books were found.'
-      );
+      throw new Error("No books were found.");
     }
   }
-
   function previousReference() {
     if (state.chapter > 1) {
       return [
@@ -520,8 +517,7 @@
       return null;
     }
 
-    const book =
-      state.books[index - 1];
+    const book = state.books[index - 1];
 
     return [
       book.id,
@@ -563,29 +559,44 @@
     const book = currentBook();
     const name = bookName(book);
 
-    el.refLabel.textContent =
-      `${name} ${state.chapter}`;
+    if (el.refLabel) {
+      el.refLabel.textContent =
+        `${name} ${state.chapter}`;
+    }
 
-    el.heroReference.textContent =
-      `${name} ${state.chapter}`;
+    if (el.heroReference) {
+      el.heroReference.textContent =
+        `${name} ${state.chapter}`;
+    }
 
-    el.chapterBook.textContent = name;
-    el.chapterNum.textContent =
-      state.chapter;
+    if (el.chapterBook) {
+      el.chapterBook.textContent = name;
+    }
 
-    el.bookTitle.textContent =
-      book?.title || name;
+    if (el.chapterNum) {
+      el.chapterNum.textContent =
+        state.chapter;
+    }
+
+    if (el.bookTitle) {
+      el.bookTitle.textContent =
+        book?.title || name;
+    }
 
     const translationName =
       state.translation?.englishName ||
       state.translation?.name ||
       state.tr;
 
-    el.trNote.textContent =
-      translationName;
+    if (el.trNote) {
+      el.trNote.textContent =
+        translationName;
+    }
 
-    el.heroTranslation.textContent =
-      translationName;
+    if (el.heroTranslation) {
+      el.heroTranslation.textContent =
+        translationName;
+    }
 
     const previous =
       previousReference();
@@ -593,25 +604,35 @@
     const next =
       nextReference();
 
-    el.prevChap.disabled = !previous;
-    el.nextChap.disabled = !next;
+    if (el.prevChap) {
+      el.prevChap.disabled = !previous;
+    }
 
-    el.prevLabel.textContent = previous
-      ? `${bookName(
-          state.books.find(
-            (item) => item.id === previous[0]
-          )
-        )} ${previous[1]}`
-      : 'Previous';
+    if (el.nextChap) {
+      el.nextChap.disabled = !next;
+    }
 
-    el.nextLabel.textContent = next
-      ? `${bookName(
-          state.books.find(
-            (item) => item.id === next[0]
-          )
-        )} ${next[1]}`
-      : 'Next';
+    if (el.prevLabel) {
+      el.prevLabel.textContent = previous
+        ? `${bookName(
+            state.books.find(
+              (item) => item.id === previous[0]
+            )
+          )} ${previous[1]}`
+        : "Previous";
+    }
+
+    if (el.nextLabel) {
+      el.nextLabel.textContent = next
+        ? `${bookName(
+            state.books.find(
+              (item) => item.id === next[0]
+            )
+          )} ${next[1]}`
+        : "Next";
+    }
   }
+
   function renderChapter(data) {
     const content =
       data?.chapter?.content || [];
@@ -621,7 +642,7 @@
       !content.length
     ) {
       throw new Error(
-        'The chapter response contains no content.'
+        "The chapter response contains no content."
       );
     }
 
@@ -634,24 +655,24 @@
 
     function createParagraph() {
       paragraph =
-        document.createElement('p');
+        document.createElement("p");
 
       fragment.appendChild(paragraph);
     }
 
     content.forEach((item) => {
-      if (!item || typeof item !== 'object') {
+      if (!item || typeof item !== "object") {
         return;
       }
 
       if (
-        item.type === 'heading' ||
-        item.type === 'subtitle'
+        item.type === "heading" ||
+        item.type === "subtitle"
       ) {
         paragraph = null;
 
         const heading =
-          document.createElement('h3');
+          document.createElement("h3");
 
         heading.textContent = cleanText(
           textFromContent(item.content)
@@ -664,12 +685,12 @@
         return;
       }
 
-      if (item.type === 'line_break') {
+      if (item.type === "line_break") {
         paragraph = null;
         return;
       }
 
-      if (item.type !== 'verse') {
+      if (item.type !== "verse") {
         return;
       }
 
@@ -678,18 +699,18 @@
       }
 
       const verse =
-        document.createElement('span');
+        document.createElement("span");
 
-      verse.className = 'verse';
+      verse.className = "verse";
       verse.dataset.v =
         String(item.number);
       verse.id =
         `v${item.number}`;
 
       const number =
-        document.createElement('sup');
+        document.createElement("sup");
 
-      number.className = 'vnum';
+      number.className = "vnum";
       number.textContent =
         String(item.number);
 
@@ -704,18 +725,18 @@
       parts.forEach((part) => {
         if (
           part &&
-          typeof part === 'object' &&
+          typeof part === "object" &&
           part.lineBreak
         ) {
           verse.appendChild(
-            document.createElement('br')
+            document.createElement("br")
           );
 
           return;
         }
 
         const text =
-          typeof part === 'string'
+          typeof part === "string"
             ? part
             : textFromContent(part);
 
@@ -726,26 +747,26 @@
         plainParts.push(text);
 
         const span =
-          document.createElement('span');
+          document.createElement("span");
 
         if (
           part &&
-          typeof part === 'object' &&
+          typeof part === "object" &&
           part.poem
         ) {
-          span.classList.add('poem-line');
+          span.classList.add("poem-line");
 
           if (Number(part.poem) > 1) {
-            span.classList.add('p2');
+            span.classList.add("p2");
           }
         }
 
         if (
           part &&
-          typeof part === 'object' &&
+          typeof part === "object" &&
           part.wordsOfJesus
         ) {
-          span.classList.add('jesus');
+          span.classList.add("jesus");
         }
 
         if (!numberInserted) {
@@ -766,7 +787,7 @@
 
       if (paragraph.childNodes.length) {
         paragraph.appendChild(
-          document.createTextNode(' ')
+          document.createTextNode(" ")
         );
       }
 
@@ -775,7 +796,7 @@
       state.verses.push({
         n: Number(item.number),
         text: cleanText(
-          plainParts.join(' ')
+          plainParts.join(" ")
         ),
         el: verse
       });
@@ -783,14 +804,17 @@
 
     if (!state.verses.length) {
       throw new Error(
-        'The chapter loaded, but no verses were found.'
+        "The chapter loaded, but no verses were found."
       );
     }
 
-    el.scripture.replaceChildren(fragment);
+    if (el.scripture) {
+      el.scripture.replaceChildren(fragment);
+    }
 
     applyBookmarkMarks();
   }
+
   async function loadChapter(
     bookId = state.bookId,
     chapter = state.chapter,
@@ -803,8 +827,10 @@
 
     updateHeader();
 
-    el.scripture.innerHTML =
-      '<p>Loading Scripture…</p>';
+    if (el.scripture) {
+      el.scripture.innerHTML =
+        "<p>Loading Scripture…</p>";
+    }
 
     try {
       const url =
@@ -813,8 +839,7 @@
         `${encodeURIComponent(state.bookId)}/` +
         `${encodeURIComponent(state.chapter)}.json`;
 
-      const data =
-        await getJSON(url);
+      const data = await getJSON(url);
 
       if (
         !data ||
@@ -822,7 +847,7 @@
         !Array.isArray(data.chapter.content)
       ) {
         throw new Error(
-          'The Bible API returned no chapter content.'
+          "The Bible API returned no chapter content."
         );
       }
 
@@ -838,46 +863,54 @@
     } catch (error) {
       console.error(error);
 
-      el.scripture.innerHTML = `
-        <div class="errorbox">
-          <strong>
-            Could not load ${escapeHTML(reference())}.
-          </strong>
+      if (el.scripture) {
+        el.scripture.innerHTML = `
+          <div class="errorbox">
+            <strong>
+              Could not load ${escapeHTML(reference())}.
+            </strong>
 
-          <p>${escapeHTML(error.message)}</p>
+            <p>${escapeHTML(error.message)}</p>
 
-          <button id="retryBtn" type="button">
-            Try again
-          </button>
-        </div>
-      `;
+            <button id="retryBtn" type="button">
+              Try again
+            </button>
+          </div>
+        `;
 
-      $('retryBtn')?.addEventListener(
-        'click',
-        () => loadChapter(
-          state.bookId,
-          state.chapter,
-          options
-        )
-      );
+        $("retryBtn")?.addEventListener(
+          "click",
+          () =>
+            loadChapter(
+              state.bookId,
+              state.chapter,
+              options
+            )
+        );
+      }
     }
   }
+
   function setupAudio(data) {
+    if (!el.audio || !el.narSel) {
+      return;
+    }
+
     const links =
       data?.thisChapterAudioLinks || {};
 
-    el.narSel.innerHTML = '';
+    el.narSel.innerHTML = "";
 
     const narrators = [
-      ['souer', 'Souer'],
-      ['hays', 'Hays'],
-      ['david', 'David'],
-      ['gilbert', 'Gilbert']
+      ["souer", "Souer"],
+      ["hays", "Hays"],
+      ["david", "David"],
+      ["gilbert", "Gilbert"]
     ];
 
     narrators.forEach(([id, label]) => {
       const option =
-        document.createElement('option');
+        document.createElement("option");
 
       option.value = id;
       option.textContent = links[id]
@@ -893,10 +926,10 @@
     });
 
     const device =
-      document.createElement('option');
+      document.createElement("option");
 
-    device.value = 'device';
-    device.textContent = 'Device voice';
+    device.value = "device";
+    device.textContent = "Device voice";
 
     el.narSel.appendChild(device);
 
@@ -904,14 +937,14 @@
       links[state.narrator];
 
     if (audioUrl) {
-      state.mode = 'audio';
+      state.mode = "audio";
       el.audio.src = audioUrl;
       el.audio.playbackRate =
         state.speed;
       el.audio.load();
     } else {
-      state.mode = 'speech';
-      el.audio.removeAttribute('src');
+      state.mode = "speech";
+      el.audio.removeAttribute("src");
       el.audio.load();
     }
 
@@ -920,8 +953,8 @@
 
   function play(startVerse = null) {
     if (
-      state.mode === 'speech' ||
-      !el.audio.src
+      state.mode === "speech" ||
+      !el.audio?.src
     ) {
       speakChapter(startVerse);
       return;
@@ -933,17 +966,19 @@
         updatePlayButton();
       })
       .catch(() => {
-        state.mode = 'speech';
+        state.mode = "speech";
         speakChapter(startVerse);
       });
   }
 
   function pause() {
-    el.audio.pause();
+    if (el.audio) {
+      el.audio.pause();
+    }
 
     state.speechToken += 1;
 
-    if ('speechSynthesis' in window) {
+    if ("speechSynthesis" in window) {
       window.speechSynthesis.cancel();
     }
 
@@ -952,12 +987,14 @@
   }
 
   function stopPlayback() {
-    el.audio.pause();
-    el.audio.currentTime = 0;
+    if (el.audio) {
+      el.audio.pause();
+      el.audio.currentTime = 0;
+    }
 
     state.speechToken += 1;
 
-    if ('speechSynthesis' in window) {
+    if ("speechSynthesis" in window) {
       window.speechSynthesis.cancel();
     }
 
@@ -966,11 +1003,10 @@
 
     updatePlayButton();
   }
-
   function speakChapter(startVerse = null) {
-    if (!('speechSynthesis' in window)) {
+    if (!("speechSynthesis" in window)) {
       showToast(
-        'Device voice is unavailable.'
+        "Device voice is unavailable."
       );
 
       return;
@@ -1078,7 +1114,7 @@
       updatePlayButton();
 
       showToast(
-        'Device voice could not read this verse.'
+        "Device voice could not read this verse."
       );
     };
 
@@ -1088,16 +1124,29 @@
   }
 
   function updatePlayButton() {
+    if (!el.playBtn) {
+      return;
+    }
+
     el.playBtn.textContent =
-      state.playing ? 'Ⅱ' : '▶';
+      state.playing ? "Ⅱ" : "▶";
 
     el.playBtn.classList.toggle(
-      'is-playing',
+      "is-playing",
       state.playing
     );
   }
 
   function updateProgress() {
+    if (
+      !el.audio ||
+      !el.seek ||
+      !el.tCur ||
+      !el.tDur
+    ) {
+      return;
+    }
+
     const current =
       Number.isFinite(el.audio.currentTime)
         ? el.audio.currentTime
@@ -1122,6 +1171,7 @@
 
   function updateCurrentVerse() {
     if (
+      !el.audio ||
       !state.verses.length ||
       !Number.isFinite(el.audio.duration) ||
       el.audio.duration <= 0
@@ -1147,20 +1197,26 @@
 
     state.verses.forEach((item) => {
       item.el.classList.toggle(
-        'is-playing',
+        "is-playing",
         item.n === verse.n
       );
     });
 
-    el.tNow.textContent =
-      `${reference()}:${verse.n}`;
+    if (el.tNow) {
+      el.tNow.textContent =
+        `${reference()}:${verse.n}`;
+    }
 
     savePosition(verse.n);
 
-    if (state.follow && state.playing) {
+    if (
+      state.follow &&
+      state.playing &&
+      verse.el
+    ) {
       verse.el.scrollIntoView({
-        behavior: 'smooth',
-        block: 'center'
+        behavior: "smooth",
+        block: "center"
       });
     }
   }
@@ -1181,24 +1237,25 @@
 
     state.verses.forEach((item) => {
       item.el.classList.remove(
-        'is-selected'
+        "is-selected"
       );
     });
 
-    verse.el.classList.add('is-selected');
+    verse.el.classList.add("is-selected");
 
     verse.el.scrollIntoView({
-      behavior: 'smooth',
-      block: 'center'
+      behavior: "smooth",
+      block: "center"
     });
   }
+
   function bookmarkKey(verse) {
     return [
       state.tr,
       state.bookId,
       state.chapter,
       verse
-    ].join(':');
+    ].join(":");
   }
 
   function isBookmarked(verse) {
@@ -1210,7 +1267,7 @@
 
   function saveLocalBookmarks() {
     localStorage.setItem(
-      'selah_bookmarks',
+      "selah_bookmarks",
       JSON.stringify(state.bookmarks)
     );
   }
@@ -1220,8 +1277,8 @@
       state.bookmarks =
         JSON.parse(
           localStorage.getItem(
-            'selah_bookmarks'
-          ) || '[]'
+            "selah_bookmarks"
+          ) || "[]"
         );
     } catch {
       state.bookmarks = [];
@@ -1239,44 +1296,47 @@
       return;
     }
 
-    const {
-      data,
-      error
-    } =
-      await supabaseClient
-        .from('selah_bookmarks')
-        .select('*')
-        .eq('user_id', state.user.id)
-        .order('created_at', {
-          ascending: false
-        });
+    try {
+      const {
+        data,
+        error
+      } =
+        await supabaseClient
+          .from("selah_bookmarks")
+          .select("*")
+          .eq("user_id", state.user.id)
+          .order("created_at", {
+            ascending: false
+          });
 
-    if (error) {
+      if (error) {
+        throw error;
+      }
+
+      state.bookmarks =
+        (data || []).map((row) => ({
+          id: row.id,
+          key: [
+            row.translation,
+            row.book_id,
+            row.chapter,
+            row.verse
+          ].join(":"),
+          row
+        }));
+
+      updateBookmarkBadge();
+      applyBookmarkMarks();
+    } catch (error) {
       console.warn(
-        'Supabase bookmark loading failed:',
+        "Supabase bookmark loading failed:",
         error.message
       );
 
       loadLocalBookmarks();
       updateBookmarkBadge();
       applyBookmarkMarks();
-      return;
     }
-
-    state.bookmarks =
-      (data || []).map((row) => ({
-        id: row.id,
-        key: [
-          row.translation,
-          row.book_id,
-          row.chapter,
-          row.verse
-        ].join(':'),
-        row
-      }));
-
-    updateBookmarkBadge();
-    applyBookmarkMarks();
   }
 
   async function toggleBookmark(verseNumber) {
@@ -1308,8 +1368,8 @@
 
       showToast(
         exists
-          ? 'Bookmark removed.'
-          : 'Bookmark saved on this device.'
+          ? "Bookmark removed."
+          : "Bookmark saved on this device."
       );
 
       return;
@@ -1320,55 +1380,53 @@
         (item) => item.key === key
       );
 
-    if (existing) {
-      const { error } =
-        await supabaseClient
-          .from('selah_bookmarks')
-          .delete()
-          .eq('id', existing.id)
-          .eq('user_id', state.user.id);
+    try {
+      if (existing) {
+        const { error } =
+          await supabaseClient
+            .from("selah_bookmarks")
+            .delete()
+            .eq("id", existing.id)
+            .eq("user_id", state.user.id);
 
-      if (error) {
-        showToast(
-          `Could not remove bookmark: ${error.message}`
-        );
+        if (error) {
+          throw error;
+        }
 
-        return;
+        showToast("Bookmark removed.");
+      } else {
+        const verse =
+          state.verses.find(
+            (item) =>
+              item.n === Number(verseNumber)
+          );
+
+        const { error } =
+          await supabaseClient
+            .from("selah_bookmarks")
+            .insert({
+              user_id: state.user.id,
+              translation: state.tr,
+              book_id: state.bookId,
+              book_name: bookName(currentBook()),
+              chapter: state.chapter,
+              verse: Number(verseNumber),
+              verse_text: verse?.text || ""
+            });
+
+        if (error) {
+          throw error;
+        }
+
+        showToast("Bookmark saved.");
       }
 
-      showToast('Bookmark removed.');
-    } else {
-      const verse =
-        state.verses.find(
-          (item) =>
-            item.n === Number(verseNumber)
-        );
-
-      const { error } =
-        await supabaseClient
-          .from('selah_bookmarks')
-          .insert({
-            user_id: state.user.id,
-            translation: state.tr,
-            book_id: state.bookId,
-            book_name: bookName(currentBook()),
-            chapter: state.chapter,
-            verse: Number(verseNumber),
-            verse_text: verse?.text || ''
-          });
-
-      if (error) {
-        showToast(
-          `Could not save bookmark: ${error.message}`
-        );
-
-        return;
-      }
-
-      showToast('Bookmark saved.');
+      await loadBookmarks();
+    } catch (error) {
+      showToast(
+        `Bookmark error: ${error.message}`
+      );
     }
-
-    await loadBookmarks();
   }
 
   function updateBookmarkBadge() {
@@ -1386,36 +1444,43 @@
   function applyBookmarkMarks() {
     state.verses.forEach((verse) => {
       verse.el.classList.toggle(
-        'is-bookmarked',
+        "is-bookmarked",
         isBookmarked(verse.n)
       );
     });
   }
-
   async function savePosition(verse) {
     if (
       !supabaseClient ||
-      !state.user
+      !state.user ||
+      !verse
     ) {
       return;
     }
 
-    const { error } =
-      await supabaseClient
-        .from('selah_positions')
-        .upsert({
-          user_id: state.user.id,
-          translation: state.tr,
-          book_id: state.bookId,
-          chapter: state.chapter,
-          verse: Number(verse),
-          narrator: state.narrator,
-          updated_at: new Date().toISOString()
-        });
+    try {
+      const { error } =
+        await supabaseClient
+          .from("selah_positions")
+          .upsert({
+            user_id: state.user.id,
+            translation: state.tr,
+            book_id: state.bookId,
+            chapter: state.chapter,
+            verse: Number(verse),
+            narrator: state.narrator,
+            updated_at: new Date().toISOString()
+          });
 
-    if (error) {
+      if (error) {
+        console.warn(
+          "Position save failed:",
+          error.message
+        );
+      }
+    } catch (error) {
       console.warn(
-        'Position save failed:',
+        "Position save failed:",
         error.message
       );
     }
@@ -1429,32 +1494,46 @@
       return;
     }
 
-    const { data, error } =
-      await supabaseClient
-        .from('selah_positions')
-        .select('*')
-        .eq('user_id', state.user.id)
-        .maybeSingle();
+    try {
+      const {
+        data,
+        error
+      } =
+        await supabaseClient
+          .from("selah_positions")
+          .select("*")
+          .eq("user_id", state.user.id)
+          .maybeSingle();
 
-    if (error || !data) {
-      return;
-    }
+      if (error || !data) {
+        return;
+      }
 
-    if (
-      data.translation !== state.tr ||
-      data.book_id !== state.bookId ||
-      Number(data.chapter) !== state.chapter
-    ) {
-      return;
-    }
+      if (
+        data.translation !== state.tr ||
+        data.book_id !== state.bookId ||
+        Number(data.chapter) !== state.chapter
+      ) {
+        return;
+      }
 
-    if (data.verse) {
-      selectVerse(data.verse);
+      if (data.verse) {
+        selectVerse(data.verse);
+      }
+    } catch (error) {
+      console.warn(
+        "Position loading failed:",
+        error.message
+      );
     }
   }
 
   function renderBookmarks() {
-    el.bmBody.innerHTML = '';
+    if (!el.bmBody) {
+      return;
+    }
+
+    el.bmBody.innerHTML = "";
 
     if (!state.bookmarks.length) {
       el.bmBody.innerHTML =
@@ -1465,10 +1544,10 @@
 
     state.bookmarks.forEach((bookmark) => {
       const row =
-        document.createElement('button');
+        document.createElement("button");
 
-      row.type = 'button';
-      row.className = 'bookmark-row';
+      row.type = "button";
+      row.className = "bookmark-row";
 
       if (bookmark.row) {
         row.innerHTML =
@@ -1481,9 +1560,11 @@
           )}</span>`;
 
         row.addEventListener(
-          'click',
+          "click",
           () => {
-            el.bookmarksDlg.hidden = true;
+            if (el.bookmarksDlg) {
+              el.bookmarksDlg.hidden = true;
+            }
 
             loadChapter(
               bookmark.row.book_id,
@@ -1496,7 +1577,7 @@
         );
       } else {
         row.textContent =
-          'Saved bookmark';
+          "Saved bookmark";
 
         row.disabled = true;
       }
@@ -1504,20 +1585,29 @@
       el.bmBody.appendChild(row);
     });
   }
+
   function openPicker() {
+    if (!el.picker) {
+      return;
+    }
+
     el.picker.hidden = false;
     el.pickerBack.hidden = true;
     el.pickerTitle.textContent =
-      'Choose a book';
+      "Choose a book";
 
     renderBooks();
   }
 
-  function renderBooks(filter = '') {
+  function renderBooks(filter = "") {
+    if (!el.pickerBody) {
+      return;
+    }
+
     const query =
       filter.toLowerCase();
 
-    el.pickerBody.innerHTML = '';
+    el.pickerBody.innerHTML = "";
 
     state.books
       .filter((book) =>
@@ -1527,10 +1617,10 @@
       )
       .forEach((book) => {
         const button =
-          document.createElement('button');
+          document.createElement("button");
 
-        button.type = 'button';
-        button.className = 'book-row';
+        button.type = "button";
+        button.className = "book-row";
 
         button.innerHTML =
           `<strong>${escapeHTML(
@@ -1539,7 +1629,7 @@
           `<span>${book.numberOfChapters} chapters</span>`;
 
         button.addEventListener(
-          'click',
+          "click",
           () => {
             state.bookId = book.id;
             renderChapters();
@@ -1553,11 +1643,18 @@
   function renderChapters() {
     const book = currentBook();
 
+    if (
+      !book ||
+      !el.pickerBody
+    ) {
+      return;
+    }
+
     el.pickerBack.hidden = false;
     el.pickerTitle.textContent =
       bookName(book);
 
-    el.pickerBody.innerHTML = '';
+    el.pickerBody.innerHTML = "";
 
     for (
       let chapter = 1;
@@ -1565,14 +1662,14 @@
       chapter += 1
     ) {
       const button =
-        document.createElement('button');
+        document.createElement("button");
 
-      button.type = 'button';
-      button.className = 'chapter-number';
+      button.type = "button";
+      button.className = "chapter-number";
       button.textContent = chapter;
 
       button.addEventListener(
-        'click',
+        "click",
         () => {
           el.picker.hidden = true;
 
@@ -1588,468 +1685,30 @@
   }
 
   function closeDialogs() {
-    el.picker.hidden = true;
-    el.searchDlg.hidden = true;
-    el.bookmarksDlg.hidden = true;
-    el.pop.hidden = true;
+    if (el.picker) {
+      el.picker.hidden = true;
+    }
+
+    if (el.searchDlg) {
+      el.searchDlg.hidden = true;
+    }
+
+    if (el.bookmarksDlg) {
+      el.bookmarksDlg.hidden = true;
+    }
+
+    if (el.pop) {
+      el.pop.hidden = true;
+    }
   }
-  function setupEvents() {
-    el.refBtn.addEventListener(
-      'click',
-      openPicker
-    );
 
-    el.browseBtn.addEventListener(
-      'click',
-      openPicker
-    );
-
-    el.continueBtn.addEventListener(
-      'click',
-      () => {
-        document
-          .getElementById('reader')
-          .scrollIntoView({
-            behavior: 'smooth'
-          });
-      }
-    );
-
-    el.readerBookmarkBtn.addEventListener(
-      'click',
-      () => {
-        if (state.currentVerse) {
-          toggleBookmark(
-            state.currentVerse
-          );
-        } else {
-          showToast(
-            'Select a verse first.'
-          );
-        }
-      }
-    );
-
-    el.pickerBack.addEventListener(
-      'click',
-      () => {
-        el.pickerBack.hidden = true;
-        el.pickerTitle.textContent =
-          'Choose a book';
-
-        renderBooks();
-      }
-    );
-
-    el.jumpForm.addEventListener(
-      'submit',
-      (event) => {
-        event.preventDefault();
-
-        const value =
-          el.jumpInput.value.trim();
-
-        const match = value.match(
-          /^(.+?)s+(d+)(?::(d+))?$/
-        );
-
-        if (!match) {
-          renderBooks(value);
-          return;
-        }
-
-        const alias =
-          match[1]
-            .toLowerCase()
-            .replace(/s+/g, '');
-
-        const bookId =
-          aliases[alias];
-
-        if (!bookId) {
-          showToast('Book not found.');
-          return;
-        }
-
-        closeDialogs();
-
-        loadChapter(
-          bookId,
-          Number(match[2]),
-          {
-            verse: match[3]
-              ? Number(match[3])
-              : null
-          }
-        );
-      }
-    );
-
-    el.playBtn.addEventListener(
-      'click',
-      () => {
-        state.playing ? pause() : play();
-      }
-    );
-
-    el.prevChap.addEventListener(
-      'click',
-      () => {
-        const previous =
-          previousReference();
-
-        if (previous) {
-          loadChapter(
-            previous[0],
-            previous[1]
-          );
-        }
-      }
-    );
-
-    el.nextChap.addEventListener(
-      'click',
-      () => {
-        const next =
-          nextReference();
-
-        if (next) {
-          loadChapter(
-            next[0],
-            next[1]
-          );
-        }
-      }
-    );
-
-    el.prevVerse.addEventListener(
-      'click',
-      () => {
-        const index =
-          state.verses.findIndex(
-            (verse) =>
-              verse.n === state.currentVerse
-          );
-
-        if (index > 0) {
-          selectVerse(
-            state.verses[index - 1].n
-          );
-        }
-      }
-    );
-
-    el.nextVerse.addEventListener(
-      'click',
-      () => {
-        const index =
-          state.verses.findIndex(
-            (verse) =>
-              verse.n === state.currentVerse
-          );
-
-        if (
-          index >= 0 &&
-          index < state.verses.length - 1
-        ) {
-          selectVerse(
-            state.verses[index + 1].n
-          );
-        }
-      }
-    );
-
-    el.narSel.addEventListener(
-      'change',
-      () => {
-        state.narrator =
-          el.narSel.value;
-
-        if (state.narrator === 'device') {
-          state.mode = 'speech';
-          el.audio.pause();
-        } else {
-          setupAudio(state.data);
-        }
-      }
-    );
-
-    el.speedBtn.addEventListener(
-      'click',
-      () => {
-        const speeds =
-          [0.75, 1, 1.25, 1.5, 1.75, 2];
-
-        const index =
-          speeds.indexOf(state.speed);
-
-        state.speed =
-          speeds[
-            (index + 1) % speeds.length
-          ];
-
-        el.speedBtn.textContent =
-          `${state.speed}×`;
-
-        el.audio.playbackRate =
-          state.speed;
-      }
-    );
-
-    el.seek.addEventListener(
-      'input',
-      () => {
-        if (state.mode === 'audio') {
-          el.audio.currentTime =
-            Number(el.seek.value);
-        }
-      }
-    );
-
-    el.trSel.addEventListener(
-      'change',
-      async () => {
-        state.tr =
-          el.trSel.value;
-
-        await loadBooks();
-
-        if (!currentBook()) {
-          state.bookId =
-            state.books[0].id;
-
-          state.chapter = 1;
-        }
-
-        await loadChapter();
-      }
-    );
-
-    el.audio.addEventListener(
-      'playing',
-      () => {
-        state.playing = true;
-        updatePlayButton();
-      }
-    );
-
-    el.audio.addEventListener(
-      'pause',
-      () => {
-        state.playing = false;
-        updatePlayButton();
-      }
-    );
-
-    el.audio.addEventListener(
-      'timeupdate',
-      () => {
-        updateProgress();
-        updateCurrentVerse();
-      }
-    );
-
-    el.audio.addEventListener(
-      'loadedmetadata',
-      updateProgress
-    );
-
-    el.audio.addEventListener(
-      'ended',
-      () => {
-        state.playing = false;
-        updatePlayButton();
-
-        if (!state.autoNext) {
-          return;
-        }
-
-        const next =
-          nextReference();
-
-        if (next) {
-          loadChapter(
-            next[0],
-            next[1]
-          ).then(play);
-        }
-      }
-    );
-
-    el.scripture.addEventListener(
-      'click',
-      (event) => {
-        const verse =
-          event.target.closest('.verse');
-
-        if (!verse) {
-          return;
-        }
-
-        selectVerse(
-          Number(verse.dataset.v)
-        );
-
-        el.pop.hidden = false;
-      }
-    );
-
-    el.popBookmark.addEventListener(
-      'click',
-      () => {
-        toggleBookmark(
-          state.selectedVerse
-        );
-
-        el.pop.hidden = true;
-      }
-    );
-
-    el.popPlay.addEventListener(
-      'click',
-      () => {
-        const verse =
-          state.selectedVerse;
-
-        el.pop.hidden = true;
-        play(verse);
-      }
-    );
-
-    el.popCopy.addEventListener(
-      'click',
-      async () => {
-        const verse =
-          state.verses.find(
-            (item) =>
-              item.n === state.selectedVerse
-          );
-
-        if (!verse) {
-          return;
-        }
-
-        await navigator.clipboard.writeText(
-          `${reference()}:${verse.n} — ${verse.text}`
-        );
-
-        showToast('Verse copied.');
-        el.pop.hidden = true;
-      }
-    );
-
-    el.searchBtn.addEventListener(
-      'click',
-      () => {
-        el.searchDlg.hidden = false;
-        el.searchInput.focus();
-      }
-    );
-
-    el.searchForm.addEventListener(
-      'submit',
-      (event) => {
-        event.preventDefault();
-
-        searchBible(
-          el.searchInput.value
-        );
-      }
-    );
-
-    el.bookmarksBtn.addEventListener(
-      'click',
-      () => {
-        renderBookmarks();
-        el.bookmarksDlg.hidden = false;
-      }
-    );
-
-    el.settingsBtn.addEventListener(
-      'click',
-      () => {
-        el.settings.hidden =
-          !el.settings.hidden;
-      }
-    );
-
-    el.themeBtn.addEventListener(
-      'click',
-      () => {
-        const dark =
-          document.documentElement.dataset.theme ===
-          'dark';
-
-        document.documentElement.dataset.theme =
-          dark ? 'light' : 'dark';
-
-        el.themeLabel.textContent =
-          dark ? 'Dark' : 'Light';
-      }
-    );
-
-    el.fontUp.addEventListener(
-      'click',
-      () => {
-        document.documentElement.style.setProperty(
-          '--read-size',
-          '1.28rem'
-        );
-      }
-    );
-
-    el.fontDown.addEventListener(
-      'click',
-      () => {
-        document.documentElement.style.setProperty(
-          '--read-size',
-          '1.08rem'
-        );
-      }
-    );
-
-    el.followToggle.addEventListener(
-      'change',
-      () => {
-        state.follow =
-          el.followToggle.checked;
-      }
-    );
-
-    el.autoNextToggle.addEventListener(
-      'change',
-      () => {
-        state.autoNext =
-          el.autoNextToggle.checked;
-      }
-    );
-
-    el.numsToggle.addEventListener(
-      'change',
-      () => {
-        el.scripture.classList.toggle(
-          'hide-nums',
-          !el.numsToggle.checked
-        );
-      }
-    );
-
-    document
-      .querySelectorAll('[data-close]')
-      .forEach((button) => {
-        button.addEventListener(
-          'click',
-          closeDialogs
-        );
-      });
-  }
   async function searchBible(query) {
     const term =
-      String(query || '')
+      String(query || "")
         .toLowerCase()
         .trim();
 
-    if (!term) {
+    if (!term || !el.searchBody) {
       return;
     }
 
@@ -2078,7 +1737,7 @@
             (data.chapter?.content || [])
               .filter(
                 (item) =>
-                  item.type === 'verse'
+                  item.type === "verse"
               );
 
           verses.forEach((item) => {
@@ -2099,7 +1758,7 @@
             }
           });
         } catch {
-          // Continue searching.
+          // Continue searching the remaining chapters.
         }
 
         if (results.length >= 100) {
@@ -2112,7 +1771,7 @@
       }
     }
 
-    el.searchBody.innerHTML = '';
+    el.searchBody.innerHTML = "";
 
     if (!results.length) {
       el.searchBody.innerHTML =
@@ -2123,10 +1782,10 @@
 
     results.forEach((result) => {
       const button =
-        document.createElement('button');
+        document.createElement("button");
 
-      button.type = 'button';
-      button.className = 'search-row';
+      button.type = "button";
+      button.className = "search-row";
 
       button.innerHTML =
         `<strong>${escapeHTML(
@@ -2137,9 +1796,11 @@
         )}</span>`;
 
       button.addEventListener(
-        'click',
+        "click",
         () => {
-          el.searchDlg.hidden = true;
+          if (el.searchDlg) {
+            el.searchDlg.hidden = true;
+          }
 
           loadChapter(
             result.book.id,
@@ -2154,10 +1815,522 @@
       el.searchBody.appendChild(button);
     });
   }
+  function setupEvents() {
+    el.refBtn?.addEventListener(
+      "click",
+      openPicker
+    );
+
+    el.browseBtn?.addEventListener(
+      "click",
+      openPicker
+    );
+
+    el.continueBtn?.addEventListener(
+      "click",
+      () => {
+        document
+          .getElementById("reader")
+          ?.scrollIntoView({
+            behavior: "smooth"
+          });
+      }
+    );
+
+    el.readerBookmarkBtn?.addEventListener(
+      "click",
+      () => {
+        if (state.currentVerse) {
+          toggleBookmark(
+            state.currentVerse
+          );
+        } else {
+          showToast(
+            "Select a verse first."
+          );
+        }
+      }
+    );
+
+    el.pickerBack?.addEventListener(
+      "click",
+      () => {
+        el.pickerBack.hidden = true;
+        el.pickerTitle.textContent =
+          "Choose a book";
+
+        renderBooks();
+      }
+    );
+
+    el.jumpForm?.addEventListener(
+      "submit",
+      (event) => {
+        event.preventDefault();
+
+        const value =
+          el.jumpInput.value.trim();
+
+        const match = value.match(
+          /^(.+?)s+(d+)(?::(d+))?$/
+        );
+
+        if (!match) {
+          renderBooks(value);
+          return;
+        }
+
+        const alias =
+          match[1]
+            .toLowerCase()
+            .replace(/s+/g, "");
+
+        const bookId =
+          aliases[alias];
+
+        if (!bookId) {
+          showToast("Book not found.");
+          return;
+        }
+
+        closeDialogs();
+
+        loadChapter(
+          bookId,
+          Number(match[2]),
+          {
+            verse: match[3]
+              ? Number(match[3])
+              : null
+          }
+        );
+      }
+    );
+
+    el.playBtn?.addEventListener(
+      "click",
+      () => {
+        state.playing ? pause() : play();
+      }
+    );
+
+    el.prevChap?.addEventListener(
+      "click",
+      () => {
+        const previous =
+          previousReference();
+
+        if (previous) {
+          loadChapter(
+            previous[0],
+            previous[1]
+          );
+        }
+      }
+    );
+
+    el.nextChap?.addEventListener(
+      "click",
+      () => {
+        const next =
+          nextReference();
+
+        if (next) {
+          loadChapter(
+            next[0],
+            next[1]
+          );
+        }
+      }
+    );
+
+    el.prevVerse?.addEventListener(
+      "click",
+      () => {
+        const index =
+          state.verses.findIndex(
+            (verse) =>
+              verse.n === state.currentVerse
+          );
+
+        if (index > 0) {
+          selectVerse(
+            state.verses[index - 1].n
+          );
+        }
+      }
+    );
+
+    el.nextVerse?.addEventListener(
+      "click",
+      () => {
+        const index =
+          state.verses.findIndex(
+            (verse) =>
+              verse.n === state.currentVerse
+          );
+
+        if (
+          index >= 0 &&
+          index < state.verses.length - 1
+        ) {
+          selectVerse(
+            state.verses[index + 1].n
+          );
+        }
+      }
+    );
+
+    el.narSel?.addEventListener(
+      "change",
+      () => {
+        state.narrator =
+          el.narSel.value;
+
+        if (state.narrator === "device") {
+          state.mode = "speech";
+          el.audio?.pause();
+        } else {
+          setupAudio(state.data);
+        }
+      }
+    );
+
+    el.speedBtn?.addEventListener(
+      "click",
+      () => {
+        const speeds =
+          [0.75, 1, 1.25, 1.5, 1.75, 2];
+
+        const index =
+          speeds.indexOf(state.speed);
+
+        state.speed =
+          speeds[
+            (index + 1) % speeds.length
+          ];
+
+        el.speedBtn.textContent =
+          `${state.speed}×`;
+
+        if (el.audio) {
+          el.audio.playbackRate =
+            state.speed;
+        }
+      }
+    );
+
+    el.seek?.addEventListener(
+      "input",
+      () => {
+        if (
+          state.mode === "audio" &&
+          el.audio
+        ) {
+          el.audio.currentTime =
+            Number(el.seek.value);
+        }
+      }
+    );
+
+    el.trSel?.addEventListener(
+      "change",
+      async () => {
+        state.tr =
+          el.trSel.value;
+
+        try {
+          await loadBooks();
+
+          if (!currentBook()) {
+            state.bookId =
+              state.books[0].id;
+
+            state.chapter = 1;
+          }
+
+          await loadChapter();
+        } catch (error) {
+          console.error(error);
+          showToast(
+            `Translation could not load: ${error.message}`
+          );
+        }
+      }
+    );
+
+    el.audio?.addEventListener(
+      "playing",
+      () => {
+        state.playing = true;
+        updatePlayButton();
+      }
+    );
+
+    el.audio?.addEventListener(
+      "pause",
+      () => {
+        state.playing = false;
+        updatePlayButton();
+      }
+    );
+
+    el.audio?.addEventListener(
+      "timeupdate",
+      () => {
+        updateProgress();
+        updateCurrentVerse();
+      }
+    );
+
+    el.audio?.addEventListener(
+      "loadedmetadata",
+      updateProgress
+    );
+
+    el.audio?.addEventListener(
+      "ended",
+      () => {
+        state.playing = false;
+        updatePlayButton();
+
+        if (!state.autoNext) {
+          return;
+        }
+
+        const next =
+          nextReference();
+
+        if (next) {
+          loadChapter(
+            next[0],
+            next[1]
+          ).then(play);
+        }
+      }
+    );
+
+    el.scripture?.addEventListener(
+      "click",
+      (event) => {
+        const verse =
+          event.target.closest(".verse");
+
+        if (!verse) {
+          return;
+        }
+
+        selectVerse(
+          Number(verse.dataset.v)
+        );
+
+        if (el.pop) {
+          el.pop.hidden = false;
+        }
+      }
+    );
+
+    el.popBookmark?.addEventListener(
+      "click",
+      () => {
+        toggleBookmark(
+          state.selectedVerse
+        );
+
+        if (el.pop) {
+          el.pop.hidden = true;
+        }
+      }
+    );
+
+    el.popPlay?.addEventListener(
+      "click",
+      () => {
+        const verse =
+          state.selectedVerse;
+
+        if (el.pop) {
+          el.pop.hidden = true;
+        }
+
+        play(verse);
+      }
+    );
+
+    el.popCopy?.addEventListener(
+      "click",
+      async () => {
+        const verse =
+          state.verses.find(
+            (item) =>
+              item.n === state.selectedVerse
+          );
+
+        if (!verse) {
+          return;
+        }
+
+        try {
+          await navigator.clipboard.writeText(
+            `${reference()}:${verse.n} — ${verse.text}`
+          );
+
+          showToast("Verse copied.");
+        } catch {
+          showToast(
+            "Copying is unavailable on this device."
+          );
+        }
+
+        if (el.pop) {
+          el.pop.hidden = true;
+        }
+      }
+    );
+
+    el.searchBtn?.addEventListener(
+      "click",
+      () => {
+        if (el.searchDlg) {
+          el.searchDlg.hidden = false;
+        }
+
+        el.searchInput?.focus();
+      }
+    );
+
+    el.searchForm?.addEventListener(
+      "submit",
+      (event) => {
+        event.preventDefault();
+
+        searchBible(
+          el.searchInput?.value
+        );
+      }
+    );
+
+    el.bookmarksBtn?.addEventListener(
+      "click",
+      () => {
+        renderBookmarks();
+
+        if (el.bookmarksDlg) {
+          el.bookmarksDlg.hidden = false;
+        }
+      }
+    );
+
+    el.settingsBtn?.addEventListener(
+      "click",
+      () => {
+        if (el.settings) {
+          el.settings.hidden =
+            !el.settings.hidden;
+        }
+      }
+    );
+
+    el.themeBtn?.addEventListener(
+      "click",
+      () => {
+        const dark =
+          document.documentElement.dataset.theme ===
+          "dark";
+
+        document.documentElement.dataset.theme =
+          dark ? "light" : "dark";
+
+        if (el.themeLabel) {
+          el.themeLabel.textContent =
+            dark ? "Dark" : "Light";
+        }
+
+        localStorage.setItem(
+          "selah_theme",
+          dark ? "light" : "dark"
+        );
+      }
+    );
+
+    el.fontUp?.addEventListener(
+      "click",
+      () => {
+        document.documentElement.style.setProperty(
+          "--read-size",
+          "1.28rem"
+        );
+      }
+    );
+
+    el.fontDown?.addEventListener(
+      "click",
+      () => {
+        document.documentElement.style.setProperty(
+          "--read-size",
+          "1.08rem"
+        );
+      }
+    );
+
+    el.followToggle?.addEventListener(
+      "change",
+      () => {
+        state.follow =
+          el.followToggle.checked;
+      }
+    );
+
+    el.autoNextToggle?.addEventListener(
+      "change",
+      () => {
+        state.autoNext =
+          el.autoNextToggle.checked;
+      }
+    );
+
+    el.numsToggle?.addEventListener(
+      "change",
+      () => {
+        el.scripture?.classList.toggle(
+          "hide-nums",
+          !el.numsToggle.checked
+        );
+      }
+    );
+
+    document
+      .querySelectorAll("[data-close]")
+      .forEach((button) => {
+        button.addEventListener(
+          "click",
+          closeDialogs
+        );
+      });
+  }
+
+  function loadSavedTheme() {
+    const theme =
+      localStorage.getItem("selah_theme");
+
+    if (!theme) {
+      return;
+    }
+
+    document.documentElement.dataset.theme =
+      theme;
+
+    if (el.themeLabel) {
+      el.themeLabel.textContent =
+        theme === "dark" ? "Dark" : "Light";
+    }
+  }
 
   async function start() {
     try {
+      loadSavedTheme();
       loadSpeechVoices();
+      loadLocalBookmarks();
       buildTranslationSelect();
       setupEvents();
 
@@ -2176,392 +2349,19 @@
     } catch (error) {
       console.error(error);
 
-      el.scripture.innerHTML = `
-        <div class="errorbox">
-          <strong>
-            Selah could not load Scripture.
-          </strong>
+      if (el.scripture) {
+        el.scripture.innerHTML = `
+          <div class="errorbox">
+            <strong>
+              Selah could not load Scripture.
+            </strong>
 
-          <p>${escapeHTML(error.message)}</p>
-        </div>
-      `;
+            <p>${escapeHTML(error.message)}</p>
+          </div>
+        `;
+      }
     }
   }
-function selahEscapeHTML(value) {
-  return String(value ?? "")
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
-}
 
-function selahBookName() {
-  const bookSelect = document.querySelector("#book-select");
-
-  if (bookSelect?.selectedOptions?.[0]) {
-    return bookSelect.selectedOptions[0].textContent;
-  }
-
-  return state.book || "";
-}
-
-function selahPassageReference() {
-  return `${selahBookName()} ${state.chapter || ""}`;
-}
-
-function selahShowToast(message) {
-  const toast = document.querySelector("#toast");
-
-  if (!toast) {
-    window.alert(message);
-    return;
-  }
-
-  toast.textContent = message;
-  toast.classList.remove("hidden");
-
-  window.clearTimeout(selahShowToast.timer);
-
-  selahShowToast.timer = window.setTimeout(() => {
-    toast.classList.add("hidden");
-  }, 3000);
-}
-  function selahShowView(viewName) {
-  document.querySelectorAll(".app-view").forEach((view) => {
-    view.classList.remove("active-view");
-  });
-
-  const targetView = document.querySelector(`#view-${viewName}`);
-
-  if (targetView) {
-    targetView.classList.add("active-view");
-  }
-
-  document.querySelectorAll("[data-view]").forEach((button) => {
-    button.classList.toggle(
-      "active",
-      button.dataset.view === viewName
-    );
-  });
-
-  state.currentView = viewName;
-
-  if (viewName === "study") {
-    selahUpdateStudyReference();
-    selahRenderPassageNotes();
-  }
-
-  if (viewName === "notes") {
-    selahRenderAllNotes();
-  }
-
-  document.querySelector("#sidebar")?.classList.remove("mobile-open");
-  }
-  function selahShowStudyTab(tabName) {
-  document.querySelectorAll(".study-tab").forEach((tab) => {
-    tab.classList.toggle(
-      "active",
-      tab.dataset.studyTab === tabName
-    );
-  });
-
-  document.querySelectorAll(".study-panel").forEach((panel) => {
-    panel.classList.remove("active-study-panel");
-  });
-
-  const targetPanel = document.querySelector(
-    `#study-panel-${tabName}`
-  );
-
-  if (targetPanel) {
-    targetPanel.classList.add("active-study-panel");
-  }
-
-  state.currentStudyTab = tabName;
-
-  if (tabName === "notes") {
-    selahRenderPassageNotes();
-  }
-  }
-  function selahUpdateStudyReference() {
-  const reference = selahPassageReference();
-
-  const studyHeading = document.querySelector("#study-heading");
-  const studyLabel = document.querySelector("#study-passage-label");
-  const studyTitle = document.querySelector("#study-passage-title");
-  const noteReference = document.querySelector("#note-reference-label");
-
-  if (studyHeading) {
-    studyHeading.textContent = `Study ${reference}`;
-  }
-
-  if (studyLabel) {
-    studyLabel.textContent =
-      state.translation
-        ? `${state.translation} · Current passage`
-        : "Current passage";
-  }
-
-  if (studyTitle) {
-    studyTitle.textContent = reference;
-  }
-
-  if (noteReference) {
-    const verse = state.selectedStudyVerse?.number;
-
-    noteReference.textContent = verse
-      ? `${reference}:${verse}`
-      : reference;
-  }
-  }
-  function bindEvents() {  document.querySelectorAll("[data-view]").forEach((button) => {
-    button.addEventListener("click", () => {
-      selahShowView(button.dataset.view);
-    });
-  });
-
-  document.querySelectorAll("[data-study-tab]").forEach((button) => {
-    button.addEventListener("click", () => {
-      selahShowStudyTab(button.dataset.studyTab);
-    });
-  });
-
-  document
-    .querySelector("#study-change-passage")
-    ?.addEventListener("click", () => {
-      selahShowView("read");
-    });
-
-  document
-    .querySelector("#theme-button")
-    ?.addEventListener("click", selahToggleTheme);
-
-  document
-    .querySelector("#mobile-menu-button")
-    ?.addEventListener("click", () => {
-      document
-        .querySelector("#sidebar")
-        ?.classList.toggle("mobile-open");
-    });
-         function selahToggleTheme() {
-  const root = document.documentElement;
-  const darkMode = root.dataset.theme === "dark";
-  const nextTheme = darkMode ? "light" : "dark";
-
-  root.dataset.theme = nextTheme;
-  localStorage.setItem("selah_theme", nextTheme);
-}
-
-function selahLoadTheme() {
-  const savedTheme =
-    localStorage.getItem("selah_theme") || "light";
-
-  document.documentElement.dataset.theme = savedTheme;
-}   
- function selahLoadLocalNotes() {
-  try {
-    const saved = localStorage.getItem("selah_study_notes");
-
-    state.studyNotes = saved
-      ? JSON.parse(saved)
-      : [];
-  } catch (error) {
-    console.error("Could not load local study notes:", error);
-    state.studyNotes = [];
-  }
-}
-
-function selahSaveLocalNotes() {
-  localStorage.setItem(
-    "selah_study_notes",
-    JSON.stringify(state.studyNotes)
-  );
-}
-    function selahNoteTypeName(type) {
-  return String(type || "observation")
-    .replaceAll("-", " ")
-    .replace(/\bw/g, (letter) => letter.toUpperCase());
-}
-
-function selahNoteReference(note) {
-  const book = note.bookName || note.book || "";
-  const chapter = note.chapter || "";
-  const verse = note.verse ? `:${note.verse}` : "";
-
-  return `${book} ${chapter}${verse}`;
-}
-
-function selahNoteHTML(note) {
-  return `
-    <article
-      class="note-item"
-      data-note-id="${selahEscapeHTML(note.id)}"
-    >
-      <div class="note-item-header">
-        <div>
-          <span class="note-reference">
-            ${selahEscapeHTML(selahNoteReference(note))}
-          </span>
-
-          <h3>
-            ${selahEscapeHTML(
-              note.title || selahNoteTypeName(note.noteType)
-            )}
-          </h3>
-
-          <span class="card-label">
-            ${selahEscapeHTML(
-              selahNoteTypeName(note.noteType)
-            )}
-          </span>
-        </div>
-
-        <div class="note-item-actions">
-          <button
-            class="small-action-button"
-            type="button"
-            data-edit-study-note="${selahEscapeHTML(note.id)}"
-          >
-            Edit
-          </button>
-
-          <button
-            class="small-action-button"
-            type="button"
-            data-delete-study-note="${selahEscapeHTML(note.id)}"
-          >
-            Delete
-          </button>
-        </div>
-      </div>
-
-      <p class="note-item-content">
-        ${selahEscapeHTML(note.content)}
-      </p>
-    </article>
-  `;
-}
-
-function selahRenderPassageNotes() {
-  const container = document.querySelector(
-    "#passage-notes-list"
-  );
-
-  if (!container) return;
-
-  const currentBook = state.book;
-  const currentChapter = Number(state.chapter);
-
-  const notes = state.studyNotes.filter((note) => {
-    return (
-      note.book === currentBook &&
-      Number(note.chapter) === currentChapter
-    );
-  });
-
-  if (!notes.length) {
-    container.innerHTML = `
-      <div class="empty-study-state compact">
-        <span class="empty-state-icon">✎</span>
-        <p>No notes have been added to this passage yet.</p>
-      </div>
-    `;
-
-    return;
-  }
-
-  container.innerHTML = notes.map(selahNoteHTML).join("");
-}
-
-function selahRenderAllNotes() {
-  const container = document.querySelector("#all-notes-list");
-
-  if (!container) return;
-
-  const search =
-    document
-      .querySelector("#notes-search-input")
-      ?.value
-      .trim()
-      .toLowerCase() || "";
-
-  const type =
-    document.querySelector("#notes-type-filter")?.value || "";
-
-  const notes = state.studyNotes.filter((note) => {
-    const searchable = [
-      note.title,
-      note.content,
-      note.bookName,
-      note.noteType
-    ]
-      .join(" ")
-      .toLowerCase();
-
-    return (
-      (!search || searchable.includes(search)) &&
-      (!type || note.noteType === type)
-    );
-  });
-
-  if (!notes.length) {
-    container.innerHTML = `
-      <div class="empty-study-state">
-        <span class="empty-state-icon">✎</span>
-        <h3>Your study notes will appear here</h3>
-        <p>
-          Start by adding an observation to the passage
-          you are reading.
-        </p>
-      </div>
-    `;
-
-    return;
-  }
-
-  container.innerHTML = notes.map(selahNoteHTML).join("");
-}
-      function selahOpenNoteModal(note = null) {
-  const modal = document.querySelector("#note-modal");
-
-  if (!modal) return;
-
-  document.querySelector("#note-id").value =
-    note?.id || "";
-
-  document.querySelector("#note-type").value =
-    note?.noteType || "observation";
-
-  document.querySelector("#note-title").value =
-    note?.title || "";
-
-  document.querySelector("#note-content").value =
-    note?.content || "";
-
-  document.querySelector("#note-modal-title").textContent =
-    note ? "Edit study note" : "Add study note";
-
-  document.querySelector("#note-form-status").textContent = "";
-
-  selahUpdateStudyReference();
-  modal.classList.remove("hidden");
-
-  document.querySelector("#note-content")?.focus();
-}
-
-function selahCloseNoteModal() {
-  document.querySelector("#note-modal")?.classList.add("hidden");
-}
-
-function selahCurrentNoteReference() {
-  return {
-    book: state.book,
-    bookName: selahBookName(),
-    chapter: Number(state.chapter),
-    verse: state.selectedStudyVerse?.number || null
-  };
-}
-                         
   start();
 })();
