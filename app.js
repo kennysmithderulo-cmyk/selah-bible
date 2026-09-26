@@ -1,3 +1,65 @@
+window.addEventListener("error", (event) => {
+  const message = [
+    "Selah JavaScript error",
+    event.message || "Unknown error",
+    `File: ${event.filename || "unknown"}`,
+    `Line: ${event.lineno || "unknown"}`
+  ].join("
+");
+
+  document.body.insertAdjacentHTML(
+    "afterbegin",
+    `<pre id="selah-debug-error" style="
+      position:fixed;
+      z-index:99999;
+      top:0;
+      left:0;
+      right:0;
+      max-height:45vh;
+      overflow:auto;
+      margin:0;
+      padding:16px;
+      background:#4b1515;
+      color:#ffffff;
+      font:14px/1.5 monospace;
+      white-space:pre-wrap;
+    ">${message.replace(/[&<>]/g, (character) => ({
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;"
+    })[character])}</pre>`
+  );
+});
+
+window.addEventListener("unhandledrejection", (event) => {
+  const message =
+    "Selah promise error
+" +
+    String(event.reason?.stack || event.reason || "Unknown error");
+
+  document.body.insertAdjacentHTML(
+    "afterbegin",
+    `<pre id="selah-debug-rejection" style="
+      position:fixed;
+      z-index:99999;
+      top:0;
+      left:0;
+      right:0;
+      max-height:45vh;
+      overflow:auto;
+      margin:0;
+      padding:16px;
+      background:#4b1515;
+      color:#ffffff;
+      font:14px/1.5 monospace;
+      white-space:pre-wrap;
+    ">${message.replace(/[&<>]/g, (character) => ({
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;"
+    })[character])}</pre>`
+  );
+});
 (() => {
   "use strict";
 
