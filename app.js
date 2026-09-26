@@ -3,6 +3,38 @@ document.body.insertAdjacentHTML(
   '<div id="selah-startup-test" style="position:fixed;z-index:99999;top:0;left:0;right:0;padding:14px;background:#146c43;color:#fff;font:16px sans-serif">app.js is executing</div>'
 );
 
+window.addEventListener("error", (event) => {
+  const text = [
+    "Runtime error:",
+    event.message || "Unknown error",
+    `Line: ${event.lineno || "unknown"}`,
+    `Column: ${event.colno || "unknown"}`
+  ].join("
+");
+
+  document.body.insertAdjacentHTML(
+    "afterbegin",
+    `<pre style="
+      position:fixed;
+      z-index:100000;
+      top:60px;
+      left:0;
+      right:0;
+      max-height:45vh;
+      overflow:auto;
+      padding:14px;
+      background:#4b1515;
+      color:#fff;
+      white-space:pre-wrap;
+      font:14px monospace;
+    ">${text.replace(/[&<>]/g, (character) => ({
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;"
+    })[character])}</pre>`
+  );
+});
+
 (() => {
   "use strict";
 
