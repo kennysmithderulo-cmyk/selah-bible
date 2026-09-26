@@ -1,65 +1,3 @@
-window.addEventListener("error", (event) => {
-  const message = [
-    "Selah JavaScript error",
-    event.message || "Unknown error",
-    `File: ${event.filename || "unknown"}`,
-    `Line: ${event.lineno || "unknown"}`
-  ].join("
-");
-
-  document.body.insertAdjacentHTML(
-    "afterbegin",
-    `<pre id="selah-debug-error" style="
-      position:fixed;
-      z-index:99999;
-      top:0;
-      left:0;
-      right:0;
-      max-height:45vh;
-      overflow:auto;
-      margin:0;
-      padding:16px;
-      background:#4b1515;
-      color:#ffffff;
-      font:14px/1.5 monospace;
-      white-space:pre-wrap;
-    ">${message.replace(/[&<>]/g, (character) => ({
-      "&": "&amp;",
-      "<": "&lt;",
-      ">": "&gt;"
-    })[character])}</pre>`
-  );
-});
-
-window.addEventListener("unhandledrejection", (event) => {
-  const message =
-    "Selah promise error
-" +
-    String(event.reason?.stack || event.reason || "Unknown error");
-
-  document.body.insertAdjacentHTML(
-    "afterbegin",
-    `<pre id="selah-debug-rejection" style="
-      position:fixed;
-      z-index:99999;
-      top:0;
-      left:0;
-      right:0;
-      max-height:45vh;
-      overflow:auto;
-      margin:0;
-      padding:16px;
-      background:#4b1515;
-      color:#ffffff;
-      font:14px/1.5 monospace;
-      white-space:pre-wrap;
-    ">${message.replace(/[&<>]/g, (character) => ({
-      "&": "&amp;",
-      "<": "&lt;",
-      ">": "&gt;"
-    })[character])}</pre>`
-  );
-});
 (() => {
   "use strict";
 
@@ -83,7 +21,7 @@ window.addEventListener("unhandledrejection", (event) => {
   const $ = (id) =>
     document.getElementById(id);
 
-    const state = {
+  const state = {
     tr: "BSB",
     translationInfo: null,
     books: [],
@@ -364,7 +302,9 @@ window.addEventListener("unhandledrejection", (event) => {
     const response = await fetch(url);
 
     if (!response.ok) {
-      throw new Error(`Request failed: ${response.status}`);
+      throw new Error(
+        `Request failed: ${response.status}`
+      );
     }
 
     return response.json();
@@ -410,7 +350,8 @@ window.addEventListener("unhandledrejection", (event) => {
 
   function chooseSpeechVoice() {
     const voices = state.voices || [];
-    const language = speechLanguage().toLowerCase();
+    const language =
+      speechLanguage().toLowerCase();
 
     return (
       voices.find(
@@ -435,11 +376,12 @@ window.addEventListener("unhandledrejection", (event) => {
   }
 
   function prepareSpeechText(text) {
-    let spoken = String(text || "")
-      .replace(/­/g, "")
-      .replace(/[-‍﻿]/g, "")
-      .replace(/s+/g, " ")
-      .trim();
+    let spoken =
+      String(text || "")
+        .replace(/­/g, "")
+        .replace(/[-‍﻿]/g, "")
+        .replace(/s+/g, " ")
+        .trim();
 
     const pronunciationMap = [
       [/\bJesus's\b/gi, "Jee-zus-es"],
@@ -453,7 +395,10 @@ window.addEventListener("unhandledrejection", (event) => {
 
     pronunciationMap.forEach(
       ([pattern, replacement]) => {
-        spoken = spoken.replace(pattern, replacement);
+        spoken = spoken.replace(
+          pattern,
+          replacement
+        );
       }
     );
 
@@ -468,17 +413,21 @@ window.addEventListener("unhandledrejection", (event) => {
     try {
       const {
         data: sessionData
-      } = await supabaseClient.auth.getSession();
+      } =
+        await supabaseClient.auth.getSession();
 
       if (sessionData?.session?.user) {
-        state.user = sessionData.session.user;
+        state.user =
+          sessionData.session.user;
+
         return state.user;
       }
 
       const {
         data,
         error
-      } = await supabaseClient.auth.signInAnonymously();
+      } =
+        await supabaseClient.auth.signInAnonymously();
 
       if (error) {
         console.warn(
@@ -489,7 +438,9 @@ window.addEventListener("unhandledrejection", (event) => {
         return null;
       }
 
-      state.user = data?.user || null;
+      state.user =
+        data?.user || null;
+
       return state.user;
     } catch (error) {
       console.warn(
@@ -529,14 +480,17 @@ window.addEventListener("unhandledrejection", (event) => {
     });
   }
 
-    async function loadBooks() {
+  async function loadBooks() {
     const url =
       `${BIBLE_API}/` +
       `${encodeURIComponent(state.tr)}/books.json`;
 
     const data = await getJSON(url);
 
-    if (!data || !Array.isArray(data.books)) {
+    if (
+      !data ||
+      !Array.isArray(data.books)
+    ) {
       throw new Error(
         "The books response was invalid."
       );
@@ -562,13 +516,13 @@ window.addEventListener("unhandledrejection", (event) => {
 
     if (!state.books.length) {
       throw new Error(
-        "No books were found for this translation."
+        "No books were found."
       );
     }
 
     state.translationInfo =
       data.translation || null;
-    }
+  }
   function previousReference() {
     if (state.chapter > 1) {
       return [
@@ -577,15 +531,17 @@ window.addEventListener("unhandledrejection", (event) => {
       ];
     }
 
-    const index = state.books.findIndex(
-      (book) => book.id === state.bookId
-    );
+    const index =
+      state.books.findIndex(
+        (book) => book.id === state.bookId
+      );
 
     if (index <= 0) {
       return null;
     }
 
-    const book = state.books[index - 1];
+    const book =
+      state.books[index - 1];
 
     return [
       book.id,
@@ -606,9 +562,10 @@ window.addEventListener("unhandledrejection", (event) => {
       ];
     }
 
-    const index = state.books.findIndex(
-      (book) => book.id === state.bookId
-    );
+    const index =
+      state.books.findIndex(
+        (book) => book.id === state.bookId
+      );
 
     if (
       index < 0 ||
@@ -627,44 +584,37 @@ window.addEventListener("unhandledrejection", (event) => {
     const book = currentBook();
     const name = bookName(book);
 
-    if (el.refLabel) {
-      el.refLabel.textContent =
-        `${name} ${state.chapter}`;
-    }
+    el.refLabel &&
+      (el.refLabel.textContent =
+        `${name} ${state.chapter}`);
 
-    if (el.heroReference) {
-      el.heroReference.textContent =
-        `${name} ${state.chapter}`;
-    }
+    el.heroReference &&
+      (el.heroReference.textContent =
+        `${name} ${state.chapter}`);
 
-    if (el.chapterBook) {
-      el.chapterBook.textContent = name;
-    }
+    el.chapterBook &&
+      (el.chapterBook.textContent = name);
 
-    if (el.chapterNum) {
-      el.chapterNum.textContent =
-        state.chapter;
-    }
+    el.chapterNum &&
+      (el.chapterNum.textContent =
+        state.chapter);
 
-    if (el.bookTitle) {
-      el.bookTitle.textContent =
-        book?.title || name;
-    }
+    el.bookTitle &&
+      (el.bookTitle.textContent =
+        book?.title || name);
 
-        const translationName =
+    const translationName =
       state.translationInfo?.englishName ||
       state.translationInfo?.name ||
       state.tr;
 
-    if (el.trNote) {
-      el.trNote.textContent =
-        translationName;
-    }
+    el.trNote &&
+      (el.trNote.textContent =
+        translationName);
 
-    if (el.heroTranslation) {
-      el.heroTranslation.textContent =
-        translationName;
-    }
+    el.heroTranslation &&
+      (el.heroTranslation.textContent =
+        translationName);
 
     const previous =
       previousReference();
@@ -684,7 +634,8 @@ window.addEventListener("unhandledrejection", (event) => {
       el.prevLabel.textContent = previous
         ? `${bookName(
             state.books.find(
-              (item) => item.id === previous[0]
+              (item) =>
+                item.id === previous[0]
             )
           )} ${previous[1]}`
         : "Previous";
@@ -694,7 +645,8 @@ window.addEventListener("unhandledrejection", (event) => {
       el.nextLabel.textContent = next
         ? `${bookName(
             state.books.find(
-              (item) => item.id === next[0]
+              (item) =>
+                item.id === next[0]
             )
           )} ${next[1]}`
         : "Next";
@@ -729,7 +681,10 @@ window.addEventListener("unhandledrejection", (event) => {
     }
 
     content.forEach((item) => {
-      if (!item || typeof item !== "object") {
+      if (
+        !item ||
+        typeof item !== "object"
+      ) {
         return;
       }
 
@@ -742,9 +697,12 @@ window.addEventListener("unhandledrejection", (event) => {
         const heading =
           document.createElement("h3");
 
-        heading.textContent = cleanText(
-          textFromContent(item.content)
-        );
+        heading.textContent =
+          cleanText(
+            textFromContent(
+              item.content
+            )
+          );
 
         if (heading.textContent) {
           fragment.appendChild(heading);
@@ -877,7 +835,9 @@ window.addEventListener("unhandledrejection", (event) => {
     }
 
     if (el.scripture) {
-      el.scripture.replaceChildren(fragment);
+      el.scripture.replaceChildren(
+        fragment
+      );
     }
 
     applyBookmarkMarks();
@@ -907,12 +867,15 @@ window.addEventListener("unhandledrejection", (event) => {
         `${encodeURIComponent(state.bookId)}/` +
         `${encodeURIComponent(state.chapter)}.json`;
 
-      const data = await getJSON(url);
+      const data =
+        await getJSON(url);
 
       if (
         !data ||
         !data.chapter ||
-        !Array.isArray(data.chapter.content)
+        !Array.isArray(
+          data.chapter.content
+        )
       ) {
         throw new Error(
           "The Bible API returned no chapter content."
@@ -935,12 +898,19 @@ window.addEventListener("unhandledrejection", (event) => {
         el.scripture.innerHTML = `
           <div class="errorbox">
             <strong>
-              Could not load ${escapeHTML(reference())}.
+              Could not load ${escapeHTML(
+                reference()
+              )}.
             </strong>
 
-            <p>${escapeHTML(error.message)}</p>
+            <p>${escapeHTML(
+              error.message
+            )}</p>
 
-            <button id="retryBtn" type="button">
+            <button
+              id="retryBtn"
+              type="button"
+            >
               Try again
             </button>
           </div>
@@ -976,28 +946,32 @@ window.addEventListener("unhandledrejection", (event) => {
       ["gilbert", "Gilbert"]
     ];
 
-    narrators.forEach(([id, label]) => {
-      const option =
-        document.createElement("option");
+    narrators.forEach(
+      ([id, label]) => {
+        const option =
+          document.createElement("option");
 
-      option.value = id;
-      option.textContent = links[id]
-        ? label
-        : `${label} · unavailable`;
+        option.value = id;
+        option.textContent =
+          links[id]
+            ? label
+            : `${label} · unavailable`;
 
-      option.disabled = !links[id];
-      option.selected =
-        id === state.narrator &&
-        Boolean(links[id]);
+        option.disabled = !links[id];
+        option.selected =
+          id === state.narrator &&
+          Boolean(links[id]);
 
-      el.narSel.appendChild(option);
-    });
+        el.narSel.appendChild(option);
+      }
+    );
 
     const device =
       document.createElement("option");
 
     device.value = "device";
-    device.textContent = "Device voice";
+    device.textContent =
+      "Device voice";
 
     el.narSel.appendChild(device);
 
@@ -1040,9 +1014,7 @@ window.addEventListener("unhandledrejection", (event) => {
   }
 
   function pause() {
-    if (el.audio) {
-      el.audio.pause();
-    }
+    el.audio?.pause();
 
     state.speechToken += 1;
 
@@ -1101,7 +1073,6 @@ window.addEventListener("unhandledrejection", (event) => {
     state.playing = true;
 
     updatePlayButton();
-
     speakNextVerse(state.speechToken);
   }
 
@@ -1216,19 +1187,26 @@ window.addEventListener("unhandledrejection", (event) => {
     }
 
     const current =
-      Number.isFinite(el.audio.currentTime)
+      Number.isFinite(
+        el.audio.currentTime
+      )
         ? el.audio.currentTime
         : 0;
 
     const duration =
-      Number.isFinite(el.audio.duration)
+      Number.isFinite(
+        el.audio.duration
+      )
         ? el.audio.duration
         : 0;
 
-    el.seek.max = duration || 100;
-    el.seek.value = duration
-      ? current
-      : 0;
+    el.seek.max =
+      duration || 100;
+
+    el.seek.value =
+      duration
+        ? current
+        : 0;
 
     el.tCur.textContent =
       timeText(current);
@@ -1241,7 +1219,9 @@ window.addEventListener("unhandledrejection", (event) => {
     if (
       !el.audio ||
       !state.verses.length ||
-      !Number.isFinite(el.audio.duration) ||
+      !Number.isFinite(
+        el.audio.duration
+      ) ||
       el.audio.duration <= 0
     ) {
       return;
@@ -1261,7 +1241,8 @@ window.addEventListener("unhandledrejection", (event) => {
     const verse =
       state.verses[index];
 
-    state.currentVerse = verse.n;
+    state.currentVerse =
+      verse.n;
 
     state.verses.forEach((item) => {
       item.el.classList.toggle(
@@ -1300,8 +1281,11 @@ window.addEventListener("unhandledrejection", (event) => {
       return;
     }
 
-    state.selectedVerse = verse.n;
-    state.currentVerse = verse.n;
+    state.selectedVerse =
+      verse.n;
+
+    state.currentVerse =
+      verse.n;
 
     state.verses.forEach((item) => {
       item.el.classList.remove(
@@ -1309,7 +1293,9 @@ window.addEventListener("unhandledrejection", (event) => {
       );
     });
 
-    verse.el.classList.add("is-selected");
+    verse.el.classList.add(
+      "is-selected"
+    );
 
     verse.el.scrollIntoView({
       behavior: "smooth",
@@ -1329,14 +1315,17 @@ window.addEventListener("unhandledrejection", (event) => {
   function isBookmarked(verse) {
     return state.bookmarks.some(
       (item) =>
-        item.key === bookmarkKey(verse)
+        item.key ===
+        bookmarkKey(verse)
     );
   }
 
   function saveLocalBookmarks() {
     localStorage.setItem(
       "selah_bookmarks",
-      JSON.stringify(state.bookmarks)
+      JSON.stringify(
+        state.bookmarks
+      )
     );
   }
 
@@ -1353,6 +1342,26 @@ window.addEventListener("unhandledrejection", (event) => {
     }
   }
 
+  function updateBookmarkBadge() {
+    if (!el.bmBadge) {
+      return;
+    }
+
+    el.bmBadge.hidden =
+      state.bookmarks.length === 0;
+
+    el.bmBadge.textContent =
+      state.bookmarks.length;
+  }
+
+  function applyBookmarkMarks() {
+    state.verses.forEach((verse) => {
+      verse.el.classList.toggle(
+        "is-bookmarked",
+        isBookmarked(verse.n)
+      );
+    });
+  }
   async function loadBookmarks() {
     if (
       !supabaseClient ||
@@ -1397,7 +1406,7 @@ window.addEventListener("unhandledrejection", (event) => {
       applyBookmarkMarks();
     } catch (error) {
       console.warn(
-        "Supabase bookmark loading failed:",
+        "Bookmark loading failed:",
         error.message
       );
 
@@ -1417,13 +1426,15 @@ window.addEventListener("unhandledrejection", (event) => {
     ) {
       const exists =
         state.bookmarks.some(
-          (item) => item.key === key
+          (item) =>
+            item.key === key
         );
 
       state.bookmarks =
         exists
           ? state.bookmarks.filter(
-              (item) => item.key !== key
+              (item) =>
+                item.key !== key
             )
           : [
               ...state.bookmarks,
@@ -1445,7 +1456,8 @@ window.addEventListener("unhandledrejection", (event) => {
 
     const existing =
       state.bookmarks.find(
-        (item) => item.key === key
+        (item) =>
+          item.key === key
       );
 
     try {
@@ -1466,7 +1478,8 @@ window.addEventListener("unhandledrejection", (event) => {
         const verse =
           state.verses.find(
             (item) =>
-              item.n === Number(verseNumber)
+              item.n ===
+              Number(verseNumber)
           );
 
         const { error } =
@@ -1476,10 +1489,15 @@ window.addEventListener("unhandledrejection", (event) => {
               user_id: state.user.id,
               translation: state.tr,
               book_id: state.bookId,
-              book_name: bookName(currentBook()),
+              book_name: bookName(
+                currentBook()
+              ),
               chapter: state.chapter,
-              verse: Number(verseNumber),
-              verse_text: verse?.text || ""
+              verse: Number(
+                verseNumber
+              ),
+              verse_text:
+                verse?.text || ""
             });
 
         if (error) {
@@ -1497,26 +1515,6 @@ window.addEventListener("unhandledrejection", (event) => {
     }
   }
 
-  function updateBookmarkBadge() {
-    if (!el.bmBadge) {
-      return;
-    }
-
-    el.bmBadge.hidden =
-      state.bookmarks.length === 0;
-
-    el.bmBadge.textContent =
-      state.bookmarks.length;
-  }
-
-  function applyBookmarkMarks() {
-    state.verses.forEach((verse) => {
-      verse.el.classList.toggle(
-        "is-bookmarked",
-        isBookmarked(verse.n)
-      );
-    });
-  }
   async function savePosition(verse) {
     if (
       !supabaseClient ||
@@ -1537,7 +1535,8 @@ window.addEventListener("unhandledrejection", (event) => {
             chapter: state.chapter,
             verse: Number(verse),
             narrator: state.narrator,
-            updated_at: new Date().toISOString()
+            updated_at:
+              new Date().toISOString()
           });
 
       if (error) {
@@ -1580,7 +1579,8 @@ window.addEventListener("unhandledrejection", (event) => {
       if (
         data.translation !== state.tr ||
         data.book_id !== state.bookId ||
-        Number(data.chapter) !== state.chapter
+        Number(data.chapter) !==
+          state.chapter
       ) {
         return;
       }
@@ -1610,48 +1610,55 @@ window.addEventListener("unhandledrejection", (event) => {
       return;
     }
 
-    state.bookmarks.forEach((bookmark) => {
-      const row =
-        document.createElement("button");
+    state.bookmarks.forEach(
+      (bookmark) => {
+        const row =
+          document.createElement(
+            "button"
+          );
 
-      row.type = "button";
-      row.className = "bookmark-row";
+        row.type = "button";
+        row.className =
+          "bookmark-row";
 
-      if (bookmark.row) {
-        row.innerHTML =
-          `<strong>${escapeHTML(
-            bookmark.row.book_name
-          )} ${bookmark.row.chapter}:` +
-          `${bookmark.row.verse}</strong>` +
-          `<span>${escapeHTML(
-            bookmark.row.verse_text
-          )}</span>`;
+        if (bookmark.row) {
+          row.innerHTML =
+            `<strong>${escapeHTML(
+              bookmark.row.book_name
+            )} ${bookmark.row.chapter}:` +
+            `${bookmark.row.verse}</strong>` +
+            `<span>${escapeHTML(
+              bookmark.row.verse_text
+            )}</span>`;
 
-        row.addEventListener(
-          "click",
-          () => {
-            if (el.bookmarksDlg) {
-              el.bookmarksDlg.hidden = true;
-            }
-
-            loadChapter(
-              bookmark.row.book_id,
-              bookmark.row.chapter,
-              {
-                verse: bookmark.row.verse
+          row.addEventListener(
+            "click",
+            () => {
+              if (el.bookmarksDlg) {
+                el.bookmarksDlg.hidden =
+                  true;
               }
-            );
-          }
-        );
-      } else {
-        row.textContent =
-          "Saved bookmark";
 
-        row.disabled = true;
+              loadChapter(
+                bookmark.row.book_id,
+                bookmark.row.chapter,
+                {
+                  verse:
+                    bookmark.row.verse
+                }
+              );
+            }
+          );
+        } else {
+          row.textContent =
+            "Saved bookmark";
+
+          row.disabled = true;
+        }
+
+        el.bmBody.appendChild(row);
       }
-
-      el.bmBody.appendChild(row);
-    });
+    );
   }
 
   function openPicker() {
@@ -1673,7 +1680,8 @@ window.addEventListener("unhandledrejection", (event) => {
     }
 
     const query =
-      filter.toLowerCase();
+      String(filter || "")
+        .toLowerCase();
 
     el.pickerBody.innerHTML = "";
 
@@ -1685,10 +1693,13 @@ window.addEventListener("unhandledrejection", (event) => {
       )
       .forEach((book) => {
         const button =
-          document.createElement("button");
+          document.createElement(
+            "button"
+          );
 
         button.type = "button";
-        button.className = "book-row";
+        button.className =
+          "book-row";
 
         button.innerHTML =
           `<strong>${escapeHTML(
@@ -1699,12 +1710,16 @@ window.addEventListener("unhandledrejection", (event) => {
         button.addEventListener(
           "click",
           () => {
-            state.bookId = book.id;
+            state.bookId =
+              book.id;
+
             renderChapters();
           }
         );
 
-        el.pickerBody.appendChild(button);
+        el.pickerBody.appendChild(
+          button
+        );
       });
   }
 
@@ -1730,11 +1745,16 @@ window.addEventListener("unhandledrejection", (event) => {
       chapter += 1
     ) {
       const button =
-        document.createElement("button");
+        document.createElement(
+          "button"
+        );
 
       button.type = "button";
-      button.className = "chapter-number";
-      button.textContent = chapter;
+      button.className =
+        "chapter-number";
+
+      button.textContent =
+        chapter;
 
       button.addEventListener(
         "click",
@@ -1748,26 +1768,24 @@ window.addEventListener("unhandledrejection", (event) => {
         }
       );
 
-      el.pickerBody.appendChild(button);
+      el.pickerBody.appendChild(
+        button
+      );
     }
   }
 
   function closeDialogs() {
-    if (el.picker) {
-      el.picker.hidden = true;
-    }
+    el.picker &&
+      (el.picker.hidden = true);
 
-    if (el.searchDlg) {
-      el.searchDlg.hidden = true;
-    }
+    el.searchDlg &&
+      (el.searchDlg.hidden = true);
 
-    if (el.bookmarksDlg) {
-      el.bookmarksDlg.hidden = true;
-    }
+    el.bookmarksDlg &&
+      (el.bookmarksDlg.hidden = true);
 
-    if (el.pop) {
-      el.pop.hidden = true;
-    }
+    el.pop &&
+      (el.pop.hidden = true);
   }
 
   async function searchBible(query) {
@@ -1776,7 +1794,10 @@ window.addEventListener("unhandledrejection", (event) => {
         .toLowerCase()
         .trim();
 
-    if (!term || !el.searchBody) {
+    if (
+      !term ||
+      !el.searchBody
+    ) {
       return;
     }
 
@@ -1794,39 +1815,51 @@ window.addEventListener("unhandledrejection", (event) => {
         try {
           const url =
             `${BIBLE_API}/` +
-            `${encodeURIComponent(state.tr)}/` +
-            `${encodeURIComponent(book.id)}/` +
+            `${encodeURIComponent(
+              state.tr
+            )}/` +
+            `${encodeURIComponent(
+              book.id
+            )}/` +
             `${chapter}.json`;
 
           const data =
             await getJSON(url);
 
           const verses =
-            (data.chapter?.content || [])
-              .filter(
-                (item) =>
-                  item.type === "verse"
-              );
+            (
+              data.chapter?.content ||
+              []
+            ).filter(
+              (item) =>
+                item.type === "verse"
+            );
 
           verses.forEach((item) => {
             const text =
               cleanText(
-                textFromContent(item.content)
+                textFromContent(
+                  item.content
+                )
               );
 
             if (
-              text.toLowerCase().includes(term)
+              text
+                .toLowerCase()
+                .includes(term)
             ) {
               results.push({
                 book,
                 chapter,
-                verse: Number(item.number),
+                verse: Number(
+                  item.number
+                ),
                 text
               });
             }
           });
         } catch {
-          // Continue searching the remaining chapters.
+          // Continue searching.
         }
 
         if (results.length >= 100) {
@@ -1850,10 +1883,13 @@ window.addEventListener("unhandledrejection", (event) => {
 
     results.forEach((result) => {
       const button =
-        document.createElement("button");
+        document.createElement(
+          "button"
+        );
 
       button.type = "button";
-      button.className = "search-row";
+      button.className =
+        "search-row";
 
       button.innerHTML =
         `<strong>${escapeHTML(
@@ -1867,7 +1903,8 @@ window.addEventListener("unhandledrejection", (event) => {
         "click",
         () => {
           if (el.searchDlg) {
-            el.searchDlg.hidden = true;
+            el.searchDlg.hidden =
+              true;
           }
 
           loadChapter(
@@ -1880,7 +1917,9 @@ window.addEventListener("unhandledrejection", (event) => {
         }
       );
 
-      el.searchBody.appendChild(button);
+      el.searchBody.appendChild(
+        button
+      );
     });
   }
   function setupEvents() {
@@ -1937,7 +1976,8 @@ window.addEventListener("unhandledrejection", (event) => {
         event.preventDefault();
 
         const value =
-          el.jumpInput.value.trim();
+          el.jumpInput?.value.trim() ||
+          "";
 
         const match = value.match(
           /^(.+?)s+(d+)(?::(d+))?$/
@@ -1978,7 +2018,9 @@ window.addEventListener("unhandledrejection", (event) => {
     el.playBtn?.addEventListener(
       "click",
       () => {
-        state.playing ? pause() : play();
+        state.playing
+          ? pause()
+          : play();
       }
     );
 
@@ -2018,7 +2060,8 @@ window.addEventListener("unhandledrejection", (event) => {
         const index =
           state.verses.findIndex(
             (verse) =>
-              verse.n === state.currentVerse
+              verse.n ===
+              state.currentVerse
           );
 
         if (index > 0) {
@@ -2035,12 +2078,14 @@ window.addEventListener("unhandledrejection", (event) => {
         const index =
           state.verses.findIndex(
             (verse) =>
-              verse.n === state.currentVerse
+              verse.n ===
+              state.currentVerse
           );
 
         if (
           index >= 0 &&
-          index < state.verses.length - 1
+          index <
+            state.verses.length - 1
         ) {
           selectVerse(
             state.verses[index + 1].n
@@ -2055,7 +2100,10 @@ window.addEventListener("unhandledrejection", (event) => {
         state.narrator =
           el.narSel.value;
 
-        if (state.narrator === "device") {
+        if (
+          state.narrator ===
+          "device"
+        ) {
           state.mode = "speech";
           el.audio?.pause();
         } else {
@@ -2067,15 +2115,24 @@ window.addEventListener("unhandledrejection", (event) => {
     el.speedBtn?.addEventListener(
       "click",
       () => {
-        const speeds =
-          [0.75, 1, 1.25, 1.5, 1.75, 2];
+        const speeds = [
+          0.75,
+          1,
+          1.25,
+          1.5,
+          1.75,
+          2
+        ];
 
         const index =
-          speeds.indexOf(state.speed);
+          speeds.indexOf(
+            state.speed
+          );
 
         state.speed =
           speeds[
-            (index + 1) % speeds.length
+            (index + 1) %
+              speeds.length
           ];
 
         el.speedBtn.textContent =
@@ -2120,6 +2177,7 @@ window.addEventListener("unhandledrejection", (event) => {
           await loadChapter();
         } catch (error) {
           console.error(error);
+
           showToast(
             `Translation could not load: ${error.message}`
           );
@@ -2182,7 +2240,9 @@ window.addEventListener("unhandledrejection", (event) => {
       "click",
       (event) => {
         const verse =
-          event.target.closest(".verse");
+          event.target.closest(
+            ".verse"
+          );
 
         if (!verse) {
           return;
@@ -2231,7 +2291,8 @@ window.addEventListener("unhandledrejection", (event) => {
         const verse =
           state.verses.find(
             (item) =>
-              item.n === state.selectedVerse
+              item.n ===
+              state.selectedVerse
           );
 
         if (!verse) {
@@ -2246,7 +2307,7 @@ window.addEventListener("unhandledrejection", (event) => {
           showToast("Verse copied.");
         } catch {
           showToast(
-            "Copying is unavailable on this device."
+            "Copying is unavailable."
           );
         }
 
@@ -2260,7 +2321,8 @@ window.addEventListener("unhandledrejection", (event) => {
       "click",
       () => {
         if (el.searchDlg) {
-          el.searchDlg.hidden = false;
+          el.searchDlg.hidden =
+            false;
         }
 
         el.searchInput?.focus();
@@ -2284,7 +2346,8 @@ window.addEventListener("unhandledrejection", (event) => {
         renderBookmarks();
 
         if (el.bookmarksDlg) {
-          el.bookmarksDlg.hidden = false;
+          el.bookmarksDlg.hidden =
+            false;
         }
       }
     );
@@ -2303,10 +2366,12 @@ window.addEventListener("unhandledrejection", (event) => {
       "click",
       () => {
         const dark =
-          document.documentElement.dataset.theme ===
+          document.documentElement
+            .dataset.theme ===
           "dark";
 
-        document.documentElement.dataset.theme =
+        document.documentElement
+          .dataset.theme =
           dark ? "light" : "dark";
 
         if (el.themeLabel) {
@@ -2368,7 +2433,9 @@ window.addEventListener("unhandledrejection", (event) => {
     );
 
     document
-      .querySelectorAll("[data-close]")
+      .querySelectorAll(
+        "[data-close]"
+      )
       .forEach((button) => {
         button.addEventListener(
           "click",
@@ -2379,18 +2446,22 @@ window.addEventListener("unhandledrejection", (event) => {
 
   function loadSavedTheme() {
     const theme =
-      localStorage.getItem("selah_theme");
+      localStorage.getItem(
+        "selah_theme"
+      );
 
     if (!theme) {
       return;
     }
 
-    document.documentElement.dataset.theme =
-      theme;
+    document.documentElement
+      .dataset.theme = theme;
 
     if (el.themeLabel) {
       el.themeLabel.textContent =
-        theme === "dark" ? "Dark" : "Light";
+        theme === "dark"
+          ? "Dark"
+          : "Light";
     }
   }
 
@@ -2424,7 +2495,9 @@ window.addEventListener("unhandledrejection", (event) => {
               Selah could not load Scripture.
             </strong>
 
-            <p>${escapeHTML(error.message)}</p>
+            <p>${escapeHTML(
+              error.message
+            )}</p>
           </div>
         `;
       }
