@@ -21,8 +21,9 @@
   const $ = (id) =>
     document.getElementById(id);
 
-  const state = {
+    const state = {
     tr: "BSB",
+    translationInfo: null,
     books: [],
     bookId: "JHN",
     chapter: 3,
