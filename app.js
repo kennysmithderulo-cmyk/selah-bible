@@ -589,9 +589,9 @@
         book?.title || name;
     }
 
-    const translationName =
-      state.translation?.englishName ||
-      state.translation?.name ||
+        const translationName =
+      state.translationInfo?.englishName ||
+      state.translationInfo?.name ||
       state.tr;
 
     if (el.trNote) {
