@@ -1,6 +1,9 @@
 (() => {
   "use strict";
 
+  const BIBLE_API =
+    "https://bible.helloao.org/api";
+
   const SUPABASE_URL =
     "https://ylspdrjrvhixrregmqtg.supabase.co";
 
@@ -15,25 +18,22 @@
         )
       : null;
 
-  const BIBLE_API =
-    "https://bible.helloao.org/api";
-
   const $ = (id) =>
     document.getElementById(id);
 
   const state = {
-    tr: "BSB",
+    translation: "BSB",
     translationInfo: null,
     books: [],
     bookId: "JHN",
     chapter: 3,
     data: null,
     verses: [],
-    narrator: "souer",
-    mode: "audio",
-    playing: false,
-    currentVerse: 0,
     selectedVerse: 0,
+    currentVerse: 0,
+    narrator: "souer",
+    audioMode: "speech",
+    playing: false,
     speechIndex: 0,
     speechToken: 0,
     voices: [],
@@ -49,56 +49,56 @@
     scripture: $("scripture"),
     refBtn: $("refBtn"),
     refLabel: $("refLabel"),
-    trSel: $("translationSel"),
-    narSel: $("narratorSel"),
-    playBtn: $("playBtn"),
-    prevVerse: $("prevVerse"),
+    translationSelect: $("translationSel"),
+    narratorSelect: $("narratorSel"),
+    playButton: $("playBtn"),
+    previousVerse: $("prevVerse"),
     nextVerse: $("nextVerse"),
     seek: $("seek"),
-    tCur: $("tCur"),
-    tDur: $("tDur"),
-    tNow: $("tNow"),
-    speedBtn: $("speedBtn"),
-    prevChap: $("prevChap"),
-    nextChap: $("nextChap"),
-    prevLabel: $("prevLabel"),
+    currentTime: $("tCur"),
+    duration: $("tDur"),
+    nowPlaying: $("tNow"),
+    speedButton: $("speedBtn"),
+    previousChapter: $("prevChap"),
+    nextChapter: $("nextChap"),
+    previousLabel: $("prevLabel"),
     nextLabel: $("nextLabel"),
     chapterBook: $("chapterBook"),
-    chapterNum: $("chapterNum"),
+    chapterNumber: $("chapterNum"),
     bookTitle: $("bookTitle"),
-    trNote: $("translationNote"),
+    translationNote: $("translationNote"),
     picker: $("picker"),
     pickerBody: $("pickerBody"),
     pickerTitle: $("pickerTitle"),
     pickerBack: $("pickerBack"),
     jumpForm: $("jumpForm"),
     jumpInput: $("jumpInput"),
-    pop: $("versePop"),
-    popPlay: $("popPlay"),
-    popCopy: $("popCopy"),
-    popBookmark: $("popBookmark"),
+    versePopup: $("versePop"),
+    popupPlay: $("popPlay"),
+    popupCopy: $("popCopy"),
+    popupBookmark: $("popBookmark"),
     toast: $("toast"),
-    searchBtn: $("searchBtn"),
-    searchDlg: $("searchDlg"),
+    searchButton: $("searchBtn"),
+    searchDialog: $("searchDlg"),
     searchForm: $("searchForm"),
     searchInput: $("searchInput"),
     searchBody: $("searchBody"),
-    bookmarksBtn: $("bookmarksBtn"),
-    bookmarksDlg: $("bookmarksDlg"),
-    bmBadge: $("bmBadge"),
-    bmBody: $("bmBody"),
-    settingsBtn: $("settingsBtn"),
-    settings: $("settingsPanel"),
-    themeBtn: $("themeBtn"),
+    bookmarksButton: $("bookmarksBtn"),
+    bookmarksDialog: $("bookmarksDlg"),
+    bookmarksBadge: $("bmBadge"),
+    bookmarksBody: $("bmBody"),
+    settingsButton: $("settingsBtn"),
+    settingsPanel: $("settingsPanel"),
+    themeButton: $("themeBtn"),
     themeLabel: $("themeLabel"),
     fontUp: $("fontUp"),
     fontDown: $("fontDown"),
     followToggle: $("followToggle"),
     autoNextToggle: $("autoNextToggle"),
-    numsToggle: $("numsToggle"),
-    continueBtn: $("continueBtn"),
-    browseBtn: $("browseBtn"),
-    readerBookmarkBtn: $("readerBookmarkBtn"),
+    numbersToggle: $("numsToggle"),
+    continueButton: $("continueBtn"),
+    browseButton: $("browseBtn"),
+    readerBookmarkButton: $("readerBookmarkBtn"),
     heroReference: $("heroReference"),
     heroTranslation: $("heroTranslation")
   };
@@ -140,75 +140,77 @@
   ];
 
   const aliases = {
+    genesis: "GEN",
     gen: "GEN",
+    exodus: "EXO",
     ex: "EXO",
-    exod: "EXO",
+    leviticus: "LEV",
     lev: "LEV",
+    numbers: "NUM",
     num: "NUM",
+    deuteronomy: "DEU",
     deut: "DEU",
+    joshua: "JOS",
     josh: "JOS",
+    judges: "JDG",
     judg: "JDG",
     ruth: "RUT",
-    ps: "PSA",
+    psalms: "PSA",
+    psalm: "PSA",
     psa: "PSA",
+    proverbs: "PRO",
     prov: "PRO",
+    ecclesiastes: "ECC",
     ecc: "ECC",
-    eccl: "ECC",
     song: "SNG",
+    isaiah: "ISA",
     isa: "ISA",
+    jeremiah: "JER",
     jer: "JER",
+    lamentations: "LAM",
     lam: "LAM",
+    ezekiel: "EZK",
     ezek: "EZK",
+    daniel: "DAN",
     dan: "DAN",
+    hosea: "HOS",
     hos: "HOS",
     joel: "JOL",
     amos: "AMO",
-    obad: "OBA",
+    obadiah: "OBA",
     jonah: "JON",
-    mic: "MIC",
-    nah: "NAM",
-    hab: "HAB",
-    zeph: "ZEP",
-    hag: "HAG",
-    zech: "ZEC",
-    mal: "MAL",
-    matt: "MAT",
+    micah: "MIC",
+    nahum: "NAM",
+    habakkuk: "HAB",
+    zephaniah: "ZEP",
+    haggai: "HAG",
+    zechariah: "ZEC",
+    malachi: "MAL",
     matthew: "MAT",
-    mt: "MAT",
+    matt: "MAT",
     mark: "MRK",
-    mk: "MRK",
     luke: "LUK",
-    lk: "LUK",
     john: "JHN",
-    jn: "JHN",
     acts: "ACT",
-    rom: "ROM",
     romans: "ROM",
-    "1cor": "1CO",
-    "2cor": "2CO",
+    rom: "ROM",
+    galatians: "GAL",
     gal: "GAL",
+    ephesians: "EPH",
     eph: "EPH",
+    philippians: "PHP",
     phil: "PHP",
-    php: "PHP",
+    colossians: "COL",
     col: "COL",
-    "1thess": "1TH",
-    "2thess": "2TH",
-    "1tim": "1TI",
-    "2tim": "2TI",
-    tit: "TIT",
-    phlm: "PHM",
+    hebrews: "HEB",
     heb: "HEB",
-    jas: "JAS",
     james: "JAS",
-    "1pet": "1PE",
-    "2pet": "2PE",
-    "1jn": "1JN",
-    "2jn": "2JN",
-    "3jn": "3JN",
+    jas: "JAS",
     jude: "JUD",
-    rev: "REV",
-    revelation: "REV"
+    revelation: "REV",
+    rev: "REV"
   };
+
   function cleanText(value) {
     return String(value || "")
       .replace(/s+/g, " ")
@@ -223,7 +225,7 @@
 
     if (Array.isArray(value)) {
       return value
-        .map((part) => textFromContent(part))
+        .map((item) => textFromContent(item))
         .join("");
     }
 
@@ -253,36 +255,6 @@
     );
   }
 
-  function bookName(book) {
-    return (
-      book?.commonName ||
-      book?.name ||
-      book?.id ||
-      ""
-    );
-  }
-
-  function currentBook() {
-    return state.books.find(
-      (book) => book.id === state.bookId
-    );
-  }
-
-  function reference() {
-    return `${bookName(currentBook())} ${state.chapter}`;
-  }
-
-  function timeText(seconds) {
-    if (!Number.isFinite(seconds)) {
-      seconds = 0;
-    }
-
-    return (
-      `${Math.floor(seconds / 60)}:` +
-      `${String(Math.floor(seconds % 60)).padStart(2, "0")}`
-    );
-  }
-
   function showToast(message) {
     if (!el.toast) {
       return;
@@ -295,7 +267,42 @@
 
     showToast.timer = setTimeout(() => {
       el.toast.classList.remove("show");
-    }, 2600);
+    }, 2800);
+  }
+
+  function getBookName(book) {
+    return (
+      book?.commonName ||
+      book?.name ||
+      book?.id ||
+      ""
+    );
+  }
+
+  function getCurrentBook() {
+    return state.books.find(
+      (book) => book.id === state.bookId
+    );
+  }
+
+  function getReference() {
+    return `${getBookName(
+      getCurrentBook()
+    )} ${state.chapter}`;
+  }
+
+  function formatTime(seconds) {
+    const safeSeconds =
+      Number.isFinite(seconds)
+        ? seconds
+        : 0;
+
+    return (
+      `${Math.floor(safeSeconds / 60)}:` +
+      `${String(
+        Math.floor(safeSeconds % 60)
+      ).padStart(2, "0")}`
+    );
   }
 
   async function getJSON(url) {
@@ -309,155 +316,12 @@
 
     return response.json();
   }
-
-  function loadSpeechVoices() {
-    if (!("speechSynthesis" in window)) {
+  function buildTranslationSelector() {
+    if (!el.translationSelect) {
       return;
     }
 
-    const update = () => {
-      state.voices =
-        window.speechSynthesis.getVoices();
-    };
-
-    update();
-
-    window.speechSynthesis.addEventListener(
-      "voiceschanged",
-      update
-    );
-  }
-
-  function speechLanguage() {
-    if (state.tr === "fra_lsg") {
-      return "fr-FR";
-    }
-
-    if (state.tr === "spa_r09") {
-      return "es-ES";
-    }
-
-    if (state.tr === "por_blj") {
-      return "pt-PT";
-    }
-
-    if (state.tr === "deu_l12") {
-      return "de-DE";
-    }
-
-    return "en-US";
-  }
-
-  function chooseSpeechVoice() {
-    const voices = state.voices || [];
-    const language =
-      speechLanguage().toLowerCase();
-
-    return (
-      voices.find(
-        (voice) =>
-          voice.lang.toLowerCase() === language
-      ) ||
-      voices.find(
-        (voice) =>
-          voice.lang
-            .toLowerCase()
-            .startsWith(language.slice(0, 2))
-      ) ||
-      voices.find(
-        (voice) =>
-          voice.lang
-            .toLowerCase()
-            .startsWith("en")
-      ) ||
-      voices[0] ||
-      null
-    );
-  }
-
-  function prepareSpeechText(text) {
-    let spoken =
-      String(text || "")
-        .replace(/­/g, "")
-        .replace(/[-‍﻿]/g, "")
-        .replace(/s+/g, " ")
-        .trim();
-
-    const pronunciationMap = [
-      [/\bJesus's\b/gi, "Jee-zus-es"],
-      [/\bJesus\b/gi, "Jee-zus"],
-      [/\bMoses\b/gi, "Moe-ziz"],
-      [/\bdisciples\b/gi, "duh-sigh-pulz"],
-      [/\bsalvation\b/gi, "sal-vay-shun"],
-      [/\bPharisees\b/gi, "Fair-uh-seez"],
-      [/\bSadducees\b/gi, "Sad-you-seez"]
-    ];
-
-    pronunciationMap.forEach(
-      ([pattern, replacement]) => {
-        spoken = spoken.replace(
-          pattern,
-          replacement
-        );
-      }
-    );
-
-    return spoken;
-  }
-
-  async function initializeSupabase() {
-    if (!supabaseClient) {
-      return null;
-    }
-
-    try {
-      const {
-        data: sessionData
-      } =
-        await supabaseClient.auth.getSession();
-
-      if (sessionData?.session?.user) {
-        state.user =
-          sessionData.session.user;
-
-        return state.user;
-      }
-
-      const {
-        data,
-        error
-      } =
-        await supabaseClient.auth.signInAnonymously();
-
-      if (error) {
-        console.warn(
-          "Anonymous sign-in failed:",
-          error.message
-        );
-
-        return null;
-      }
-
-      state.user =
-        data?.user || null;
-
-      return state.user;
-    } catch (error) {
-      console.warn(
-        "Supabase initialization failed:",
-        error.message
-      );
-
-      return null;
-    }
-  }
-
-  function buildTranslationSelect() {
-    if (!el.trSel) {
-      return;
-    }
-
-    el.trSel.innerHTML = "";
+    el.translationSelect.innerHTML = "";
 
     translations.forEach((group) => {
       const optgroup =
@@ -471,19 +335,24 @@
 
         option.value = id;
         option.textContent = name;
-        option.selected = id === state.tr;
+        option.selected =
+          id === state.translation;
 
         optgroup.appendChild(option);
       });
 
-      el.trSel.appendChild(optgroup);
+      el.translationSelect.appendChild(
+        optgroup
+      );
     });
   }
 
   async function loadBooks() {
     const url =
       `${BIBLE_API}/` +
-      `${encodeURIComponent(state.tr)}/books.json`;
+      `${encodeURIComponent(
+        state.translation
+      )}/books.json`;
 
     const data = await getJSON(url);
 
@@ -523,7 +392,8 @@
     state.translationInfo =
       data.translation || null;
   }
-  function previousReference() {
+
+  function getPreviousReference() {
     if (state.chapter > 1) {
       return [
         state.bookId,
@@ -540,17 +410,17 @@
       return null;
     }
 
-    const book =
+    const previousBook =
       state.books[index - 1];
 
     return [
-      book.id,
-      book.numberOfChapters
+      previousBook.id,
+      previousBook.numberOfChapters
     ];
   }
 
-  function nextReference() {
-    const book = currentBook();
+  function getNextReference() {
+    const book = getCurrentBook();
 
     if (
       book &&
@@ -581,75 +451,91 @@
   }
 
   function updateHeader() {
-    const book = currentBook();
-    const name = bookName(book);
+    const book =
+      getCurrentBook();
 
-    el.refLabel &&
-      (el.refLabel.textContent =
-        `${name} ${state.chapter}`);
+    const name =
+      getBookName(book);
 
-    el.heroReference &&
-      (el.heroReference.textContent =
-        `${name} ${state.chapter}`);
+    if (el.refLabel) {
+      el.refLabel.textContent =
+        `${name} ${state.chapter}`;
+    }
 
-    el.chapterBook &&
-      (el.chapterBook.textContent = name);
+    if (el.heroReference) {
+      el.heroReference.textContent =
+        `${name} ${state.chapter}`;
+    }
 
-    el.chapterNum &&
-      (el.chapterNum.textContent =
-        state.chapter);
+    if (el.chapterBook) {
+      el.chapterBook.textContent = name;
+    }
 
-    el.bookTitle &&
-      (el.bookTitle.textContent =
-        book?.title || name);
+    if (el.chapterNumber) {
+      el.chapterNumber.textContent =
+        state.chapter;
+    }
+
+    if (el.bookTitle) {
+      el.bookTitle.textContent =
+        book?.title || name;
+    }
 
     const translationName =
       state.translationInfo?.englishName ||
       state.translationInfo?.name ||
-      state.tr;
+      state.translation;
 
-    el.trNote &&
-      (el.trNote.textContent =
-        translationName);
+    if (el.translationNote) {
+      el.translationNote.textContent =
+        translationName;
+    }
 
-    el.heroTranslation &&
-      (el.heroTranslation.textContent =
-        translationName);
+    if (el.heroTranslation) {
+      el.heroTranslation.textContent =
+        translationName;
+    }
 
     const previous =
-      previousReference();
+      getPreviousReference();
 
     const next =
-      nextReference();
+      getNextReference();
 
-    if (el.prevChap) {
-      el.prevChap.disabled = !previous;
+    if (el.previousChapter) {
+      el.previousChapter.disabled =
+        !previous;
     }
 
-    if (el.nextChap) {
-      el.nextChap.disabled = !next;
+    if (el.nextChapter) {
+      el.nextChapter.disabled =
+        !next;
     }
 
-    if (el.prevLabel) {
-      el.prevLabel.textContent = previous
-        ? `${bookName(
-            state.books.find(
-              (item) =>
-                item.id === previous[0]
-            )
-          )} ${previous[1]}`
-        : "Previous";
+    if (el.previousLabel) {
+      el.previousLabel.textContent =
+        previous
+          ? `${getBookName(
+              state.books.find(
+                (bookItem) =>
+                  bookItem.id ===
+                  previous[0]
+              )
+            )} ${previous[1]}`
+          : "Previous";
     }
 
     if (el.nextLabel) {
-      el.nextLabel.textContent = next
-        ? `${bookName(
-            state.books.find(
-              (item) =>
-                item.id === next[0]
-            )
-          )} ${next[1]}`
-        : "Next";
+      el.nextLabel.textContent =
+        next
+          ? `${getBookName(
+              state.books.find(
+                (bookItem) =>
+                  bookItem.id ===
+                  next[0]
+              )
+            )} ${next[1]}`
+          : "Next";
     }
   }
 
@@ -662,7 +548,7 @@
       !content.length
     ) {
       throw new Error(
-        "The chapter response contains no content."
+        "The chapter contains no content."
       );
     }
 
@@ -705,7 +591,9 @@
           );
 
         if (heading.textContent) {
-          fragment.appendChild(heading);
+          fragment.appendChild(
+            heading
+          );
         }
 
         return;
@@ -740,13 +628,13 @@
       number.textContent =
         String(item.number);
 
-      const plainParts = [];
-      let numberInserted = false;
-
       const parts =
         Array.isArray(item.content)
           ? item.content
           : [item.content];
+
+      const plainParts = [];
+      let numberInserted = false;
 
       parts.forEach((part) => {
         if (
@@ -780,7 +668,9 @@
           typeof part === "object" &&
           part.poem
         ) {
-          span.classList.add("poem-line");
+          span.classList.add(
+            "poem-line"
+          );
 
           if (Number(part.poem) > 1) {
             span.classList.add("p2");
@@ -820,17 +710,17 @@
       paragraph.appendChild(verse);
 
       state.verses.push({
-        n: Number(item.number),
+        number: Number(item.number),
         text: cleanText(
           plainParts.join(" ")
         ),
-        el: verse
+        element: verse
       });
     });
 
     if (!state.verses.length) {
       throw new Error(
-        "The chapter loaded, but no verses were found."
+        "The chapter contains no verses."
       );
     }
 
@@ -863,22 +753,27 @@
     try {
       const url =
         `${BIBLE_API}/` +
-        `${encodeURIComponent(state.tr)}/` +
-        `${encodeURIComponent(state.bookId)}/` +
-        `${encodeURIComponent(state.chapter)}.json`;
+        `${encodeURIComponent(
+          state.translation
+        )}/` +
+        `${encodeURIComponent(
+          state.bookId
+        )}/` +
+        `${encodeURIComponent(
+          state.chapter
+        )}.json`;
 
       const data =
         await getJSON(url);
 
       if (
-        !data ||
-        !data.chapter ||
+        !data?.chapter ||
         !Array.isArray(
           data.chapter.content
         )
       ) {
         throw new Error(
-          "The Bible API returned no chapter content."
+          "The chapter response was invalid."
         );
       }
 
@@ -899,7 +794,7 @@
           <div class="errorbox">
             <strong>
               Could not load ${escapeHTML(
-                reference()
+                getReference()
               )}.
             </strong>
 
@@ -928,16 +823,123 @@
       }
     }
   }
+  function speechLanguage() {
+    if (state.translation === "fra_lsg") {
+      return "fr-FR";
+    }
+
+    if (state.translation === "spa_r09") {
+      return "es-ES";
+    }
+
+    if (state.translation === "por_blj") {
+      return "pt-PT";
+    }
+
+    if (state.translation === "deu_l12") {
+      return "de-DE";
+    }
+
+    return "en-US";
+  }
+
+  function loadSpeechVoices() {
+    if (!("speechSynthesis" in window)) {
+      return;
+    }
+
+    const update =
+      () => {
+        state.voices =
+          window.speechSynthesis
+            .getVoices();
+      };
+
+    update();
+
+    window.speechSynthesis
+      .addEventListener(
+        "voiceschanged",
+        update
+      );
+  }
+
+  function chooseSpeechVoice() {
+    const voices =
+      state.voices || [];
+
+    const language =
+      speechLanguage().toLowerCase();
+
+    return (
+      voices.find(
+        (voice) =>
+          voice.lang.toLowerCase() ===
+          language
+      ) ||
+      voices.find(
+        (voice) =>
+          voice.lang
+            .toLowerCase()
+            .startsWith(
+              language.slice(0, 2)
+            )
+      ) ||
+      voices.find(
+        (voice) =>
+          voice.lang
+            .toLowerCase()
+            .startsWith("en")
+      ) ||
+      voices[0] ||
+      null
+    );
+  }
+
+  function prepareSpeechText(text) {
+    let spoken =
+      String(text || "")
+        .replace(/­/g, "")
+        .replace(/[-‍﻿]/g, "")
+        .replace(/s+/g, " ")
+        .trim();
+
+    const pronunciations = [
+      [/\bJesus's\b/gi, "Jee-zus-es"],
+      [/\bJesus\b/gi, "Jee-zus"],
+      [/\bMoses\b/gi, "Moe-ziz"],
+      [/\bdisciples\b/gi, "duh-sigh-pulz"],
+      [/\bsalvation\b/gi, "sal-vay-shun"],
+      [/\bPharisees\b/gi, "Fair-uh-seez"],
+      [/\bSadducees\b/gi, "Sad-you-seez"]
+    ];
+
+    pronunciations.forEach(
+      ([pattern, replacement]) => {
+        spoken =
+          spoken.replace(
+            pattern,
+            replacement
+          );
+      }
+    );
+
+    return spoken;
+  }
 
   function setupAudio(data) {
-    if (!el.audio || !el.narSel) {
+    if (
+      !el.audio ||
+      !el.narratorSelect
+    ) {
       return;
     }
 
     const links =
       data?.thisChapterAudioLinks || {};
 
-    el.narSel.innerHTML = "";
+    el.narratorSelect.innerHTML =
+      "";
 
     const narrators = [
       ["souer", "Souer"],
@@ -949,7 +951,9 @@
     narrators.forEach(
       ([id, label]) => {
         const option =
-          document.createElement("option");
+          document.createElement(
+            "option"
+          );
 
         option.value = id;
         option.textContent =
@@ -957,35 +961,43 @@
             ? label
             : `${label} · unavailable`;
 
-        option.disabled = !links[id];
+        option.disabled =
+          !links[id];
+
         option.selected =
           id === state.narrator &&
           Boolean(links[id]);
 
-        el.narSel.appendChild(option);
+        el.narratorSelect.appendChild(
+          option
+        );
       }
     );
 
-    const device =
-      document.createElement("option");
+    const deviceOption =
+      document.createElement(
+        "option"
+      );
 
-    device.value = "device";
-    device.textContent =
+    deviceOption.value = "device";
+    deviceOption.textContent =
       "Device voice";
 
-    el.narSel.appendChild(device);
+    el.narratorSelect.appendChild(
+      deviceOption
+    );
 
     const audioUrl =
       links[state.narrator];
 
     if (audioUrl) {
-      state.mode = "audio";
+      state.audioMode = "audio";
       el.audio.src = audioUrl;
       el.audio.playbackRate =
         state.speed;
       el.audio.load();
     } else {
-      state.mode = "speech";
+      state.audioMode = "speech";
       el.audio.removeAttribute("src");
       el.audio.load();
     }
@@ -993,9 +1005,23 @@
     updatePlayButton();
   }
 
+  function updatePlayButton() {
+    if (!el.playButton) {
+      return;
+    }
+
+    el.playButton.textContent =
+      state.playing ? "Ⅱ" : "▶";
+
+    el.playButton.classList.toggle(
+      "is-playing",
+      state.playing
+    );
+  }
+
   function play(startVerse = null) {
     if (
-      state.mode === "speech" ||
+      state.audioMode === "speech" ||
       !el.audio?.src
     ) {
       speakChapter(startVerse);
@@ -1008,7 +1034,7 @@
         updatePlayButton();
       })
       .catch(() => {
-        state.mode = "speech";
+        state.audioMode = "speech";
         speakChapter(startVerse);
       });
   }
@@ -1043,8 +1069,11 @@
 
     updatePlayButton();
   }
+
   function speakChapter(startVerse = null) {
-    if (!("speechSynthesis" in window)) {
+    if (
+      !("speechSynthesis" in window)
+    ) {
       showToast(
         "Device voice is unavailable."
       );
@@ -1060,7 +1089,8 @@
       const found =
         state.verses.findIndex(
           (verse) =>
-            verse.n === Number(startVerse)
+            verse.number ===
+            Number(startVerse)
         );
 
       if (found >= 0) {
@@ -1073,7 +1103,9 @@
     state.playing = true;
 
     updatePlayButton();
-    speakNextVerse(state.speechToken);
+    speakNextVerse(
+      state.speechToken
+    );
   }
 
   function speakNextVerse(token) {
@@ -1085,7 +1117,9 @@
     }
 
     const verse =
-      state.verses[state.speechIndex];
+      state.verses[
+        state.speechIndex
+      ];
 
     if (!verse) {
       state.playing = false;
@@ -1093,7 +1127,7 @@
 
       if (state.autoNext) {
         const next =
-          nextReference();
+          getNextReference();
 
         if (next) {
           loadChapter(
@@ -1108,11 +1142,13 @@
       return;
     }
 
-    selectVerse(verse.n);
+    selectVerse(verse.number);
 
     const utterance =
       new SpeechSynthesisUtterance(
-        prepareSpeechText(verse.text)
+        prepareSpeechText(
+          verse.text
+        )
       );
 
     const voice =
@@ -1145,7 +1181,9 @@
     };
 
     utterance.onerror = () => {
-      if (token !== state.speechToken) {
+      if (
+        token !== state.speechToken
+      ) {
         return;
       }
 
@@ -1162,26 +1200,48 @@
     );
   }
 
-  function updatePlayButton() {
-    if (!el.playBtn) {
+  function selectVerse(number) {
+    const verse =
+      state.verses.find(
+        (item) =>
+          item.number ===
+          Number(number)
+      );
+
+    if (!verse) {
       return;
     }
 
-    el.playBtn.textContent =
-      state.playing ? "Ⅱ" : "▶";
+    state.selectedVerse =
+      verse.number;
 
-    el.playBtn.classList.toggle(
-      "is-playing",
-      state.playing
+    state.currentVerse =
+      verse.number;
+
+    state.verses.forEach(
+      (item) => {
+        item.element.classList.remove(
+          "is-selected"
+        );
+      }
     );
+
+    verse.element.classList.add(
+      "is-selected"
+    );
+
+    verse.element.scrollIntoView({
+      behavior: "smooth",
+      block: "center"
+    });
   }
 
   function updateProgress() {
     if (
       !el.audio ||
       !el.seek ||
-      !el.tCur ||
-      !el.tDur
+      !el.currentTime ||
+      !el.duration
     ) {
       return;
     }
@@ -1208,11 +1268,11 @@
         ? current
         : 0;
 
-    el.tCur.textContent =
-      timeText(current);
+    el.currentTime.textContent =
+      formatTime(current);
 
-    el.tDur.textContent =
-      timeText(duration);
+    el.duration.textContent =
+      formatTime(duration);
   }
 
   function updateCurrentVerse() {
@@ -1242,70 +1302,38 @@
       state.verses[index];
 
     state.currentVerse =
-      verse.n;
+      verse.number;
 
-    state.verses.forEach((item) => {
-      item.el.classList.toggle(
-        "is-playing",
-        item.n === verse.n
-      );
-    });
+    state.verses.forEach(
+      (item) => {
+        item.element.classList.toggle(
+          "is-playing",
+          item.number ===
+            verse.number
+        );
+      }
+    );
 
-    if (el.tNow) {
-      el.tNow.textContent =
-        `${reference()}:${verse.n}`;
+    if (el.nowPlaying) {
+      el.nowPlaying.textContent =
+        `${getReference()}:${verse.number}`;
     }
 
-    savePosition(verse.n);
+    savePosition(verse.number);
 
     if (
       state.follow &&
-      state.playing &&
-      verse.el
+      state.playing
     ) {
-      verse.el.scrollIntoView({
+      verse.element.scrollIntoView({
         behavior: "smooth",
         block: "center"
       });
     }
   }
-
-  function selectVerse(number) {
-    const verse =
-      state.verses.find(
-        (item) =>
-          item.n === Number(number)
-      );
-
-    if (!verse) {
-      return;
-    }
-
-    state.selectedVerse =
-      verse.n;
-
-    state.currentVerse =
-      verse.n;
-
-    state.verses.forEach((item) => {
-      item.el.classList.remove(
-        "is-selected"
-      );
-    });
-
-    verse.el.classList.add(
-      "is-selected"
-    );
-
-    verse.el.scrollIntoView({
-      behavior: "smooth",
-      block: "center"
-    });
-  }
-
   function bookmarkKey(verse) {
     return [
-      state.tr,
+      state.translation,
       state.bookId,
       state.chapter,
       verse
@@ -1314,8 +1342,8 @@
 
   function isBookmarked(verse) {
     return state.bookmarks.some(
-      (item) =>
-        item.key ===
+      (bookmark) =>
+        bookmark.key ===
         bookmarkKey(verse)
     );
   }
@@ -1343,25 +1371,30 @@
   }
 
   function updateBookmarkBadge() {
-    if (!el.bmBadge) {
+    if (!el.bookmarksBadge) {
       return;
     }
 
-    el.bmBadge.hidden =
+    el.bookmarksBadge.hidden =
       state.bookmarks.length === 0;
 
-    el.bmBadge.textContent =
+    el.bookmarksBadge.textContent =
       state.bookmarks.length;
   }
 
   function applyBookmarkMarks() {
-    state.verses.forEach((verse) => {
-      verse.el.classList.toggle(
-        "is-bookmarked",
-        isBookmarked(verse.n)
-      );
-    });
+    state.verses.forEach(
+      (verse) => {
+        verse.element.classList.toggle(
+          "is-bookmarked",
+          isBookmarked(
+            verse.number
+          )
+        );
+      }
+    );
   }
+
   async function loadBookmarks() {
     if (
       !supabaseClient ||
@@ -1426,15 +1459,15 @@
     ) {
       const exists =
         state.bookmarks.some(
-          (item) =>
-            item.key === key
+          (bookmark) =>
+            bookmark.key === key
         );
 
       state.bookmarks =
         exists
           ? state.bookmarks.filter(
-              (item) =>
-                item.key !== key
+              (bookmark) =>
+                bookmark.key !== key
             )
           : [
               ...state.bookmarks,
@@ -1456,8 +1489,8 @@
 
     const existing =
       state.bookmarks.find(
-        (item) =>
-          item.key === key
+        (bookmark) =>
+          bookmark.key === key
       );
 
     try {
@@ -1467,7 +1500,10 @@
             .from("selah_bookmarks")
             .delete()
             .eq("id", existing.id)
-            .eq("user_id", state.user.id);
+            .eq(
+              "user_id",
+              state.user.id
+            );
 
         if (error) {
           throw error;
@@ -1478,7 +1514,7 @@
         const verse =
           state.verses.find(
             (item) =>
-              item.n ===
+              item.number ===
               Number(verseNumber)
           );
 
@@ -1487,11 +1523,13 @@
             .from("selah_bookmarks")
             .insert({
               user_id: state.user.id,
-              translation: state.tr,
+              translation:
+                state.translation,
               book_id: state.bookId,
-              book_name: bookName(
-                currentBook()
-              ),
+              book_name:
+                getBookName(
+                  getCurrentBook()
+                ),
               chapter: state.chapter,
               verse: Number(
                 verseNumber
@@ -1525,26 +1563,19 @@
     }
 
     try {
-      const { error } =
-        await supabaseClient
-          .from("selah_positions")
-          .upsert({
-            user_id: state.user.id,
-            translation: state.tr,
-            book_id: state.bookId,
-            chapter: state.chapter,
-            verse: Number(verse),
-            narrator: state.narrator,
-            updated_at:
-              new Date().toISOString()
-          });
-
-      if (error) {
-        console.warn(
-          "Position save failed:",
-          error.message
-        );
-      }
+      await supabaseClient
+        .from("selah_positions")
+        .upsert({
+          user_id: state.user.id,
+          translation:
+            state.translation,
+          book_id: state.bookId,
+          chapter: state.chapter,
+          verse: Number(verse),
+          narrator: state.narrator,
+          updated_at:
+            new Date().toISOString()
+        });
     } catch (error) {
       console.warn(
         "Position save failed:",
@@ -1577,8 +1608,10 @@
       }
 
       if (
-        data.translation !== state.tr ||
-        data.book_id !== state.bookId ||
+        data.translation !==
+          state.translation ||
+        data.book_id !==
+          state.bookId ||
         Number(data.chapter) !==
           state.chapter
       ) {
@@ -1588,23 +1621,20 @@
       if (data.verse) {
         selectVerse(data.verse);
       }
-    } catch (error) {
-      console.warn(
-        "Position loading failed:",
-        error.message
-      );
+    } catch {
+      // Reading position is optional.
     }
   }
 
   function renderBookmarks() {
-    if (!el.bmBody) {
+    if (!el.bookmarksBody) {
       return;
     }
 
-    el.bmBody.innerHTML = "";
+    el.bookmarksBody.innerHTML = "";
 
     if (!state.bookmarks.length) {
-      el.bmBody.innerHTML =
+      el.bookmarksBody.innerHTML =
         '<p class="muted">No bookmarks yet.</p>';
 
       return;
@@ -1634,8 +1664,8 @@
           row.addEventListener(
             "click",
             () => {
-              if (el.bookmarksDlg) {
-                el.bookmarksDlg.hidden =
+              if (el.bookmarksDialog) {
+                el.bookmarksDialog.hidden =
                   true;
               }
 
@@ -1652,11 +1682,11 @@
         } else {
           row.textContent =
             "Saved bookmark";
-
-          row.disabled = true;
         }
 
-        el.bmBody.appendChild(row);
+        el.bookmarksBody.appendChild(
+          row
+        );
       }
     );
   }
@@ -1681,13 +1711,14 @@
 
     const query =
       String(filter || "")
-        .toLowerCase();
+        .toLowerCase()
+        .trim();
 
     el.pickerBody.innerHTML = "";
 
     state.books
       .filter((book) =>
-        bookName(book)
+        getBookName(book)
           .toLowerCase()
           .includes(query)
       )
@@ -1703,7 +1734,7 @@
 
         button.innerHTML =
           `<strong>${escapeHTML(
-            bookName(book)
+            getBookName(book)
           )}</strong>` +
           `<span>${book.numberOfChapters} chapters</span>`;
 
@@ -1724,7 +1755,8 @@
   }
 
   function renderChapters() {
-    const book = currentBook();
+    const book =
+      getCurrentBook();
 
     if (
       !book ||
@@ -1735,7 +1767,7 @@
 
     el.pickerBack.hidden = false;
     el.pickerTitle.textContent =
-      bookName(book);
+      getBookName(book);
 
     el.pickerBody.innerHTML = "";
 
@@ -1775,152 +1807,21 @@
   }
 
   function closeDialogs() {
-    el.picker &&
-      (el.picker.hidden = true);
-
-    el.searchDlg &&
-      (el.searchDlg.hidden = true);
-
-    el.bookmarksDlg &&
-      (el.bookmarksDlg.hidden = true);
-
-    el.pop &&
-      (el.pop.hidden = true);
-  }
-
-  async function searchBible(query) {
-    const term =
-      String(query || "")
-        .toLowerCase()
-        .trim();
-
-    if (
-      !term ||
-      !el.searchBody
-    ) {
-      return;
+    if (el.picker) {
+      el.picker.hidden = true;
     }
 
-    el.searchBody.innerHTML =
-      '<p class="muted">Searching…</p>';
-
-    const results = [];
-
-    for (const book of state.books) {
-      for (
-        let chapter = 1;
-        chapter <= book.numberOfChapters;
-        chapter += 1
-      ) {
-        try {
-          const url =
-            `${BIBLE_API}/` +
-            `${encodeURIComponent(
-              state.tr
-            )}/` +
-            `${encodeURIComponent(
-              book.id
-            )}/` +
-            `${chapter}.json`;
-
-          const data =
-            await getJSON(url);
-
-          const verses =
-            (
-              data.chapter?.content ||
-              []
-            ).filter(
-              (item) =>
-                item.type === "verse"
-            );
-
-          verses.forEach((item) => {
-            const text =
-              cleanText(
-                textFromContent(
-                  item.content
-                )
-              );
-
-            if (
-              text
-                .toLowerCase()
-                .includes(term)
-            ) {
-              results.push({
-                book,
-                chapter,
-                verse: Number(
-                  item.number
-                ),
-                text
-              });
-            }
-          });
-        } catch {
-          // Continue searching.
-        }
-
-        if (results.length >= 100) {
-          break;
-        }
-      }
-
-      if (results.length >= 100) {
-        break;
-      }
+    if (el.searchDialog) {
+      el.searchDialog.hidden = true;
     }
 
-    el.searchBody.innerHTML = "";
-
-    if (!results.length) {
-      el.searchBody.innerHTML =
-        '<p class="muted">No matches found.</p>';
-
-      return;
+    if (el.bookmarksDialog) {
+      el.bookmarksDialog.hidden = true;
     }
 
-    results.forEach((result) => {
-      const button =
-        document.createElement(
-          "button"
-        );
-
-      button.type = "button";
-      button.className =
-        "search-row";
-
-      button.innerHTML =
-        `<strong>${escapeHTML(
-          bookName(result.book)
-        )} ${result.chapter}:${result.verse}</strong>` +
-        `<span>${escapeHTML(
-          result.text
-        )}</span>`;
-
-      button.addEventListener(
-        "click",
-        () => {
-          if (el.searchDlg) {
-            el.searchDlg.hidden =
-              true;
-          }
-
-          loadChapter(
-            result.book.id,
-            result.chapter,
-            {
-              verse: result.verse
-            }
-          );
-        }
-      );
-
-      el.searchBody.appendChild(
-        button
-      );
-    });
+    if (el.versePopup) {
+      el.versePopup.hidden = true;
+    }
   }
   function setupEvents() {
     el.refBtn?.addEventListener(
@@ -1928,12 +1829,12 @@
       openPicker
     );
 
-    el.browseBtn?.addEventListener(
+    el.browseButton?.addEventListener(
       "click",
       openPicker
     );
 
-    el.continueBtn?.addEventListener(
+    el.continueButton?.addEventListener(
       "click",
       () => {
         document
@@ -1944,7 +1845,7 @@
       }
     );
 
-    el.readerBookmarkBtn?.addEventListener(
+    el.readerBookmarkButton?.addEventListener(
       "click",
       () => {
         if (state.currentVerse) {
@@ -1988,16 +1889,19 @@
           return;
         }
 
-        const alias =
+        const bookKey =
           match[1]
             .toLowerCase()
             .replace(/s+/g, "");
 
         const bookId =
-          aliases[alias];
+          aliases[bookKey];
 
         if (!bookId) {
-          showToast("Book not found.");
+          showToast(
+            "Book not found."
+          );
+
           return;
         }
 
@@ -2015,7 +1919,7 @@
       }
     );
 
-    el.playBtn?.addEventListener(
+    el.playButton?.addEventListener(
       "click",
       () => {
         state.playing
@@ -2024,11 +1928,11 @@
       }
     );
 
-    el.prevChap?.addEventListener(
+    el.previousChapter?.addEventListener(
       "click",
       () => {
         const previous =
-          previousReference();
+          getPreviousReference();
 
         if (previous) {
           loadChapter(
@@ -2039,11 +1943,11 @@
       }
     );
 
-    el.nextChap?.addEventListener(
+    el.nextChapter?.addEventListener(
       "click",
       () => {
         const next =
-          nextReference();
+          getNextReference();
 
         if (next) {
           loadChapter(
@@ -2054,19 +1958,20 @@
       }
     );
 
-    el.prevVerse?.addEventListener(
+    el.previousVerse?.addEventListener(
       "click",
       () => {
         const index =
           state.verses.findIndex(
             (verse) =>
-              verse.n ===
+              verse.number ===
               state.currentVerse
           );
 
         if (index > 0) {
           selectVerse(
-            state.verses[index - 1].n
+            state.verses[index - 1]
+              .number
           );
         }
       }
@@ -2078,7 +1983,7 @@
         const index =
           state.verses.findIndex(
             (verse) =>
-              verse.n ===
+              verse.number ===
               state.currentVerse
           );
 
@@ -2088,23 +1993,24 @@
             state.verses.length - 1
         ) {
           selectVerse(
-            state.verses[index + 1].n
+            state.verses[index + 1]
+              .number
           );
         }
       }
     );
 
-    el.narSel?.addEventListener(
+    el.narratorSelect?.addEventListener(
       "change",
       () => {
         state.narrator =
-          el.narSel.value;
+          el.narratorSelect.value;
 
         if (
           state.narrator ===
           "device"
         ) {
-          state.mode = "speech";
+          state.audioMode = "speech";
           el.audio?.pause();
         } else {
           setupAudio(state.data);
@@ -2112,7 +2018,7 @@
       }
     );
 
-    el.speedBtn?.addEventListener(
+    el.speedButton?.addEventListener(
       "click",
       () => {
         const speeds = [
@@ -2135,8 +2041,10 @@
               speeds.length
           ];
 
-        el.speedBtn.textContent =
-          `${state.speed}×`;
+        if (el.speedButton) {
+          el.speedButton.textContent =
+            `${state.speed}×`;
+        }
 
         if (el.audio) {
           el.audio.playbackRate =
@@ -2149,7 +2057,7 @@
       "input",
       () => {
         if (
-          state.mode === "audio" &&
+          state.audioMode === "audio" &&
           el.audio
         ) {
           el.audio.currentTime =
@@ -2158,16 +2066,16 @@
       }
     );
 
-    el.trSel?.addEventListener(
+    el.translationSelect?.addEventListener(
       "change",
       async () => {
-        state.tr =
-          el.trSel.value;
+        state.translation =
+          el.translationSelect.value;
 
         try {
           await loadBooks();
 
-          if (!currentBook()) {
+          if (!getCurrentBook()) {
             state.bookId =
               state.books[0].id;
 
@@ -2176,8 +2084,6 @@
 
           await loadChapter();
         } catch (error) {
-          console.error(error);
-
           showToast(
             `Translation could not load: ${error.message}`
           );
@@ -2225,7 +2131,7 @@
         }
 
         const next =
-          nextReference();
+          getNextReference();
 
         if (next) {
           loadChapter(
@@ -2252,46 +2158,49 @@
           Number(verse.dataset.v)
         );
 
-        if (el.pop) {
-          el.pop.hidden = false;
+        if (el.versePopup) {
+          el.versePopup.hidden =
+            false;
         }
       }
     );
 
-    el.popBookmark?.addEventListener(
+    el.popupBookmark?.addEventListener(
       "click",
       () => {
         toggleBookmark(
           state.selectedVerse
         );
 
-        if (el.pop) {
-          el.pop.hidden = true;
+        if (el.versePopup) {
+          el.versePopup.hidden =
+            true;
         }
       }
     );
 
-    el.popPlay?.addEventListener(
+    el.popupPlay?.addEventListener(
       "click",
       () => {
         const verse =
           state.selectedVerse;
 
-        if (el.pop) {
-          el.pop.hidden = true;
+        if (el.versePopup) {
+          el.versePopup.hidden =
+            true;
         }
 
         play(verse);
       }
     );
 
-    el.popCopy?.addEventListener(
+    el.popupCopy?.addEventListener(
       "click",
       async () => {
         const verse =
           state.verses.find(
             (item) =>
-              item.n ===
+              item.number ===
               state.selectedVerse
           );
 
@@ -2301,27 +2210,30 @@
 
         try {
           await navigator.clipboard.writeText(
-            `${reference()}:${verse.n} — ${verse.text}`
+            `${getReference()}:${verse.number} — ${verse.text}`
           );
 
-          showToast("Verse copied.");
+          showToast(
+            "Verse copied."
+          );
         } catch {
           showToast(
             "Copying is unavailable."
           );
         }
 
-        if (el.pop) {
-          el.pop.hidden = true;
+        if (el.versePopup) {
+          el.versePopup.hidden =
+            true;
         }
       }
     );
 
-    el.searchBtn?.addEventListener(
+    el.searchButton?.addEventListener(
       "click",
       () => {
-        if (el.searchDlg) {
-          el.searchDlg.hidden =
+        if (el.searchDialog) {
+          el.searchDialog.hidden =
             false;
         }
 
@@ -2340,35 +2252,34 @@
       }
     );
 
-    el.bookmarksBtn?.addEventListener(
+    el.bookmarksButton?.addEventListener(
       "click",
       () => {
         renderBookmarks();
 
-        if (el.bookmarksDlg) {
-          el.bookmarksDlg.hidden =
+        if (el.bookmarksDialog) {
+          el.bookmarksDialog.hidden =
             false;
         }
       }
     );
 
-    el.settingsBtn?.addEventListener(
+    el.settingsButton?.addEventListener(
       "click",
       () => {
-        if (el.settings) {
-          el.settings.hidden =
-            !el.settings.hidden;
+        if (el.settingsPanel) {
+          el.settingsPanel.hidden =
+            !el.settingsPanel.hidden;
         }
       }
     );
 
-    el.themeBtn?.addEventListener(
+    el.themeButton?.addEventListener(
       "click",
       () => {
         const dark =
           document.documentElement
-            .dataset.theme ===
-          "dark";
+            .dataset.theme === "dark";
 
         document.documentElement
           .dataset.theme =
@@ -2422,12 +2333,12 @@
       }
     );
 
-    el.numsToggle?.addEventListener(
+    el.numbersToggle?.addEventListener(
       "change",
       () => {
         el.scripture?.classList.toggle(
           "hide-nums",
-          !el.numsToggle.checked
+          !el.numbersToggle.checked
         );
       }
     );
@@ -2468,15 +2379,14 @@
   async function start() {
     try {
       loadSavedTheme();
-      loadSpeechVoices();
       loadLocalBookmarks();
-      buildTranslationSelect();
+      loadSpeechVoices();
+      buildTranslationSelector();
       setupEvents();
 
-      await initializeSupabase();
       await loadBooks();
 
-      if (!currentBook()) {
+      if (!getCurrentBook()) {
         state.bookId =
           state.books[0].id;
 
@@ -2484,7 +2394,6 @@
       }
 
       await loadChapter();
-      await loadBookmarks();
     } catch (error) {
       console.error(error);
 
@@ -2500,6 +2409,19 @@
             )}</p>
           </div>
         `;
+      } else {
+        document.body.insertAdjacentHTML(
+          "afterbegin",
+          `<pre style="
+            padding:16px;
+            background:#4b1515;
+            color:#fff;
+            white-space:pre-wrap;
+          ">Selah could not start:
+${escapeHTML(
+            error.message
+          )}</pre>`
+        );
       }
     }
   }
