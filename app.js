@@ -1,3 +1,8 @@
+document.body.insertAdjacentHTML(
+  "afterbegin",
+  '<div id="selah-startup-test" style="position:fixed;z-index:99999;top:0;left:0;right:0;padding:14px;background:#146c43;color:#fff;font:16px sans-serif">app.js is executing</div>'
+);
+
 (() => {
   "use strict";
 
