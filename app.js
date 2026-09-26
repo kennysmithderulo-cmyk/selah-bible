@@ -2315,6 +2315,50 @@ function selahShowToast(message) {
       : reference;
   }
   }
-  
+  function bindEvents() {  document.querySelectorAll("[data-view]").forEach((button) => {
+    button.addEventListener("click", () => {
+      selahShowView(button.dataset.view);
+    });
+  });
+
+  document.querySelectorAll("[data-study-tab]").forEach((button) => {
+    button.addEventListener("click", () => {
+      selahShowStudyTab(button.dataset.studyTab);
+    });
+  });
+
+  document
+    .querySelector("#study-change-passage")
+    ?.addEventListener("click", () => {
+      selahShowView("read");
+    });
+
+  document
+    .querySelector("#theme-button")
+    ?.addEventListener("click", selahToggleTheme);
+
+  document
+    .querySelector("#mobile-menu-button")
+    ?.addEventListener("click", () => {
+      document
+        .querySelector("#sidebar")
+        ?.classList.toggle("mobile-open");
+    });
+         function selahToggleTheme() {
+  const root = document.documentElement;
+  const darkMode = root.dataset.theme === "dark";
+  const nextTheme = darkMode ? "light" : "dark";
+
+  root.dataset.theme = nextTheme;
+  localStorage.setItem("selah_theme", nextTheme);
+}
+
+function selahLoadTheme() {
+  const savedTheme =
+    localStorage.getItem("selah_theme") || "light";
+
+  document.documentElement.dataset.theme = savedTheme;
+}   
+                         
   start();
 })();
